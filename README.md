@@ -159,7 +159,7 @@ project_root$> docker-compose -f docker-compose.base.yaml -f docker-compose.loca
 You can access Redis via:
 
 ```
-1) http://localhost:8442
+1) http://<host>:8442
 2) http://redis:6379   (from linked containers)
 ```
 
@@ -167,7 +167,7 @@ You can access Redis via:
 You can access ElasticSearch via:
 
 ```
-1) http://localhost:9200
+1) http://<host>:9200
 2) http://search:9200   (from linked containers)
 ```
 
@@ -198,7 +198,7 @@ The indexer fetches new jobs from a Redis queue ("indexer"), which were previous
 The web-notifier creates service endpoints that supports requests for the creation of indexing job, iiif manifest creation jobs or for citation jobs creation. Below is an example test for creating an indexing job:
 
 ```
-POST http://<ip-adr><:port>/api/indexer/jobs HTTP/1.1
+POST http://<host>:<port>/api/indexer/jobs HTTP/1.1
 Accept: */*
 Cache-Control: no-cache
 Content-Type: application/json
