@@ -21,7 +21,7 @@ For more information about endpoints, please visit [this documentation][1].
 │           └── application.properties                    -> config file for both
 ├── .dockerignore    -> list of files which should not be copy to Docker container during the build process
 ├── .gitignore
-├── docker-compose.base.yaml        -> Base config for apps, stil not filled
+├── docker-compose.base.yaml        -> Base config for apps (indexer, web-notifier)
 ├── docker-compose.cluster.yaml     -> Cluster/VM config, stil not filled
 ├── docker-compose.kibana.yaml      -> Kibana config
 ├── docker-compose.local.yaml       -> local config
@@ -143,15 +143,15 @@ This describes a "local" view, which means the containes are linked via docker-c
 
 We have different docker-compose files for a local and also for a cluster/VM environemt. The configuration use specific configuration variables (see folder cfg/).
 
-#### Redis, ElasticSearch and Kinana
+#### Redis, ElasticSearch, Kinana, Indexer, Web-Notifier
 ##### Build all services
 ```
-project_root$> docker-compose -f docker-compose.local.yaml -f docker-compose.kibana.yaml build
+project_root$> docker-compose -f docker-compose.base.yaml -f docker-compose.local.yaml -f docker-compose.kibana.yaml build
 ```
 
 ##### Start all services
 ```
-project_root$> docker-compose -f docker-compose.local.yaml -f docker-compose.kibana.yaml up -d
+project_root$> docker-compose -f docker-compose.base.yaml -f docker-compose.local.yaml -f docker-compose.kibana.yaml up -d
 ```
 
 ### How to use
@@ -190,5 +190,24 @@ GET /_search
 }
 ```
 
+#### Indexer
+The indexer fetches new jobs from a Redis queue ("indexer"), which were previously enqueued there by the web-notifier. The indexer runs as a background process. 
+
+
+#### Web-Notifier
+The web-notifier creates service endpoints that supports requests for the creation of indexing job, iiif manifest creation jobs or for citation jobs creation. Below is an example test for creating an indexing job:
+
+```
+POST http://<ip-adr><:port>/api/indexer/jobs HTTP/1.1
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{ 
+    "document": "PPN4711",   
+    "context": "ocrd", 
+    "product": "vd18"
+}
+```
 
 
