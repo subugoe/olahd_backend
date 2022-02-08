@@ -8,6 +8,10 @@ For more information about endpoints, please visit [this documentation][1].
 .
 ├── .mvn
 │   └── wrapper      -> Maven wrapper executor
+├── cfg
+├── docker
+│   └── kibana
+│   └── search
 ├── src
 │   └── main
 │       ├── java     -> Java code
@@ -17,6 +21,10 @@ For more information about endpoints, please visit [this documentation][1].
 │           └── application.properties                    -> config file for both
 ├── .dockerignore    -> list of files which should not be copy to Docker container during the build process
 ├── .gitignore
+├── docker-compose.base.yaml        -> Base config for apps, stil not filled
+├── docker-compose.cluster.yaml     -> Cluster/VM config, stil not filled
+├── docker-compose.kibana.yaml      -> Kibana config
+├── docker-compose.local.yaml       -> local config
 ├── Dockerfile       -> used to dockerize the backend
 ├── mvnw             -> Maven wrapper to build the project in case Maven is not installed
 ├── mvnw.cmd         -> Maven wrapper for Windows
@@ -128,3 +136,59 @@ curl -X GET http://your.domain.com/full-export?id=your-id --output export.zip
 [3]: https://www.gwdg.de/application-services/persistent-identifier-pid
 [4]: https://hdl.handle.net/
 [5]: https://info.gwdg.de/dokuwiki/doku.php?id=en:services:storage_services:gwdg_cdstar:start
+
+
+### How to build/install/run
+This describes a "local" view, which means the containes are linked via docker-compose. For access from external locations we must add some kind of reverse proxy (e.g. haProxy) to accept and route requests in a secure manner.
+
+We have different docker-compose files for a local and also for a cluster/VM environemt. The configuration use specific configuration variables (see folder cfg/).
+
+#### Redis, ElasticSearch and Kinana
+##### Build all services
+```
+project_root$> docker-compose -f docker-compose.local.yaml -f docker-compose.kibana.yaml build
+```
+
+##### Start all services
+```
+project_root$> docker-compose -f docker-compose.local.yaml -f docker-compose.kibana.yaml up -d
+```
+
+### How to use
+#### Redis
+You can access Redis via:
+
+```
+1) http://localhost:8442
+2) http://redis:6379   (from linked containers)
+```
+
+#### ElasticSearch
+You can access ElasticSearch via:
+
+```
+1) http://localhost:9200
+2) http://search:9200   (from linked containers)
+```
+
+The Kibana configuration uses 2), yu can see it e.g. in:
+```
+<project>/docker/kibana/config/kibana.yml
+```
+
+#### Kinana
+Open the Kibana frontend in your browser (http://localhost:5601) and click on "Dev tools". Sample query:
+
+```
+GET /_search
+{
+  "size":5,
+  "query": {
+    "match_all": {}
+  },
+  "_source": ["*"]
+}
+```
+
+
+
