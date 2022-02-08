@@ -1,0 +1,48 @@
+version: '3.2'
+services:
+
+
+  redis:
+    image: redis:6-alpine
+    command: redis-server --appendonly yes
+    container_name: redis
+    restart: on-failure
+    labels:
+      build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
+    ports:
+      - "8442:6379"
+    volumes:
+      - redisdata:/data/
+    networks:
+      dev:
+  
+  search:
+    build:
+      context: ./docker/search
+    container_name: search
+    labels:
+      build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
+    #command: tail -f /dev/null
+    volumes:
+      - ./docker/search/config/stopwords.txt:/usr/share/elasticsearch/config/stopwords.txt:ro
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9200/_cat/health"]
+      interval: 30s
+      timeout: 60s
+      retries: 300
+    networks:
+      dev:
+        aliases:
+          - es
+
+
+volumes:
+  redisdata:
+  es_data:
+
+networks:
+  dev:
