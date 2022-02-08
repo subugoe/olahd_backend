@@ -2,3 +2,26 @@ version: '3.2'
 services:
 
 # must still be filled with content
+
+
+  web-notifier:
+    command: /usr/local/bin/web -d /etc/env/
+    image: docker.gitlab.gwdg.de/subugoe/metsimporter/web:latest
+    ports:
+      - 1323
+    links:
+      - redis
+      - indexer
+    depends_on:
+      - redis
+      - indexer
+  
+  indexer:
+    image: docker.gitlab.gwdg.de/subugoe/metsimporter/indexer:latest
+    command: /usr/local/bin/indexer -d /etc/env/
+    links:
+      - redis
+      - search
+    depends_on:
+      - redis
+      - search
