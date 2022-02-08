@@ -138,7 +138,7 @@ curl -X GET http://your.domain.com/full-export?id=your-id --output export.zip
 [5]: https://info.gwdg.de/dokuwiki/doku.php?id=en:services:storage_services:gwdg_cdstar:start
 
 
-### How to build/install/run
+### How to build/install/run  (Redis, ES, Kibana, Indexer, Web-Notifier)
 This describes a "local" view, which means the containes are linked via docker-compose. For access from external locations we must add some kind of reverse proxy (e.g. haProxy) to accept and route requests in a secure manner.
 
 We have different docker-compose files for a local and also for a cluster/VM environemt. The configuration use specific configuration variables (see folder cfg/).
@@ -154,7 +154,7 @@ project_root$> docker-compose -f docker-compose.base.yaml -f docker-compose.loca
 project_root$> docker-compose -f docker-compose.base.yaml -f docker-compose.local.yaml -f docker-compose.kibana.yaml up -d
 ```
 
-### How to use
+### How to use (Redis, ES, Kibana, Indexer, Web-Notifier)
 #### Redis
 You can access Redis via:
 
