@@ -144,10 +144,11 @@ The Indexing tool loads METS files, interprete the structures, derives bibliogra
 
 iiiF Manifests will be created from the index, there is no direct transformation from METS to manifest. This has several reasons:
 * Simplicity: METS is only analysed in one place to reduce support and maintenance.
-* Flexibility of METS, there are different places where to describe e.g. the title, the outhor and so on and one has to check all the different places. Generic tools doesn't do this and possibly lost information.
+* Flexibility of METS: There are different places where to describe e.g. the title, the outhor and so on and one has to check all the different places. Generic tools doesn't do this and possibly lost information.
 * Our viewer (TIFY) currently does not support iiif Presentation v. 3.0. 
 * Bad quality of existing mapping tools.
 
+#### Data and control flow 
 The data and control flow starts with an indexing request on the web-notifier service (s. the request example below). The web-notifier creates an indexing job for this and push it to the indexing queue (redis queue "indexer"). The indexer service listening on this queues and blocks until a new message (job) is in the queue. If the indexer get a new job, it downloads the METS, parses the structures and creates the index documents. As part of the parsing it also downloads the fulltexts and adds these to the physicle index documents to support fulltext serarch.
 
 #### How to build/install/run  (Redis, ES, Kibana, Indexer, Web-Notifier)
