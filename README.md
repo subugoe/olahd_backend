@@ -137,25 +137,36 @@ curl -X GET http://your.domain.com/full-export?id=your-id --output export.zip
 [4]: https://hdl.handle.net/
 [5]: https://info.gwdg.de/dokuwiki/doku.php?id=en:services:storage_services:gwdg_cdstar:start
 
+### Indexer tool, iiif Manifest Builder
 
-### How to build/install/run  (Redis, ES, Kibana, Indexer, Web-Notifier)
+#### Short explaination
+The Indexing tool loads METS files, interprete the structures, derives bibliographic and structural metadata and creates json based index documents.  The logical structure and metadata is mapped to the logical index. Each logical structure element in METS coressponds to a logical index document. The same applies to the physical descriptions in the METS, except that these are mapped to physical index documents and also contain the full text. 
+
+iiiF Manifests will be created from the index, there is no direct transformation from METS to manifest. This has several reasons:
+* Flexibility of METS, there are different places where to describe e.g. the title, the outhor and so on and one has to check all the different places. Generic tools doesn't do this and possibly lost information.
+* Our viewer (TIFY) currently does not support iiif Presentation v. 3.0. 
+* Bad quality of existing mapping tools.
+
+The data and control flow starts with an indexing request on the web-notifier service (s. the request example below). The web-notifier creates an indexing job for this and push it to the indexing queue (redis queue "indexer"). The indexer service listening on this queues and blocks until a new message (job) is in the queue. If the indexer get a new job, it downloads the METS, parses the structures and creates the index documents. As part of the parsing it also downloads the fulltexts and adds these to the physicle index documents to support fulltext serarch.
+
+#### How to build/install/run  (Redis, ES, Kibana, Indexer, Web-Notifier)
 This describes a "local" view, which means the containes are linked via docker-compose. For access from external locations we must add some kind of reverse proxy (e.g. haProxy) to accept and route requests in a secure manner.
 
 We have different docker-compose files for a local and also for a cluster/VM environemt. The configuration use specific configuration variables (see folder cfg/).
 
-#### Redis, ElasticSearch, Kinana, Indexer, Web-Notifier
-##### Build all services
+##### Redis, ElasticSearch, Kinana, Indexer, Web-Notifier
+###### Build all services
 ```
 project_root$> docker-compose -f docker-compose.base.yaml -f docker-compose.local.yaml -f docker-compose.kibana.yaml build
 ```
 
-##### Start all services
+###### Start all services
 ```
 project_root$> docker-compose -f docker-compose.base.yaml -f docker-compose.local.yaml -f docker-compose.kibana.yaml up -d
 ```
 
-### How to use (Redis, ES, Kibana, Indexer, Web-Notifier)
-#### Redis
+#### How to use (Redis, ES, Kibana, Indexer, Web-Notifier)
+##### Redis
 You can access Redis via:
 
 ```
@@ -163,7 +174,7 @@ You can access Redis via:
 2) http://redis:6379   (from linked containers)
 ```
 
-#### ElasticSearch
+##### ElasticSearch
 You can access ElasticSearch via:
 
 ```
@@ -176,7 +187,7 @@ The Kibana configuration uses 2), yu can see it e.g. in:
 <project>/docker/kibana/config/kibana.yml
 ```
 
-#### Kinana
+##### Kinana
 Open the Kibana frontend in your browser (http://localhost:5601) and click on "Dev tools". Sample query:
 
 ```
@@ -190,11 +201,11 @@ GET /_search
 }
 ```
 
-#### Indexer
+##### Indexer
 The indexer fetches new jobs from a Redis queue ("indexer"), which were previously enqueued there by the web-notifier. The indexer runs as a background process. 
 
 
-#### Web-Notifier
+##### Web-Notifier
 The web-notifier creates service endpoints that supports requests for the creation of indexing job, iiif manifest creation jobs or for citation jobs creation. Below is an example test for creating an indexing job:
 
 ```
