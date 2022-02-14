@@ -143,6 +143,7 @@ curl -X GET http://your.domain.com/full-export?id=your-id --output export.zip
 The Indexing tool loads METS files, interprete the structures, derives bibliographic and structural metadata and creates json based index documents.  The logical structure and metadata is mapped to the logical index. Each logical structure element in METS coressponds to a logical index document. The same applies to the physical descriptions in the METS, except that these are mapped to physical index documents and also contain the full text. 
 
 iiiF Manifests will be created from the index, there is no direct transformation from METS to manifest. This has several reasons:
+* Simplicity: METS is only analysed in one place to reduce support and maintenance.
 * Flexibility of METS, there are different places where to describe e.g. the title, the outhor and so on and one has to check all the different places. Generic tools doesn't do this and possibly lost information.
 * Our viewer (TIFY) currently does not support iiif Presentation v. 3.0. 
 * Bad quality of existing mapping tools.
