@@ -3,6 +3,9 @@
 tmp
 pom.xml.versionsBackup
 
+data/
+.env
+
 ### STS ###
 .apt_generated
 .classpath
