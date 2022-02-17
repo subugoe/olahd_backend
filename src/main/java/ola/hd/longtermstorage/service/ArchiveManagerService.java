@@ -1,14 +1,14 @@
 package ola.hd.longtermstorage.service;
 
-import okhttp3.Response;
-import ola.hd.longtermstorage.domain.HttpFile;
-import ola.hd.longtermstorage.domain.ImportResult;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
+import okhttp3.Response;
+import ola.hd.longtermstorage.domain.HttpFile;
+import ola.hd.longtermstorage.domain.ImportResult;
 
 public interface ArchiveManagerService {
 
@@ -108,6 +108,28 @@ public interface ArchiveManagerService {
      * @throws IOException Thrown if something's wrong when connecting to the archive services
      */
     HttpFile getFile(String id, String path, boolean infoOnly) throws IOException;
+
+    /**
+     * Get bag-info.txt from OCRD-ZIP for provided id, converted into a Map.
+     *
+     * @param pid: PID or PPA of archive
+     * @return Map with key-value-pairs of bag-info.txt
+     * @throws IOException Thrown if something's wrong when connecting to the archive services
+     */
+    Map<String, String> getBagInfoTxt(String pid) throws IOException;
+
+    /**
+     * Get the file from the archive via it's PID/PPA and path.
+     *
+     * This method only searches in Online-Profile, so it should not be used for images or large
+     * files which might be only available in offline profile.
+     *
+     * @param id    identifier of archive (PID/PPA)
+     * @param path  Path to the file inside archive
+     * @return The {@link Response} object to get the stream and close it properly.
+     * @throws IOException Thrown if something's wrong when connecting to the archive services
+     */
+    Response exportFile(String id, String path) throws IOException;
 
     /**
      * Delete an archive

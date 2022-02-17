@@ -2,18 +2,6 @@ package ola.hd.longtermstorage.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
-import ola.hd.longtermstorage.domain.HttpFile;
-import ola.hd.longtermstorage.domain.ImportResult;
-import ola.hd.longtermstorage.domain.SearchRequest;
-import ola.hd.longtermstorage.domain.SearchResults;
-import org.apache.tika.Tika;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,9 +14,30 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import okhttp3.Credentials;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import ola.hd.longtermstorage.domain.HttpFile;
+import ola.hd.longtermstorage.domain.ImportResult;
+import ola.hd.longtermstorage.domain.SearchRequest;
+import ola.hd.longtermstorage.domain.SearchResults;
+import ola.hd.longtermstorage.utils.Utils;
+import org.apache.tika.Tika;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Service
 public class CdstarService implements ArchiveManagerService, SearchService {
@@ -56,6 +65,12 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
     @Value("${offline.mimeTypes}")
     private String offlineMimeTypes;
+
+    /**
+     * To indicate that function
+     * {@linkplain #getArchiveIdFromIdentifier(String, String)} wasn't successful
+     */
+    private static final String NOT_FOUND = "";
 
     @Override
     public ImportResult importZipFile(Path extractedDir,
@@ -106,7 +121,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             // Get the online archive of the previous version
             String prevOnlineArchiveId = getArchiveIdFromIdentifier(prevPid, onlineProfile);
             String prevOfflineArchiveId = getArchiveIdFromIdentifier(prevPid, offlineProfile);
-            if (prevOnlineArchiveId.equals("NOT_FOUND") && prevOfflineArchiveId.equals("NOT_FOUND")) {
+            if (prevOnlineArchiveId.equals(NOT_FOUND) && prevOfflineArchiveId.equals(NOT_FOUND)) {
                 throw new HttpClientErrorException(
                         HttpStatus.BAD_REQUEST, "Previous version with PID " + prevPid + " was not found.");
             }
@@ -125,7 +140,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
             // Delete the previous version on the hard drive
             // Only store the latest version on the hard drive
-            if (!prevOnlineArchiveId.equals("NOT_FOUND")) {
+            if (!prevOnlineArchiveId.equals(NOT_FOUND)) {
                 deleteArchive(prevOnlineArchiveId, txId);
             }
 
@@ -494,7 +509,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         }
 
         // Archive not found
-        if (archiveId.equals("NOT_FOUND")) {
+        if (archiveId.equals(NOT_FOUND)) {
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
         }
 
@@ -572,7 +587,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         String archiveId = getArchiveIdFromIdentifier(identifier, offlineProfile);
 
         // Change the profile of the archive to a mirror profile
-        if (!archiveId.equals("NOT_FOUND")) {
+        if (!archiveId.equals(NOT_FOUND)) {
             updateProfile(archiveId, mirrorProfile);
         } else {
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
@@ -586,7 +601,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         String archiveId = getArchiveIdFromIdentifier(identifier, mirrorProfile);
 
         // Change the profile of the archive to a cold profile
-        if (!archiveId.equals("NOT_FOUND")) {
+        if (!archiveId.equals(NOT_FOUND)) {
             updateProfile(archiveId, offlineProfile);
         } else {
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
@@ -623,20 +638,11 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         // Search for archive with specified identifier (PPN, PID)
         String query = String.format("dcIdentifier:\"%s\" AND profile:%s", identifier, profile);
 
-        // Sort by modified time in descending order
-        String order = "-modified";
-
-        // Number of the returned results
-        String limit = "1";
-
-        // Construct the URL
         HttpUrl httpUrl = HttpUrl.parse(fullUrl).newBuilder()
                 .addQueryParameter("q", query)
-                .addQueryParameter("order", order)
-                .addQueryParameter("limit", limit)
+                .addQueryParameter("order", "-modified")
+                .addQueryParameter("limit", "1")
                 .build();
-
-        OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder()
                 .url(httpUrl)
@@ -644,7 +650,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
                 .get()
                 .build();
 
-        try (Response response = client.newCall(request).execute()) {
+        try (Response response = new OkHttpClient().newCall(request).execute()) {
 
             if (response.isSuccessful()) {
                 if (response.body() != null) {
@@ -659,10 +665,10 @@ public class CdstarService implements ArchiveManagerService, SearchService {
                     // Archive found
                     if (firstElement != null) {
                         return firstElement.get("id").asText();
+                    } else {
+                        return NOT_FOUND;
                     }
 
-                    // Archive not found
-                    return "NOT_FOUND";
                 }
             }
 
@@ -771,7 +777,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
         String archiveId = getArchiveIdFromIdentifier(identifier, mirrorProfile);
 
-        if (archiveId.equals("NOT_FOUND")) {
+        if (archiveId.equals(NOT_FOUND)) {
             return false;
         }
 
@@ -853,5 +859,63 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             // Cannot search? Throw exception
             throw new HttpServerErrorException(HttpStatus.valueOf(response.code()), "Error when getting file info.");
         }
+    }
+
+    @Override
+    public Map<String, String> getBagInfoTxt(String pid) throws IOException {
+        String archiveId = this.getArchiveIdFromIdentifier(pid, onlineProfile);
+        if (archiveId.equals(NOT_FOUND)) {
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "File not found.");
+        }
+
+        String fullUrl = url + vault + "/" + archiveId + "/bag-info.txt";
+        Request request = new Request.Builder()
+                .url(fullUrl)
+                .addHeader("Authorization", Credentials.basic(username, password))
+                .get()
+                .build();
+
+        try (Response response = new OkHttpClient().newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                String body = response.body().string();
+                return Utils.readBagInfoToMap(body);
+            } else if (response.code() == HttpStatus.CONFLICT.value()) {
+                throw new HttpClientErrorException(HttpStatus.CONFLICT,
+                    "Cannot get the file because it is on tape.");
+            } else {
+                // Cannot search? Throw exception
+                throw new HttpServerErrorException(HttpStatus.valueOf(response.code()),
+                        "Error when getting bag-info.txt");
+            }
+
+        }
+    }
+
+
+    @Override
+    public Response exportFile(String pid, String path) throws IOException{
+        String archiveId = getArchiveIdFromIdentifier(pid, onlineProfile);
+        if (archiveId.equals(NOT_FOUND)) {
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
+        }
+
+        String fullUrl = url + vault + "/" + archiveId + "/" + path;
+        HttpUrl httpUrl = HttpUrl.parse(fullUrl).newBuilder().build();
+        Request request = new Request.Builder()
+                .url(httpUrl)
+                .addHeader("Authorization", Credentials.basic(username, password))
+                .get()
+                .build();
+
+        Response response = new OkHttpClient().newCall(request).execute();
+
+        if (response.isSuccessful()) {
+            return response;
+        } else {
+            // Cannot export the archive? Throw the exception
+            throw new HttpServerErrorException(HttpStatus.valueOf(response.code()),
+                    "Cannot export file from archive " + archiveId);
+        }
+
     }
 }
