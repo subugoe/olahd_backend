@@ -1,12 +1,12 @@
 version: '3.2'
 services:
 
-  kibana:
+  olahds_kibana:
     image: docker.elastic.co/kibana/kibana:6.8.23
     #image: docker.elastic.co/kibana/kibana:7.17.0
     depends_on:
       - search
-    container_name: kibana
+    container_name: olahds_kibana
     ports:
       - 5601:5601
     links:
@@ -14,9 +14,4 @@ services:
     volumes:
       - ./docker/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
-      dev:
-
-
-networks:
-  dev:
-
+      olahd:

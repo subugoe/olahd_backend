@@ -4,9 +4,22 @@ services:
 # must still be filled with content
 
 
-  web-notifier:
+  olahds_backend:
+    build:                         # on mac osx based host
+      context: .
+      dockerfile: Dockerfile
+    container_name: olahds_backend
+    links:
+      - web-notifier
+    depends_on:
+      - web-notifier
+    networks:
+      olahd:
+
+  olahds_web_notifier:
     command: /usr/local/bin/web -d /etc/env/
     image: docker.gitlab.gwdg.de/subugoe/metsimporter/web:latest
+    container_name: olahds_web_notifier
     ports:
       - 1323
     links:
@@ -16,12 +29,26 @@ services:
       - redis
       - indexer
   
-  indexer:
+  olahds_indexer:
     image: docker.gitlab.gwdg.de/subugoe/metsimporter/indexer:latest
     command: /usr/local/bin/indexer -d /etc/env/
+    container_name: olahds_indexer
     links:
       - redis
       - search
     depends_on:
       - redis
       - search
+    networks:
+      olahd:
+
+
+
+networks:
+  olahd:
+    name: ola-hd
+    driver: bridge                       
+    driver_opts:                         
+      com.docker.network.driver.mtu: 1454
+      #com.docker.network.driver.mtu: 1450
+  

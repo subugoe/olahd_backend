@@ -1,11 +1,71 @@
 version: '3.2'
 services:
 
+  olahds_backend:
+    labels:
+      kompose.image-pull-policy: Always
+    #volumes:
+    ports: 
+      - "8080:8080"
+    environment:
+      - OLA_HD_MIN_MEMORY=6G
+      - OLA_HD_MAX_MEMORY=6G
+      - OLA_HD_EXTERNAL_PORT=8080
+      - OLA_HD_PORT=8080
 
-  redis:
+
+  olahds_indexer:
+    command: /usr/local/bin/indexer -v -d /etc/env/
+    labels:
+      kompose.image-pull-policy: Always
+    volumes:
+      - ./indexer/cfg/digizeit-aws/app.env:/etc/env/app.env
+      - ./indexer/cfg/digizeit-aws/app-static.env:/etc/env/app-static.env
+      - ./indexer/cfg/digizeit-aws/commons.env:/etc/env/commons.env
+      - ./indexer/cfg/commons/commons-static.env:/etc/env/commons-static.env
+      - ./indexer/cfg/commons/iiif.env:/etc/env/iiif.env
+
+  olahds_web_notifier:
+    labels:
+      kompose.image-pull-policy: Always
+    volumes:
+      - ./indexer/cfg/digizeit-aws/app.env:/etc/env/app.env
+      - ./indexer/cfg/digizeit-aws/app-static.env:/etc/env/app-static.env
+      - ./indexer/cfg/digizeit-aws/commons.env:/etc/env/commons.env
+      - ./indexer/cfg/commons/commons-static.env:/etc/env/commons-static.env
+      - ./indexer/cfg/commons/iiif.env:/etc/env/iiif.env
+    networks:
+      olahd:
+        aliases:
+          - web
+
+  olahds_mongo:
+    image: mongo:4.0.10
+    container_name: olahds_mongo
+    command: mongod
+    ports: 
+      - "27017:27017"
+    env_file: .env
+    volumes:
+      - ./data:/data/db
+    networks:
+      olahd:
+        aliases:
+          - mongo
+    #environment:
+    #  # provide your credentials here
+    #  - MONGO_INITDB_ROOT_USERNAME=admin
+    #  - MONGO_INITDB_ROOT_PASSWORD=password
+
+
+      
+  
+
+
+  olahds_redis:
     image: redis:6-alpine
     command: redis-server --appendonly yes
-    container_name: redis
+    container_name: olahds_redis
     restart: on-failure
     labels:
       build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
@@ -14,12 +74,14 @@ services:
     volumes:
       - redisdata:/data/
     networks:
-      dev:
+      olahd:
+        aliases:
+          - redis
   
-  search:
+  olahds_search:
     build:
       context: ./docker/search
-    container_name: search
+    container_name: olahds_search
     labels:
       build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
     #command: tail -f /dev/null
@@ -35,14 +97,13 @@ services:
       timeout: 60s
       retries: 300
     networks:
-      dev:
+      olahd:
         aliases:
           - es
+          - search
 
 
 volumes:
   redisdata:
+  # TODO has to be chanched to container external storage
   es_data:
-
-networks:
-  dev:
