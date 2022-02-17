@@ -1,24 +1,40 @@
 package ola.hd.longtermstorage.controller;
 
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.Principal;
+import java.util.Map;
+import okhttp3.Headers;
 import okhttp3.Response;
-import ola.hd.longtermstorage.domain.*;
+import ola.hd.longtermstorage.domain.ArchiveStatus;
+import ola.hd.longtermstorage.domain.DownloadRequest;
+import ola.hd.longtermstorage.domain.ExportRequest;
+import ola.hd.longtermstorage.domain.HttpFile;
+import ola.hd.longtermstorage.domain.ResponseMessage;
 import ola.hd.longtermstorage.repository.mongo.ExportRequestRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import springfox.documentation.annotations.ApiIgnore;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.Principal;
 
 @Api(description = "This endpoint is used to export data from the system.")
 @RestController
@@ -159,6 +175,40 @@ public class ExportController {
                 .body(resource);
     }
 
+    /**
+     * Export METS-file via PID
+     *
+     * Expects the METS-file to be always stored in online-profile (Hot Storage)
+     *
+     * @param id  PID or PPA
+     * @return archive's METS-file
+     * @throws IOException
+     */
+    @ApiOperation(value = "Quickly export the METS-file via PID")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "METS-File for specified identifier was found.", response = byte[].class),
+        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class)
+    })
+    @GetMapping(value = "/export/mets", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    public ResponseEntity<InputStreamResource> exportMetsfile(
+            @ApiParam(value = "The PID or PPA of the work.", required = true) @RequestParam String id) throws IOException {
+        final String metsPath;
+        Map<String, String> bagInfoMap = archiveManagerService.getBagInfoTxt(id);
+        if (bagInfoMap.containsKey("Ocrd-Mets")) {
+            metsPath = bagInfoMap.get("Ocrd-Mets");
+        } else {
+            metsPath = "data/mets.xml";
+        }
+
+        try (Response res = archiveManagerService.exportFile(id, metsPath)) {
+            Headers headers = res.headers();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(headers.get(HttpHeaders.CONTENT_TYPE)))
+                    .header(HttpHeaders.CONTENT_LENGTH, headers.get(HttpHeaders.CONTENT_LENGTH))
+                    .body(new InputStreamResource(res.body().byteStream()));
+        }
+    }
+
     private ResponseEntity<StreamingResponseBody> exportData(String id, String type, boolean isInternal) {
 
         // Set proper file name
@@ -193,4 +243,6 @@ public class ExportController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
                 .body(stream);
     }
+
+
 }

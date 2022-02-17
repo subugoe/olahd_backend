@@ -1,8 +1,5 @@
 package ola.hd.longtermstorage.config;
 
-import ola.hd.longtermstorage.component.CustomAuthenticationEntryPoint;
-import ola.hd.longtermstorage.component.TokenProvider;
-import ola.hd.longtermstorage.filter.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +10,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
+import ola.hd.longtermstorage.component.CustomAuthenticationEntryPoint;
+import ola.hd.longtermstorage.component.TokenProvider;
+import ola.hd.longtermstorage.filter.JwtFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -42,7 +43,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .and()
                 .addFilterBefore(new JwtFilter(this.tokenProvider), BasicAuthenticationFilter.class)
                 .authorizeRequests()
-                    .antMatchers("/export",
+                    .antMatchers("/export/**",
                             "/download",
                             "/download-file/**",
                             "/login",
