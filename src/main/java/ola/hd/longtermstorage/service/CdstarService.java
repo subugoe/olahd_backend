@@ -70,7 +70,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
      * To indicate that function
      * {@linkplain #getArchiveIdFromIdentifier(String, String)} wasn't successful
      */
-    private static final String NOT_FOUND = "";
+    private static final String NOT_FOUND = "NOT_FOUND";
 
     @Override
     public ImportResult importZipFile(Path extractedDir,
@@ -887,7 +887,6 @@ public class CdstarService implements ArchiveManagerService, SearchService {
                 throw new HttpServerErrorException(HttpStatus.valueOf(response.code()),
                         "Error when getting bag-info.txt");
             }
-
         }
     }
 
@@ -912,7 +911,6 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         if (response.isSuccessful()) {
             return response;
         } else {
-            // Cannot export the archive? Throw the exception
             throw new HttpServerErrorException(HttpStatus.valueOf(response.code()),
                     "Cannot export file from archive " + archiveId);
         }

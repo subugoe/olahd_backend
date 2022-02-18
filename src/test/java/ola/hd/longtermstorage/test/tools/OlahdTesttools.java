@@ -4,15 +4,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
 import javax.servlet.http.HttpServletRequest;
-
+import ola.hd.longtermstorage.controller.ExportControllerTest;
+import ola.hd.longtermstorage.service.ArchiveManagerService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -111,7 +112,7 @@ public class OlahdTesttools {
             List<Pair<String, String>> checksums = new ArrayList<>();
 
             String fName = "mets.xml";
-            String content = "test";
+            String content = "METS-testfile";
             addDataBagitEntry(out, checksums, fName, content);
             out.closeEntry();
 
@@ -155,5 +156,38 @@ public class OlahdTesttools {
         zos.write(content.getBytes());
         String checksum = Sha512DigestUtils.shaHex(content);
         cSums.add(new ImmutablePair<>(checksum, path));
+    }
+
+
+    /**
+     * Intended for use in {@linkplain ExportControllerTest}, but could be used elsewhere as well.
+     * Test-data is stored, but it needs some time to be accessible after insert. This function
+     *
+     * @param testPid PID which should be reachable in database
+     * @param timeout max wait this seconds for archive. Method finishes after 10 secs in any case
+     */
+    public static boolean waitForArchive(String pid, ArchiveManagerService archiveManagerService) {
+        try {
+            Method method = archiveManagerService.getClass()
+                .getDeclaredMethod("getArchiveIdFromIdentifier", String.class, String.class);
+            method.setAccessible(true);
+
+            int i = 20;
+            while (i > 0) {
+                Object r = method.invoke(archiveManagerService, pid, "default");
+                if (r != null && !r.toString().equals("NOT_FOUND")) {
+                    /* It is possible that parts of archive are already available and others not.
+                     * Therefore wait another 1/4 seconds*/
+                    Thread.sleep(250);
+                    return true;
+                }
+                Thread.sleep(500);
+                i--;
+            }
+            return false;
+        } catch (Exception e) {
+            throw new RuntimeException("Error in " + OlahdTesttools.class.getSimpleName() +
+                    ".waitForArchive()", e);
+        }
     }
 }

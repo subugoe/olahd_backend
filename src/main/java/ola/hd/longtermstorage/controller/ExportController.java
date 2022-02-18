@@ -175,40 +175,6 @@ public class ExportController {
                 .body(resource);
     }
 
-    /**
-     * Export METS-file via PID
-     *
-     * Expects the METS-file to be always stored in online-profile (Hot Storage)
-     *
-     * @param id  PID or PPA
-     * @return archive's METS-file
-     * @throws IOException
-     */
-    @ApiOperation(value = "Quickly export the METS-file via PID")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "METS-File for specified identifier was found.", response = byte[].class),
-        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class)
-    })
-    @GetMapping(value = "/export/mets", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
-    public ResponseEntity<InputStreamResource> exportMetsfile(
-            @ApiParam(value = "The PID or PPA of the work.", required = true) @RequestParam String id) throws IOException {
-        final String metsPath;
-        Map<String, String> bagInfoMap = archiveManagerService.getBagInfoTxt(id);
-        if (bagInfoMap.containsKey("Ocrd-Mets")) {
-            metsPath = bagInfoMap.get("Ocrd-Mets");
-        } else {
-            metsPath = "data/mets.xml";
-        }
-
-        try (Response res = archiveManagerService.exportFile(id, metsPath)) {
-            Headers headers = res.headers();
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(headers.get(HttpHeaders.CONTENT_TYPE)))
-                    .header(HttpHeaders.CONTENT_LENGTH, headers.get(HttpHeaders.CONTENT_LENGTH))
-                    .body(new InputStreamResource(res.body().byteStream()));
-        }
-    }
-
     private ResponseEntity<StreamingResponseBody> exportData(String id, String type, boolean isInternal) {
 
         // Set proper file name
@@ -244,5 +210,39 @@ public class ExportController {
                 .body(stream);
     }
 
+    /**
+     * Export METS-file via PID
+     *
+     * Expects the METS-file to be always stored in online-profile (Hot Storage)
+     *
+     * @param id  PID or PPA
+     * @return archive's METS-file
+     * @throws IOException
+     */
+    @ApiOperation(value = "Quickly export the METS-file via PID")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "METS-File for specified identifier was found.", response = byte[].class),
+        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class)
+    })
+    @GetMapping(value = "/export/mets", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    public ResponseEntity<InputStreamResource> exportMetsfile(
+            @ApiParam(value = "The PID or PPA of the work.", required = true) @RequestParam String id) throws IOException {
+        long zeit = System.currentTimeMillis();
+        final String metsPath;
+        Map<String, String> bagInfoMap = archiveManagerService.getBagInfoTxt(id);
+        if (bagInfoMap.containsKey("Ocrd-Mets")) {
+            metsPath = bagInfoMap.get("Ocrd-Mets");
+        } else {
+            metsPath = "data/mets.xml";
+        }
+
+        Response res = archiveManagerService.exportFile(id, metsPath);
+        Headers headers = res.headers();
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(headers.get(HttpHeaders.CONTENT_TYPE)))
+            .header(HttpHeaders.CONTENT_LENGTH, headers.get(HttpHeaders.CONTENT_LENGTH))
+            .body(new InputStreamResource(res.body().byteStream()));
+    }
 
 }
