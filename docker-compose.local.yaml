@@ -19,21 +19,21 @@ services:
     labels:
       kompose.image-pull-policy: Always
     volumes:
-      - ./indexer/cfg/digizeit-aws/app.env:/etc/env/app.env
-      - ./indexer/cfg/digizeit-aws/app-static.env:/etc/env/app-static.env
-      - ./indexer/cfg/digizeit-aws/commons.env:/etc/env/commons.env
-      - ./indexer/cfg/commons/commons-static.env:/etc/env/commons-static.env
-      - ./indexer/cfg/commons/iiif.env:/etc/env/iiif.env
+      - cfg/local/app.env:/etc/env/app.env
+      - cfg/local/app-static.env:/etc/env/app-static.env
+      - cfg/local/commons.env:/etc/env/commons.env
+      - cfg/local/commons-static.env:/etc/env/commons-static.env
+      - cfg/local/iiif.env:/etc/env/iiif.env
 
   olahds_web_notifier:
     labels:
       kompose.image-pull-policy: Always
     volumes:
-      - ./indexer/cfg/digizeit-aws/app.env:/etc/env/app.env
-      - ./indexer/cfg/digizeit-aws/app-static.env:/etc/env/app-static.env
-      - ./indexer/cfg/digizeit-aws/commons.env:/etc/env/commons.env
-      - ./indexer/cfg/commons/commons-static.env:/etc/env/commons-static.env
-      - ./indexer/cfg/commons/iiif.env:/etc/env/iiif.env
+      - cfg/local/app.env:/etc/env/app.env
+      - cfg/local/app-static.env:/etc/env/app-static.env
+      - cfg/local/commons.env:/etc/env/commons.env
+      - cfg/local/commons-static.env:/etc/env/commons-static.env
+      - cfg/local/iiif.env:/etc/env/iiif.env
     networks:
       olahd:
         aliases:
