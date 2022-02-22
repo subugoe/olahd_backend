@@ -19,21 +19,22 @@ services:
     labels:
       kompose.image-pull-policy: Always
     volumes:
-      - cfg/local/app.env:/etc/env/app.env
-      - cfg/local/app-static.env:/etc/env/app-static.env
-      - cfg/local/commons.env:/etc/env/commons.env
-      - cfg/local/commons-static.env:/etc/env/commons-static.env
-      - cfg/local/iiif.env:/etc/env/iiif.env
+      - ./cfg/local/app.env:/etc/env/app.env
+      - ./cfg/local/app-static.env:/etc/env/app-static.env
+      - ./cfg/local/commons.env:/etc/env/commons.env
+      - ./cfg/local/commons-static.env:/etc/env/commons-static.env
+      - ./cfg/local/iiif.env:/etc/env/iiif.env
 
   olahds_web_notifier:
+    command: /usr/local/bin/web -d /etc/env/
     labels:
       kompose.image-pull-policy: Always
     volumes:
-      - cfg/local/app.env:/etc/env/app.env
-      - cfg/local/app-static.env:/etc/env/app-static.env
-      - cfg/local/commons.env:/etc/env/commons.env
-      - cfg/local/commons-static.env:/etc/env/commons-static.env
-      - cfg/local/iiif.env:/etc/env/iiif.env
+      - ./cfg/local/app.env:/etc/env/app.env
+      - ./cfg/local/app-static.env:/etc/env/app-static.env
+      - ./cfg/local/commons.env:/etc/env/commons.env
+      - ./cfg/local/commons-static.env:/etc/env/commons-static.env
+      - ./cfg/local/iiif.env:/etc/env/iiif.env
     networks:
       olahd:
         aliases:
