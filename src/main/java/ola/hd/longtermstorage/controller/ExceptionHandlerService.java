@@ -3,15 +3,18 @@ package ola.hd.longtermstorage.controller;
 import ola.hd.longtermstorage.domain.ResponseMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
@@ -53,6 +56,14 @@ public class ExceptionHandlerService extends ResponseEntityExceptionHandler {
         String uri = request.getRequest().getRequestURI();
 
         // Return the error message
+        return new ResponseEntity<>(new ResponseMessage(status, message, uri), status);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex,
+            HttpHeaders headers, HttpStatus status, WebRequest request) {
+        String message = "Request parameter(s) missing.";
+        String uri = request.getDescription(false).replace("uri=", "");
         return new ResponseEntity<>(new ResponseMessage(status, message, uri), status);
     }
 }
