@@ -633,6 +633,8 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         }
     }
 
+    /* TODO: todo: this is not reliable, because we have archives(don't know why) without pid in
+     * cdstar-metadata. Must be changed: ask mongodb for archive-id from pid*/
     private String getArchiveIdFromIdentifier(String identifier, String profile) throws IOException {
         String fullUrl = url + vault;
 
@@ -866,7 +868,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     public Map<String, String> getBagInfoTxt(String pid) throws IOException {
         String archiveId = this.getArchiveIdFromIdentifier(pid, onlineProfile);
         if (archiveId.equals(NOT_FOUND)) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.FILE_NOT_FOUND);
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
 
         String fullUrl = url + vault + "/" + archiveId + "/bag-info.txt";
