@@ -1,10 +1,14 @@
 package ola.hd.longtermstorage.controller;
 
+import static ola.hd.longtermstorage.test.tools.OlahdTesttools.TEST_PW;
+import static ola.hd.longtermstorage.test.tools.OlahdTesttools.TEST_ROLE;
+import static ola.hd.longtermstorage.test.tools.OlahdTesttools.TEST_USER;
+
 import java.io.File;
 import java.security.Principal;
-
 import javax.servlet.http.HttpServletRequest;
-
+import ola.hd.longtermstorage.domain.ResponseMessage;
+import ola.hd.longtermstorage.test.tools.OlahdTesttools;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +20,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.Assert;
 
-import ola.hd.longtermstorage.domain.ResponseMessage;
-import ola.hd.longtermstorage.test.tools.OlahdTesttools;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @TestPropertySource(locations = "classpath:application-test.properties")
@@ -28,9 +29,9 @@ public class ImportControllerTest {
     private ImportController importController;
 
     @Test
-    @WithMockUser(username = "testImportData", password = "pass", roles = "USER")
+    @WithMockUser(username = TEST_USER, password = TEST_PW, roles = TEST_ROLE)
     public void testImportData() throws Exception {
-        File testzip = OlahdTesttools.createTestOcrdzip("test.zip");
+        File testzip = OlahdTesttools.createTestOcrdzip();
         HttpServletRequest request = OlahdTesttools.createZipUploadRequest(testzip);
         Principal user = SecurityContextHolder.getContext().getAuthentication();
         ResponseEntity<?> importData = importController.importData(request, user);

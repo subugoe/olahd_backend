@@ -31,6 +31,10 @@ public class OlahdTesttools {
     private OlahdTesttools() {
     }
 
+    public final static String TEST_USER = "testuser";
+    public final static String TEST_PW = "testpw";
+    public final static String TEST_ROLE = "USER";
+
     /**
      * Create zip-file-post-request
      *
@@ -100,10 +104,9 @@ public class OlahdTesttools {
      * Creates a minimal ocrdzip in tmp-dir. Currently not completely valid, it's for testing
      * purposes only
      *
-     * @param string - Filename to be used for the zip
      * @return
      */
-    public static File createTestOcrdzip(String string) {
+    public static File createTestOcrdzip() {
         try {
             File res = File.createTempFile("test", ".zip");
             res.deleteOnExit();
@@ -177,8 +180,8 @@ public class OlahdTesttools {
                 Object r = method.invoke(archiveManagerService, pid, "default");
                 if (r != null && !r.toString().equals("NOT_FOUND")) {
                     /* It is possible that parts of archive are already available and others not.
-                     * Therefore wait another 1/4 seconds*/
-                    Thread.sleep(250);
+                     * Therefore wait another 1/2 seconds*/
+                    Thread.sleep(500);
                     return true;
                 }
                 Thread.sleep(500);
