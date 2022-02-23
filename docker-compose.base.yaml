@@ -17,8 +17,8 @@ services:
       olahd:
 
   olahds_web_notifier:
-    command: /usr/local/bin/web -d /etc/env/
     image: docker.gitlab.gwdg.de/subugoe/metsimporter/web:latest
+    command: /usr/local/bin/web -d /etc/env/
     container_name: olahds_web_notifier
     ports:
       - 1323
