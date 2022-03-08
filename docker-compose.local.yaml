@@ -47,18 +47,16 @@ services:
     env_file: .env
     volumes:
       - ./data:/data/db
+      - ./docker/mongodb/config/mongodb-setup.js:/setup/mongodb-setup.js
     networks:
       olahd:
         aliases:
           - mongo
-    #environment:
-    #  # provide your credentials here
-    #  - MONGO_INITDB_ROOT_USERNAME=admin
-    #  - MONGO_INITDB_ROOT_PASSWORD=password
-
-
-      
-  
+    environment:
+      # provide your credentials here
+      MONGO_INITDB_ROOT_USERNAME: test
+      MONGO_INITDB_ROOT_PASSWORD: testtest
+      MONGO_INITDB_DATABASE: admin
 
 
   olahds_redis:
