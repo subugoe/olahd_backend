@@ -24,6 +24,7 @@ services:
       - ./cfg/local/commons-static.env:/etc/env/commons-static.env
       - ./cfg/local/iiif.env:/etc/env/iiif.env
 
+
   olahds_web_notifier:
     #labels:
     #  kompose.image-pull-policy: Always
