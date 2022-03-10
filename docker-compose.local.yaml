@@ -1,27 +1,87 @@
 version: '3.2'
 services:
 
+  olahds_backend:
+    #labels:
+    #  kompose.image-pull-policy: Always
+    #volumes:
+    ports: 
+      - "8080:8080"
+    environment:
+      - OLA_HD_MIN_MEMORY=6G
+      - OLA_HD_MAX_MEMORY=6G
+      - OLA_HD_EXTERNAL_PORT=8080
+      - OLA_HD_PORT=8080
 
-  redis:
+
+  olahds_indexer:
+    #labels:
+    #  kompose.image-pull-policy: Always
+    volumes:
+      - ./cfg/local/app.env:/etc/env/app.env
+      - ./cfg/local/app-static.env:/etc/env/app-static.env
+      - ./cfg/local/commons.env:/etc/env/commons.env
+      - ./cfg/local/commons-static.env:/etc/env/commons-static.env
+      - ./cfg/local/iiif.env:/etc/env/iiif.env
+
+
+  olahds_web_notifier:
+    #labels:
+    #  kompose.image-pull-policy: Always
+    volumes:
+      - ./cfg/local/app.env:/etc/env/app.env
+      - ./cfg/local/app-static.env:/etc/env/app-static.env
+      - ./cfg/local/commons.env:/etc/env/commons.env
+      - ./cfg/local/commons-static.env:/etc/env/commons-static.env
+      - ./cfg/local/iiif.env:/etc/env/iiif.env
+    networks:
+      olahd:
+        aliases:
+          - web
+
+  olahds_mongo:
+    image: mongo:4.0.10
+    container_name: olahds_mongo
+    command: mongod
+    ports: 
+      - "27017:27017"
+    env_file: .env
+    volumes:
+      - ./data:/data/db
+      - ./docker/mongodb/config/mongodb-setup.js:/setup/mongodb-setup.js
+    networks:
+      olahd:
+        aliases:
+          - mongo
+    environment:
+      # provide your credentials here
+      MONGO_INITDB_ROOT_USERNAME: test
+      MONGO_INITDB_ROOT_PASSWORD: testtest
+      MONGO_INITDB_DATABASE: admin
+
+
+  olahds_redis:
     image: redis:6-alpine
     command: redis-server --appendonly yes
-    container_name: redis
+    container_name: olahds_redis
     restart: on-failure
-    labels:
-      build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
+    #labels:
+    #  build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
     ports:
       - "8442:6379"
     volumes:
       - redisdata:/data/
     networks:
-      dev:
+      olahd:
+        aliases:
+          - redis
   
-  search:
+  olahds_search:
     build:
       context: ./docker/search
-    container_name: search
-    labels:
-      build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
+    container_name: olahds_search
+    #labels:
+    #  build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
     #command: tail -f /dev/null
     volumes:
       - ./docker/search/config/stopwords.txt:/usr/share/elasticsearch/config/stopwords.txt:ro
@@ -35,14 +95,13 @@ services:
       timeout: 60s
       retries: 300
     networks:
-      dev:
+      olahd:
         aliases:
           - es
+          - search
 
 
 volumes:
   redisdata:
+  # TODO has to be chanched to container external storage
   es_data:
-
-networks:
-  dev:
