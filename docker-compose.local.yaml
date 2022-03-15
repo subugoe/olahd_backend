@@ -1,11 +1,11 @@
-version: '3.2'
+version: '3.5'
 services:
 
   olahds_backend:
     #labels:
     #  kompose.image-pull-policy: Always
     #volumes:
-    ports: 
+    ports:
       - "8080:8080"
     environment:
       - OLA_HD_MIN_MEMORY=6G
@@ -43,11 +43,11 @@ services:
     image: mongo:4.0.10
     container_name: olahds_mongo
     command: mongod
-    ports: 
+    ports:
       - "27017:27017"
     env_file: .env
     volumes:
-      - ./data:/data/db
+      - ./mongodb/data:/data/db
       - ./docker/mongodb/config/mongodb-setup.js:/setup/mongodb-setup.js
     networks:
       olahd:
@@ -75,7 +75,7 @@ services:
       olahd:
         aliases:
           - redis
-  
+
   olahds_search:
     build:
       context: ./docker/search

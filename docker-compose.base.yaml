@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.5'
 services:
 
 # must still be filled with content
@@ -56,9 +56,8 @@ services:
 
 networks:
   olahd:
-    name: ola-hd
+    name: olahd
     driver: bridge                       
     driver_opts:                         
-      com.docker.network.driver.mtu: 1454
-      #com.docker.network.driver.mtu: 1450
+      com.docker.network.driver.mtu: 1450
   

@@ -1,1 +1,108 @@
-# must still be filled with content
+version: '3.5'
+services:
+
+  reverse-proxy:
+    image: traefik:v2.6
+    command:
+      - "--api.insecure=true" # TODO: remove
+      - "--providers.docker=true"
+      - "--entrypoints.http.address=:80"
+      - "--providers.docker.exposedByDefault=false"
+    ports:
+      - "80:80"
+      - "8081:8080" # TODO: remove
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - olahd
+
+  olahds_backend:
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    env_file:
+        - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.olahds_backend.entrypoints=http"
+      - "traefik.http.routers.olahds_backend.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.olahds_backend.middlewares=stripprefix_api"
+      - "traefik.http.middlewares.stripprefix_api.stripprefix.prefixes=/api"
+
+  olahds_indexer:
+    volumes:
+      - ./cfg/local/app.env:/etc/env/app.env
+      - ./cfg/local/app-static.env:/etc/env/app-static.env
+      - ./cfg/local/commons.env:/etc/env/commons.env
+      - ./cfg/local/commons-static.env:/etc/env/commons-static.env
+      - ./cfg/local/iiif.env:/etc/env/iiif.env
+
+
+  olahds_web_notifier:
+    volumes:
+      - ./cfg/local/app.env:/etc/env/app.env
+      - ./cfg/local/app-static.env:/etc/env/app-static.env
+      - ./cfg/local/commons.env:/etc/env/commons.env
+      - ./cfg/local/commons-static.env:/etc/env/commons-static.env
+      - ./cfg/local/iiif.env:/etc/env/iiif.env
+    networks:
+      olahd:
+        aliases:
+          - web
+
+  olahds_mongo:
+    image: mongo:4.0.10
+    container_name: olahds_mongo
+    command: mongod
+    ports:
+      - "27017:27017"
+    env_file: .env
+    volumes:
+      - ~/ola-hd-data/mongdb-1:/data/db
+    networks:
+      olahd:
+        aliases:
+          - mongo
+    env_file:
+      - .env
+
+  olahds_redis:
+    image: redis:6-alpine
+    command: redis-server --appendonly yes
+    container_name: olahds_redis
+    restart: on-failure
+    ports:
+      - "8442:6379"
+    volumes:
+      - redisdata:/data/
+    networks:
+      olahd:
+        aliases:
+          - redis
+
+  olahds_search:
+    build:
+      context: ./docker/search
+    container_name: olahds_search
+    volumes:
+      - ./docker/search/config/stopwords.txt:/usr/share/elasticsearch/config/stopwords.txt:ro
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9200/_cat/health"]
+      interval: 30s
+      timeout: 60s
+      retries: 300
+    networks:
+      olahd:
+        aliases:
+          - es
+          - search
+
+volumes:
+  redisdata:
+  # TODO has to be chanched to container external storage
+  es_data:

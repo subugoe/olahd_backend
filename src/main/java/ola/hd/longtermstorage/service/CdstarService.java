@@ -31,6 +31,7 @@ import ola.hd.longtermstorage.domain.HttpFile;
 import ola.hd.longtermstorage.domain.ImportResult;
 import ola.hd.longtermstorage.domain.SearchRequest;
 import ola.hd.longtermstorage.domain.SearchResults;
+import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.utils.Utils;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
@@ -510,7 +511,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
         // Archive not found
         if (archiveId.equals(NOT_FOUND)) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
 
         // The archive can't be exported because it is still on tape
@@ -590,7 +591,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         if (!archiveId.equals(NOT_FOUND)) {
             updateProfile(archiveId, mirrorProfile);
         } else {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
     }
 
@@ -604,7 +605,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         if (!archiveId.equals(NOT_FOUND)) {
             updateProfile(archiveId, offlineProfile);
         } else {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
     }
 
@@ -632,6 +633,8 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         }
     }
 
+    /* TODO: todo: this is not reliable, because we have archives(don't know why) without pid in
+     * cdstar-metadata. Must be changed: ask mongodb for archive-id from pid*/
     private String getArchiveIdFromIdentifier(String identifier, String profile) throws IOException {
         String fullUrl = url + vault;
 
@@ -810,7 +813,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             }
 
             if (response.code() == HttpStatus.NOT_FOUND.value()) {
-                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
             }
 
             // Cannot search? Throw exception
@@ -849,7 +852,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             }
 
             if (response.code() == HttpStatus.NOT_FOUND.value()) {
-                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "File not found.");
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.FILE_NOT_FOUND);
             }
 
             if (response.code() == HttpStatus.CONFLICT.value()) {
@@ -865,7 +868,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     public Map<String, String> getBagInfoTxt(String pid) throws IOException {
         String archiveId = this.getArchiveIdFromIdentifier(pid, onlineProfile);
         if (archiveId.equals(NOT_FOUND)) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "File not found.");
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
 
         String fullUrl = url + vault + "/" + archiveId + "/bag-info.txt";
@@ -895,7 +898,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     public Response exportFile(String pid, String path) throws IOException{
         String archiveId = getArchiveIdFromIdentifier(pid, onlineProfile);
         if (archiveId.equals(NOT_FOUND)) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "Archive not found.");
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
 
         String fullUrl = url + vault + "/" + archiveId + "/" + path;
@@ -910,6 +913,8 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
         if (response.isSuccessful()) {
             return response;
+        } else if (Integer.valueOf(response.code()).equals(404)) {
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.FILE_NOT_FOUND);
         } else {
             throw new HttpServerErrorException(HttpStatus.valueOf(response.code()),
                     "Cannot export file from archive " + archiveId);
