@@ -4,24 +4,61 @@ services:
 # must still be filled with content
 
 
-  web-notifier:
-    command: /usr/local/bin/web -d /etc/env/
+  olahds_backend:
+    build:                         # on mac osx based host
+      context: .
+      dockerfile: Dockerfile
+    container_name: olahds_backend
+    links:
+      - olahds_mongo
+      - olahds_web_notifier
+    depends_on:
+      - olahds_mongo
+      - olahds_web_notifier
+    env_file: .env
+    networks:
+      olahd:
+        aliases:
+          - backend
+
+  olahds_web_notifier:
     image: docker.gitlab.gwdg.de/subugoe/metsimporter/web:latest
+    #build:                         # on mac osx based host
+    #  context: web
+    #  dockerfile: Dockerfile
+    command: /usr/local/bin/web -d /etc/env/
+    container_name: olahds_web_notifier
     ports:
-      - 1323
+      - "1323:1323"
     links:
-      - redis
-      - indexer
+      - olahds_redis
+      - olahds_indexer
     depends_on:
-      - redis
-      - indexer
+      - olahds_redis
+      - olahds_indexer
   
-  indexer:
+  olahds_indexer:
     image: docker.gitlab.gwdg.de/subugoe/metsimporter/indexer:latest
+    #build:                         # on mac osx based host
+    #  context: indexer
+    #  dockerfile: Dockerfile
     command: /usr/local/bin/indexer -d /etc/env/
+    container_name: olahds_indexer
     links:
-      - redis
-      - search
+      - olahds_redis
+      - olahds_search
     depends_on:
-      - redis
-      - search
+      - olahds_redis
+      - olahds_search
+    networks:
+      olahd:
+
+
+networks:
+  olahd:
+    name: ola-hd
+    driver: bridge                       
+    driver_opts:                         
+      com.docker.network.driver.mtu: 1454
+      #com.docker.network.driver.mtu: 1450
+  
