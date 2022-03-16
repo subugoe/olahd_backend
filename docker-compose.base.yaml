@@ -58,6 +58,6 @@ networks:
   olahd:
     name: olahd
     driver: bridge                       
-    driver_opts:                         
-      com.docker.network.driver.mtu: 1450
+    #driver_opts:                         
+    #  com.docker.network.driver.mtu: 1450
   
