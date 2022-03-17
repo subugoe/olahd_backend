@@ -1,17 +1,56 @@
 package ola.hd.longtermstorage.controller;
 
 import gov.loc.repository.bagit.domain.Bag;
-import gov.loc.repository.bagit.exceptions.*;
+import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
+import gov.loc.repository.bagit.exceptions.FileNotInPayloadDirectoryException;
+import gov.loc.repository.bagit.exceptions.InvalidBagitFileFormatException;
+import gov.loc.repository.bagit.exceptions.InvalidPayloadOxumException;
+import gov.loc.repository.bagit.exceptions.MaliciousPathException;
+import gov.loc.repository.bagit.exceptions.MissingBagitFileException;
+import gov.loc.repository.bagit.exceptions.MissingPayloadDirectoryException;
+import gov.loc.repository.bagit.exceptions.MissingPayloadManifestException;
+import gov.loc.repository.bagit.exceptions.UnparsableVersionException;
+import gov.loc.repository.bagit.exceptions.UnsupportedAlgorithmException;
+import gov.loc.repository.bagit.exceptions.VerificationException;
 import gov.loc.repository.bagit.reader.BagReader;
 import gov.loc.repository.bagit.verify.BagVerifier;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.Principal;
+import java.time.Duration;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import ola.hd.longtermstorage.component.ExecutorWrapper;
 import ola.hd.longtermstorage.component.MutexFactory;
-import ola.hd.longtermstorage.domain.*;
+import ola.hd.longtermstorage.domain.Archive;
+import ola.hd.longtermstorage.domain.ImportResult;
+import ola.hd.longtermstorage.domain.ResponseMessage;
+import ola.hd.longtermstorage.domain.TrackingInfo;
+import ola.hd.longtermstorage.domain.TrackingStatus;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
@@ -24,6 +63,7 @@ import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,21 +82,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.context.request.ServletWebRequest;
 import springfox.documentation.annotations.ApiIgnore;
-
-import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.Principal;
-import java.time.Duration;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 @Api(description = "This endpoint is used to import a ZIP file into the system")
 @RestController
@@ -78,6 +103,9 @@ public class ImportController {
 
     @Value("${ola.hd.upload.dir}")
     private String uploadDir;
+
+    @Value("${webnotifier.url}")
+    private String webnotifierUrl;
 
     @Autowired
     public ImportController(ArchiveManagerService archiveManagerService, TrackingRepository trackingRepository, ArchiveRepository archiveRepository, PidService pidService,
@@ -410,6 +438,7 @@ public class ImportController {
         }
 
         trackingRepository.save(info);
+        this.sendToEs(pid);
 
         ResponseMessage responseMessage = new ResponseMessage(HttpStatus.ACCEPTED, "Your data is being processed.");
         responseMessage.setPid(pid);
@@ -460,4 +489,43 @@ public class ImportController {
         return ResponseEntity.badRequest()
                 .body(new ResponseMessage(status, message, uri));
     }
+
+    /**
+     * Inform web-notifier about the new ocrd-zip so that it can put it into the search-index
+     *
+     * @param pid - PID(PPA) of ocrd-zip
+     */
+    private void sendToEs(String pid) {
+        /* TODO: remove: pid must never be null. Exception must be thrown at first possible
+         * occurrence. Search for first possible occurrence and throw Exception there if necessary */
+        if (StringUtils.isBlank(pid)) {
+            logger.error("pid is null, cannot send to ElasticSearch");
+            return;
+        }
+
+        try {
+            // TODO: ask: is it always vd18 here?
+            final String json = String.format(
+                    "{\"document\":\"%s\", \"context\":\"ocrd\", \"product\":\"vd18\"}", pid);
+
+            RequestBody body = RequestBody.create(okhttp3.MediaType.parse(
+                    "application/json; charset=utf-8"), json);
+
+            Request request = new Request.Builder().url(webnotifierUrl)
+                    .addHeader("Accept", "*/*").addHeader("Content-Type", "application/json")
+                    .addHeader("Cache-Control", "no-cache").post(body).build();
+
+            try (Response response = new OkHttpClient().newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    logger.error("Request to web-notifier failed. Message: '{}'. Code: '{}'",
+                            response.message(), response.code());
+                } else {
+                    logger.debug("Sending request to web-notifier successfull");
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error while trying to send request to web-notifier", e);
+        }
+    }
+
 }
