@@ -38,10 +38,10 @@ services:
       - olahds_indexer
   
   olahds_indexer:
-    #image: docker.gitlab.gwdg.de/subugoe/metsimporter/indexer:latest
-    build:                         # on mac osx based host
-      context: indexer
-      dockerfile: Dockerfile
+    image: docker.gitlab.gwdg.de/subugoe/metsimporter/indexer:latest
+    #build:                         # on mac osx based host
+    #  context: indexer
+    #  dockerfile: Dockerfile
     command: /usr/local/bin/indexer -d /etc/env/
     container_name: olahds_indexer
     links:
