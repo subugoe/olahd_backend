@@ -17,18 +17,10 @@ RUN set -x && \
     mkdir -m 777 -p $TMP_ES_PATH_CONF && \
     cp /usr/share/elasticsearch/config/* $TMP_ES_PATH_CONF/ && \
     echo "http.port: $ELASTIC_PORT" >> $TMP_ES_PATH_CONF/elasticsearch.yml && \
-<<<<<<< Updated upstream
     ES_PATH_CONF=$TMP_ES_PATH_CONF /usr/local/bin/docker-entrypoint.sh elasticsearch -p /tmp/es.pid -d && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.dz_phys/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.dz_phys.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.dz_log/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.dz_log.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT  http://0.0.0.0:$ELASTIC_PORT/_all/_settings -H 'Content-Type: application/json' -d '{"index.blocks.read_only_allow_delete": null}' && \
-=======
-    ES_PATH_CONF=$TMP_ES_PATH_CONF /usr/local/bin/docker-entrypoint.sh elasticsearch -p /tmp/es.pid -d && \ 
-    /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST http://0.0.0.0:$ELASTIC_PORT/meta.phys/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.phys.json && \
-    /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST http://0.0.0.0:$ELASTIC_PORT/meta.log/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.log.json && \
-    /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST  http://0.0.0.0:$ELASTIC_PORT/_all/_settings -H 'Content-Type: application/json' -d '{"index.blocks.read_only_allow_delete": null}' && \
-    
->>>>>>> Stashed changes
     find $TMP_ES_PATH_CONF  -name "*phys*.json"  -type f |while IFS= read -r line ; do /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST http://0.0.0.0:$ELASTIC_PORT/meta.phys/_doc -H 'Content-Type: application/json' --data-binary @$line ; done && \
     find $TMP_ES_PATH_CONF  -name "*log*.json"  -type f |while IFS= read -r line ; do /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST http://0.0.0.0:$ELASTIC_PORT/meta.log/_doc -H 'Content-Type: application/json' --data-binary @$line ; done && \
     kill $(cat /tmp/es.pid) && \
