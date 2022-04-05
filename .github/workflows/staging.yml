@@ -1,10 +1,12 @@
 # This workflow runs the tests, builds the image and starts the deploy-script for olahd-backend on the devserver
 
-name: Olahd CI/CD
-
+name: olahd-ci-to-staging
 on:
   push:
-    branches: [ main ]
+    branches:
+      - 'main'
+    tags:
+      - !v*.*.*
   workflow_dispatch:
 
 jobs:
@@ -34,19 +36,25 @@ jobs:
       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
 
   # deploy on the devserver via script located on devserver
-  deploy:
+  deploy-staging:
+    name: Deploy to staging
+    environment:
+      name: Staging
+    if: github.event.ref == 'refs/heads/main'
+    #if: github.ref == 'refs/heads/main'
     needs: [test, build]
     runs-on: ubuntu-latest
     steps:
       - name: copy key
         run: |
           mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/key
+          echo "$SSH_STAGING_KEY" > ~/.ssh/key
           chmod 600 ~/.ssh/key
         env:
-          SSH_KEY: ${{ secrets.OLAHD_SSH_KEY }}
-      - name: run deploy script
-        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/start-olahd-docker.sh
+          SSH_STAGING_KEY: ${{ secrets.OLAHD_SSH_STAGING_KEY }}
+      - name: deploy to server
+        run: ssh $SSH_STAGING_USER@$SSH_STAGING_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_STAGING_USER/start-olahd-docker.sh
         env:
-          SSH_USER: ${{ secrets.OLAHD_SSH_USER }}
-          SSH_HOST: ${{ secrets.OLAHD_SSH_HOST }}
+          SSH_STAGING_USER: ${{ secrets.OLAHD_SSH_STAGING_USER }}
+          SSH_STAGING_HOST: ${{ secrets.OLAHD_SSH_STAGING_HOST }}
+    
