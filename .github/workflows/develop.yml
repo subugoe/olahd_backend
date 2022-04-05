@@ -58,4 +58,3 @@ jobs:
         env:
           SSH_DEV_USER: ${{ secrets.OLAHD_SSH_DEV_USER }}
           SSH_DEV_HOST: ${{ secrets.OLAHD_SSH_DEV_HOST }}
-    
