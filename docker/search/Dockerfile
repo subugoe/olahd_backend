@@ -21,5 +21,7 @@ RUN set -x && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.dz_phys/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.dz_phys.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.dz_log/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.dz_log.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT  http://0.0.0.0:$ELASTIC_PORT/_all/_settings -H 'Content-Type: application/json' -d '{"index.blocks.read_only_allow_delete": null}' && \
+    find $TMP_ES_PATH_CONF  -name "*phys*.json"  -type f |while IFS= read -r line ; do /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST http://0.0.0.0:$ELASTIC_PORT/meta.phys/_doc -H 'Content-Type: application/json' --data-binary @$line ; done && \
+    find $TMP_ES_PATH_CONF  -name "*log*.json"  -type f |while IFS= read -r line ; do /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST http://0.0.0.0:$ELASTIC_PORT/meta.log/_doc -H 'Content-Type: application/json' --data-binary @$line ; done && \
     kill $(cat /tmp/es.pid) && \
     rm /mapping_meta.dz_phys.json /mapping_meta.dz_log.json
