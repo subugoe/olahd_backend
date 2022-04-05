@@ -6,7 +6,7 @@ on:
     branches:
       - 'main'
     tags:
-      - v*.*.*
+      - 'refs/tags/*.*.*'
   workflow_dispatch:
 
 jobs:
