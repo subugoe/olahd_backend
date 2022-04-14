@@ -1,10 +1,11 @@
 # This workflow runs the tests, builds the image and starts the deploy-script for olahd-backend on the devserver
 
-name: olahd-ci-to-live
+name: olahd CI/CD
 on:
   push:
     branches:
       - 'main'
+      - 'develop'
     tags:
       - 'refs/tags/v*'
   workflow_dispatch:
@@ -34,15 +35,33 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build the Docker image with version
       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-    
 
-  # deploy on the devserver via script located on devserver
-  deploy-production:
-    name: Deploy to production
+  deploy-develop:
+    name: Deploy to develop
     environment:
-      name: Production
+      name: Develop
+    if: github.event.ref == 'refs/heads/develop'
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: copy key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+        env:
+          SSH_KEY: ${{ secrets.OLAHD_SSH_KEY }}
+      - name: deploy to server
+        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/start-olahd-docker.sh -b develop
+        env:
+          SSH_USER: ${{ secrets.OLAHD_SSH_USER }}
+          SSH_HOST: ${{ secrets.OLAHD_SSH_HOST_DEV }}
+
+  deploy-staging:
+    name: Deploy to staging
+    environment:
+      name: Staging
     if: github.event.ref == 'refs/heads/main'
-    #if: github.ref == 'refs/heads/main'
     needs: [test, build]
     runs-on: ubuntu-latest
     steps:
@@ -57,5 +76,25 @@ jobs:
         run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/start-olahd-docker.sh
         env:
           SSH_USER: ${{ secrets.OLAHD_SSH_USER }}
-          SSH_HOST: ${{ secrets.OLAHD_SSH_HOST }}
-    
+          SSH_HOST: ${{ secrets.OLAHD_SSH_HOST_STAGE }}
+
+  deploy-production:
+    name: Deploy to production
+    environment:
+      name: Production
+    if: startsWith(github.event.ref, 'refs/tags/v')
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: copy key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+        env:
+          SSH_KEY: ${{ secrets.OLAHD_SSH_KEY }}
+      - name: deploy to server
+        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/start-olahd-docker.sh
+        env:
+          SSH_USER: ${{ secrets.OLAHD_SSH_USER }}
+          SSH_HOST: ${{ secrets.OLAHD_SSH_HOST_PROD }}
