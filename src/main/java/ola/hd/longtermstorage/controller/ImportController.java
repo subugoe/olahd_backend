@@ -39,7 +39,7 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -489,9 +489,8 @@ public class ImportController {
             File targetFile, String destination, String tempDir, TrackingInfo info)
     throws IOException {
         Bag bag;
-        try (BagVerifier verifier = new BagVerifier()) {
+        try (BagVerifier verifier = new BagVerifier(); ZipFile zipFile = new ZipFile(targetFile)) {
             // Extract the zip file
-            ZipFile zipFile = new ZipFile(targetFile);
             zipFile.extractAll(destination);
 
             // Validate the bag
