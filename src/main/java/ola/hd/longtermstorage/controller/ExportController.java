@@ -151,6 +151,14 @@ public class ExportController {
                 .body(resource);
     }
 
+    /**
+     * Export data using {@linkplain ArchiveManagerService}
+     *
+     * @param id PID or PPN
+     * @param type "quick" or "full"
+     * @param isInternal true: mongoDB-id. false: PID or PPN
+     * @return
+     */
     private ResponseEntity<StreamingResponseBody> exportData(String id, String type, boolean isInternal) {
         // Set proper file name
         String contentDisposition = "attachment;filename=";
