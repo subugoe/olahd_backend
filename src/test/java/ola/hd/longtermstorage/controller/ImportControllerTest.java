@@ -8,6 +8,7 @@ import java.io.File;
 import java.security.Principal;
 import javax.servlet.http.HttpServletRequest;
 import ola.hd.longtermstorage.domain.ResponseMessage;
+import ola.hd.longtermstorage.service.PidService;
 import ola.hd.longtermstorage.test.tools.OlahdTesttools;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +29,9 @@ public class ImportControllerTest {
     @Autowired
     private ImportController importController;
 
+    @Autowired
+    private PidService pidService;
+
     @Test
     @WithMockUser(username = TEST_USER, password = TEST_PW, roles = TEST_ROLE)
     public void testImportData() throws Exception {
@@ -36,7 +40,8 @@ public class ImportControllerTest {
         Principal user = SecurityContextHolder.getContext().getAuthentication();
         ResponseEntity<?> importData = importController.importData(request, user);
 
-        Assert.notNull(((ResponseMessage)importData.getBody()).getPid(),
-                "Pid of import-response must not be null");
+        String pid = ((ResponseMessage)importData.getBody()).getPid();
+        Assert.notNull(pid, "Pid of import-response must not be null");
+        pidService.deletePid(pid);
     }
 }
