@@ -67,6 +67,7 @@ public class ExportControllerTest {
         Principal user = SecurityContextHolder.getContext().getAuthentication();
         ResponseEntity<?> importData = importController.importData(request, user);
         testPid = ((ResponseMessage)importData.getBody()).getPid();
+        assertTrue("Setup failed, testPid not received", StringUtils.isNotBlank(testPid));
 
         logger.info("OCRD-ZIP Test-PID: {}", testPid);
         OlahdTesttools.waitForArchive(testPid, archiveManagerService);
