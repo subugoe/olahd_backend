@@ -165,6 +165,7 @@ public class OlahdTesttools {
     /**
      * Intended for use in {@linkplain ExportControllerTest}, but could be used elsewhere as well.
      * Test-data is stored, but it needs some time to be accessible after insert. This function
+     * queries the provided PID several times and sleeps in between
      *
      * @param testPid PID which should be reachable in database
      * @param timeout max wait this seconds for archive. Method finishes after 10 secs in any case
@@ -180,8 +181,8 @@ public class OlahdTesttools {
                 Object r = method.invoke(archiveManagerService, pid, "default");
                 if (r != null && !r.toString().equals("NOT_FOUND")) {
                     /* It is possible that parts of archive are already available and others not.
-                     * Therefore wait another 1/2 seconds*/
-                    Thread.sleep(500);
+                     * Therefore wait another 3/4 seconds*/
+                    Thread.sleep(750);
                     return true;
                 }
                 Thread.sleep(500);
