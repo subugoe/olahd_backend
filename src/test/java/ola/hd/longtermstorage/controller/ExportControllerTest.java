@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import ola.hd.longtermstorage.domain.ResponseMessage;
 import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
+import ola.hd.longtermstorage.service.PidService;
 import ola.hd.longtermstorage.test.tools.OlahdTesttools;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
@@ -46,7 +47,11 @@ public class ExportControllerTest {
     private ArchiveManagerService archiveManagerService;
 
     @Autowired
+    private PidService pidService;
+
+    @Autowired
     private ImportController importController;
+
 
     private static boolean setUpIsDone = false;
 
@@ -61,10 +66,11 @@ public class ExportControllerTest {
         HttpServletRequest request = OlahdTesttools.createZipUploadRequest(testzip);
         Principal user = SecurityContextHolder.getContext().getAuthentication();
         ResponseEntity<?> importData = importController.importData(request, user);
-
         testPid = ((ResponseMessage)importData.getBody()).getPid();
+
         logger.info("OCRD-ZIP Test-PID: {}", testPid);
         OlahdTesttools.waitForArchive(testPid, archiveManagerService);
+        pidService.deletePid(testPid);
         setUpIsDone = true;
     }
 

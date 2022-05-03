@@ -634,7 +634,8 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     }
 
     /* TODO: todo: this is not reliable, because we have archives(don't know why) without pid in
-     * cdstar-metadata. Must be changed: ask mongodb for archive-id from pid*/
+     * cdstar-metadata. Must be changed: ask mongodb for archive-id from pid, at least as backup
+     * if pid in cdstar not found*/
     private String getArchiveIdFromIdentifier(String identifier, String profile) throws IOException {
         String fullUrl = url + vault;
 

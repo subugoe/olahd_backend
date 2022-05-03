@@ -64,9 +64,7 @@ services:
       olahd:
         aliases:
           - mongo
-    env_file:
-      - .env
-
+    
   olahds_redis:
     image: redis:6-alpine
     command: redis-server --appendonly yes
