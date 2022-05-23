@@ -1,5 +1,6 @@
 package ola.hd.longtermstorage.controller;
 
+import static ola.hd.longtermstorage.test.tools.OlahdTesttools.TEST_LOGGER;
 import static ola.hd.longtermstorage.test.tools.OlahdTesttools.TEST_PW;
 import static ola.hd.longtermstorage.test.tools.OlahdTesttools.TEST_ROLE;
 import static ola.hd.longtermstorage.test.tools.OlahdTesttools.TEST_USER;
@@ -70,7 +71,10 @@ public class ExportControllerTest {
         assertTrue("Setup failed, testPid not received", StringUtils.isNotBlank(testPid));
 
         logger.info("OCRD-ZIP Test-PID: {}", testPid);
-        OlahdTesttools.waitForArchive(testPid, archiveManagerService);
+        boolean waitResult = OlahdTesttools.waitForArchive(testPid, archiveManagerService);
+        if (!waitResult) {
+            TEST_LOGGER.error("Uploading archive to CDStar Demo for Tests failed");
+        }
         pidService.deletePid(testPid);
         setUpIsDone = true;
     }

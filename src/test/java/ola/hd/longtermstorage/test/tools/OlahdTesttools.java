@@ -17,6 +17,8 @@ import ola.hd.longtermstorage.service.ArchiveManagerService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.mock.web.MockMultipartHttpServletRequest;
@@ -34,6 +36,8 @@ public class OlahdTesttools {
     public final static String TEST_USER = "testuser";
     public final static String TEST_PW = "testpw";
     public final static String TEST_ROLE = "USER";
+
+    public static final Logger TEST_LOGGER = LoggerFactory.getLogger(OlahdTesttools.class);
 
     /**
      * Create zip-file-post-request
@@ -181,11 +185,11 @@ public class OlahdTesttools {
                 Object r = method.invoke(archiveManagerService, pid, "default");
                 if (r != null && !r.toString().equals("NOT_FOUND")) {
                     /* It is possible that parts of archive are already available and others not.
-                     * Therefore wait another 3/4 seconds*/
-                    Thread.sleep(750);
+                     * Therefore wait another 2 seconds*/
+                    Thread.sleep(2000);
                     return true;
                 }
-                Thread.sleep(500);
+                Thread.sleep(1000);
                 i--;
             }
             return false;
