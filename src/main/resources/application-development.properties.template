@@ -33,3 +33,4 @@ spring.ldap.access = lzaAccess
 
 ### Elasticsearch
 webnotifier.url = http://web:1323/api/indexer/jobs
+elasticsearch.host-port = es:9200
