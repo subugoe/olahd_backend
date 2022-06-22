@@ -28,7 +28,7 @@ jobs:
       run: docker stop es-test || true && docker rm es -test || true
     - name: start test-es
       # test-es currently just neededs to be available without doing anything
-      run: docker run --name es-test -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch:6.8.23
+      run: docker run --name es-test -p 9200:9200 -d docker.elastic.co/elasticsearch/elasticsearch:6.8.23
     - name: run tests
       run: mvn test
 
