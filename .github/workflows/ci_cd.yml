@@ -20,12 +20,8 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
-    - name: stop test-mongodb if running
-      run: docker stop mongodb-test || true && docker rm mongodb-test || true
     - name: start test-mongodb
       run: docker run -v mongodb:/data-test/db -p 27018:27017 --name mongodb-test -e MONGO_INITDB_ROOT_USERNAME=test -e MONGO_INITDB_ROOT_PASSWORD=testtest -d mongo:4.0.10
-    - name: stop test-es if running
-      run: docker stop es-test || true && docker rm es -test || true
     - name: start test-es
       # test-es currently just neededs to be available without doing anything
       run: docker run --name es-test -p 9200:9200 -d docker.elastic.co/elasticsearch/elasticsearch:6.8.23
