@@ -19,9 +19,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.elasticsearch.client.ClientConfiguration;
-import org.springframework.data.elasticsearch.client.RestClients;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;;
 
 /**
@@ -34,17 +32,12 @@ import org.springframework.stereotype.Service;;
 @Service
 public class ElasticsearchService {
 
+    @Autowired
     private LogicalRepository logicalRepository;
+    @Autowired
     private PhysicalRepository physicalRepository;
-    private RestHighLevelClient client = null;
-
-    public ElasticsearchService(LogicalRepository logicalRepository, PhysicalRepository
-            physicalRepository, @Value("${elasticsearch.host-port}") String hostPort) {
-        this.logicalRepository = logicalRepository;
-        this.physicalRepository = physicalRepository;
-        ClientConfiguration clientConf= ClientConfiguration.builder().connectedTo(hostPort).build();
-        this.client = RestClients.create(clientConf).rest();
-    }
+    @Autowired
+    private RestHighLevelClient client;
 
     /**
      * Execute a query with a simple query-string on both indices, logical and physical.
