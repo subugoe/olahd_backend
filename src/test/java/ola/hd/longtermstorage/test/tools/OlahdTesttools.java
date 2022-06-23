@@ -177,12 +177,18 @@ public class OlahdTesttools {
     public static boolean waitForArchive(String pid, ArchiveManagerService archiveManagerService) {
         try {
             Method method = archiveManagerService.getClass()
-                .getDeclaredMethod("getArchiveIdFromIdentifier", String.class, String.class);
+                    .getDeclaredMethod("getArchiveIdFromIdentifier", String.class, String.class);
             method.setAccessible(true);
 
             int i = 20;
             while (i > 0) {
-                Object r = method.invoke(archiveManagerService, pid, "default");
+                Object r = null;
+                try {
+                    r = method.invoke(archiveManagerService, pid, "default");
+                } catch (Exception e) {
+                    //pass
+                    r = null;
+                }
                 if (r != null && !r.toString().equals("NOT_FOUND")) {
                     /* It is possible that parts of archive are already available and others not.
                      * Therefore wait another 2 seconds*/
