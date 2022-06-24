@@ -235,10 +235,9 @@ public class SearchController {
     })
     @GetMapping(value = "/search-es/{index:" + LOGICAL_INDEX_NAME + "|" + PHYSICAL_INDEX_NAME
             + "}/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> searchEslementById(@PathVariable String index, @PathVariable String id)
+    public ResponseEntity<?> searchEsElementById(@PathVariable String index, @PathVariable String id)
             throws IOException {
         Map<String, Object> res = elasticsearchService.getElement(index, id);
-        System.out.println(res);
         if (res == null) {
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
         }

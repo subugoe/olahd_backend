@@ -72,9 +72,11 @@ public class ElasticsearchService {
     public Map<String, Object> getElement(String index, String id) throws IOException {
         GetRequest request = new GetRequest(index).id(id);
         GetResponse response = client.get(request, RequestOptions.DEFAULT);
-        Map<String, Object> source = response.getSourceAsMap();
+        if (!response.isExists()) {
+            return null;
+        }
         Map<String, Object> res = new HashMap<>();
-        res.put("_source", source);
+        res.put("_source", response.getSourceAsMap());
         res.put("_id", response.getId());
         res.put("_index", response.getIndex());
         return res;
