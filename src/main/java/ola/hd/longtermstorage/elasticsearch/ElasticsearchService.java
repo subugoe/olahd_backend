@@ -5,7 +5,6 @@ import static ola.hd.longtermstorage.Constants.PHYSICAL_INDEX_NAME;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,7 @@ public class ElasticsearchService {
      * @return
      * @throws IOException
      */
-    public List<Object> bigQuery(String query, int from, int size) throws IOException {
+    public Object bigQuery(String query, int from, int size) throws IOException {
         SearchRequest request = new SearchRequest().indices(LOGICAL_INDEX_NAME, PHYSICAL_INDEX_NAME);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         sourceBuilder.query(QueryBuilders.simpleQueryStringQuery(query));
@@ -57,8 +56,7 @@ public class ElasticsearchService {
         request.source(sourceBuilder);
 
         SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-        response.getHits();
-        return Arrays.asList(response.getHits());
+        return response.getHits();
     }
 
     /**

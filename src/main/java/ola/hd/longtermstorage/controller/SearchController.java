@@ -212,7 +212,7 @@ public class SearchController {
             @RequestParam(name = "from") int from,
             @RequestParam(name = "size") int size) throws IOException {
 
-        List<Object> hits = elasticsearchService.bigQuery(query, from, size);
+        Object hits = elasticsearchService.bigQuery(query, from, size);
 
         ObjectMapper mapper = new ObjectMapper();
         String jsonString = mapper.writeValueAsString(hits)
