@@ -15,6 +15,7 @@ services:
     depends_on:
       - olahds_mongo
       - olahds_web_notifier
+    restart: on-failure:3
     env_file: .env
     networks:
       olahd:
@@ -36,6 +37,7 @@ services:
     depends_on:
       - olahds_redis
       - olahds_indexer
+    restart: on-failure:3
   
   olahds_indexer:
     image: docker.gitlab.gwdg.de/subugoe/metsimporter/indexer:latest
@@ -50,6 +52,7 @@ services:
     depends_on:
       - olahds_redis
       - olahds_search
+    restart: on-failure:3
     networks:
       olahd:
 
