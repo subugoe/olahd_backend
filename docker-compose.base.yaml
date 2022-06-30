@@ -13,12 +13,8 @@ services:
       - olahds_mongo
       - olahds_web_notifier
     depends_on:
-      olahds_mongo:
-        condition: service_started
-      olahds_web_notifier:
-        condition: service_started
-      olahds_search:
-        condition: service_healthy
+      - olahds_mongo
+      - olahds_web_notifier
     env_file: .env
     networks:
       olahd:
@@ -52,10 +48,8 @@ services:
       - olahds_redis
       - olahds_search
     depends_on:
-      olahds_redis:
-        condition: service_started
-      olahds_search:
-        condition: service_healthy
+      - olahds_redis
+      - olahds_search
     networks:
       olahd:
 
