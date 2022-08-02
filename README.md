@@ -97,7 +97,7 @@ Therefore, authentication is needed to access it.
 ```
 curl -X POST \
      http://your.domain.com/bag \
-     -H 'Authorization: <your-credential>' \
+     -u <user:password> \
      -H 'content-type: multipart/form-data' \
      -F file=@<path-to-file>
 ```
@@ -108,7 +108,7 @@ To import a new version, in addition to the `.zip` file, a PID of a previous wor
 ```
 curl -X POST \
      http://your.domain.com/bag \
-     -H 'Authorization: <your-credential>' \
+     -u <user:password> \
      -H 'content-type: multipart/form-data' \
      -F file=@<path-to-file>
      -F prev=<PID-previous-version>
