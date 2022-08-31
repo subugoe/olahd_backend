@@ -7,7 +7,6 @@ ENV TMP_ES_PATH_CONF=/tmp/es-config
 
 COPY ./config/stopwords.txt /usr/share/elasticsearch/config/stopwords.txt
 COPY config/mapping_meta.phys.json config/mapping_meta.log.json /
-COPY sampledata /sampledata
 
 RUN set -x && \
     bin/elasticsearch-plugin install analysis-icu && \
@@ -16,16 +15,12 @@ RUN set -x && \
     for ELASTIC_PORT in $(seq 9200 9300); do nc -v -z -w 1 0.0.0.0 $ELASTIC_PORT 2&> /dev/null && echo "Port $ELASTIC_PORT unuseable, skipping" || echo "Using $ELASTIC_PORT" && export ELASTIC_PORT && break ; done && \
     mkdir -m 777 -p $TMP_ES_PATH_CONF && \
     cp /usr/share/elasticsearch/config/* $TMP_ES_PATH_CONF/ && \
-    cp /sampledata/* $TMP_ES_PATH_CONF/ && \
     echo "http.port: $ELASTIC_PORT" >> $TMP_ES_PATH_CONF/elasticsearch.yml && \
     ES_PATH_CONF=$TMP_ES_PATH_CONF /usr/local/bin/docker-entrypoint.sh elasticsearch -p /tmp/es.pid -d && \ 
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.phys/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.phys.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.log/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.log.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT  http://0.0.0.0:$ELASTIC_PORT/_all/_settings -H 'Content-Type: application/json' -d '{"index.blocks.read_only_allow_delete": null}' && \
     
-    find $TMP_ES_PATH_CONF  -name "*phys*.json"  -type f |while IFS= read -r line ; do /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST http://0.0.0.0:$ELASTIC_PORT/meta.phys/_doc -H 'Content-Type: application/json' --data-binary @$line ; done && \
-    find $TMP_ES_PATH_CONF  -name "*log*.json"  -type f |while IFS= read -r line ; do /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X POST http://0.0.0.0:$ELASTIC_PORT/meta.log/_doc -H 'Content-Type: application/json' --data-binary @$line ; done && \
-    
     kill $(cat /tmp/es.pid) && \
-    rm -rf /mapping_meta.phys.json /mapping_meta.log.json /usr/local/bin/wait-for-it.sh $TMP_ES_PATH_CONF/*phys*.json $TMP_ES_PATH_CONF/*log*.json
+    rm -rf /mapping_meta.phys.json /mapping_meta.log.json /usr/local/bin/wait-for-it.sh
     
