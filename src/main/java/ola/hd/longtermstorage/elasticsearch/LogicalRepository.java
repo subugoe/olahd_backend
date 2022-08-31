@@ -5,7 +5,7 @@ import ola.hd.longtermstorage.elasticsearch.mapping.LogicalEntry;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 /**
- * Repository for Index called "meta.log"
+ * Repository the logical index
  *
  * XXX: for future use. Not really used somewhere yet (remove comment or class if used or not needed)
  */

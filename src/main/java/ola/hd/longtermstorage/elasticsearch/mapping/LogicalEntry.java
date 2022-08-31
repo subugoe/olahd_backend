@@ -7,7 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
 /**
- * record of "meta.log"-Index
+ * record of logical index
  *
  * Every field of the index which should be queried must be a field of this class, but I only
  * started with the fields I need for the first queries

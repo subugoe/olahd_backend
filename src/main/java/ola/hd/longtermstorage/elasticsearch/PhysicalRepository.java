@@ -6,7 +6,7 @@ import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 /**
- * Repository for Index called "meta.phys"
+ * Repository for the physical index
  *
  * XXX: for future use. Not really used somewhere yet (remove comment or class if used or not needed)
  */
