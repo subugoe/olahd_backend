@@ -370,11 +370,15 @@ public class ImportController {
             logger.error("pid is null, cannot send to ElasticSearch");
             return;
         }
-
+        // TODO: Make it possible to read this two params from bag-info.txt
+        String imageFileGrp = "OCR-D-IMG";
+        String fulltextFileGrp = "OCR-D-GT-SEG-LINE";
         try {
-            // TODO: ask: is it always vd18 here?
             final String json = String.format(
-                    "{\"document\":\"%s\", \"context\":\"ocrd\", \"product\":\"vd18\"}", pid);
+                    "{"
+                    + "\"document\":\"%s\", \"context\":\"ocrd\", \"product\":\"olahds\","
+                    + "\"imageFileGrp\":\"%s\", \"fulltextFileGrp\":\"%s\", \"ftype\":\"PAGEXML_1\""
+                    + "}", pid, imageFileGrp, fulltextFileGrp);
 
             RequestBody body = RequestBody.create(okhttp3.MediaType.parse(
                     "application/json; charset=utf-8"), json);
