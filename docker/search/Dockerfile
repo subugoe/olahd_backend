@@ -17,8 +17,8 @@ RUN set -x && \
     cp /usr/share/elasticsearch/config/* $TMP_ES_PATH_CONF/ && \
     echo "http.port: $ELASTIC_PORT" >> $TMP_ES_PATH_CONF/elasticsearch.yml && \
     ES_PATH_CONF=$TMP_ES_PATH_CONF /usr/local/bin/docker-entrypoint.sh elasticsearch -p /tmp/es.pid -d && \ 
-    /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.phys/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.phys.json && \
-    /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.log/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.log.json && \
+    /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.olahds_phys/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.phys.json && \
+    /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.olahds_log/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.log.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT  http://0.0.0.0:$ELASTIC_PORT/_all/_settings -H 'Content-Type: application/json' -d '{"index.blocks.read_only_allow_delete": null}' && \
     
     kill $(cat /tmp/es.pid) && \
