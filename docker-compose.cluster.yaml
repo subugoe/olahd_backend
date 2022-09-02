@@ -59,7 +59,7 @@ services:
       - "27017:27017"
     env_file: .env
     volumes:
-      - ~/ola-hd-data/mongdb-1:/data/db
+      - ~/olahd-data/mongdb-data:/data/db
     networks:
       olahd:
         aliases:
@@ -85,7 +85,7 @@ services:
     container_name: olahds_search
     volumes:
       - ./docker/search/config/stopwords.txt:/usr/share/elasticsearch/config/stopwords.txt:ro
-      - es_data:/usr/share/elasticsearch/data
+      - ~/olahd-data/elastic-data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -103,4 +103,3 @@ services:
 volumes:
   redisdata:
   # TODO has to be chanched to container external storage
-  es_data:
