@@ -186,7 +186,13 @@ public class ImportController {
         executor.submit(new BagImport(destination, pid, prev, bagInfos, info, tempDir));
 
         trackingRepository.save(info);
-        this.sendToEs(pid);
+
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                sendToElastic(pid);
+            }
+        });
 
         ResponseMessage responseMessage = new ResponseMessage(HttpStatus.ACCEPTED,
                 "Your data is being processed.");
@@ -359,16 +365,27 @@ public class ImportController {
     }
 
     /**
-     * Inform web-notifier about the new ocrd-zip so that it can put it into the search-index
+     * Inform web-notifier about the new ocrd-zip so that it can put it into the search-index.
+     *
+     * FIXME: Problem: The indexer could be faster than CDStar: It tries to receive the mets before
+     * it is available in CDStar. Because of that this function sleeps some time before it executes.
+     * Therefore it should be run in a thread as it is done here. It could be cleaner to try to read
+     * it in a loop with a timeout and send after that to elastic or throw Exception
+     *
      *
      * @param pid - PID(PPA) of ocrd-zip
      */
-    private void sendToEs(String pid) {
+    private void sendToElastic(String pid) {
         /* TODO: remove: PID must never be null. Exception must be thrown at first possible
          * occurrence. Search for first possible occurrence and throw Exception there if necessary*/
         if (StringUtils.isBlank(pid)) {
             logger.error("pid is null, cannot send to ElasticSearch");
             return;
+        }
+        try {
+            Thread.sleep(10_000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
         // TODO: Make it possible to read this two params from bag-info.txt
         String imageFileGrp = "OCR-D-IMG";
