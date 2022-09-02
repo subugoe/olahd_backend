@@ -47,7 +47,7 @@ services:
       - "27017:27017"
     env_file: .env
     volumes:
-      - ./mongodb/data:/data/db
+      - ~/olahd-data/mongodb-data-local:/data/db
       - ./docker/mongodb/config/mongodb-setup.js:/setup/mongodb-setup.js
     networks:
       olahd:
