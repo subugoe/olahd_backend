@@ -1,12 +1,8 @@
-### IntelliJ IDEA ###
-.idea
-*.iml
+# Ignore everything
+*
 
-### Maven Wrapper ###
-.mvn
-mvnw
-mvnw.cmd
-
-### Docker ###
-.dockerignore
-Dockerfile
+# Copy only following files/dirs
+!pom.xml
+!.env
+!src/
+!.project
