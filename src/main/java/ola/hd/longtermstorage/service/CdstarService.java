@@ -523,7 +523,11 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     }
 
     @Override
-    public void downloadFiles(String archiveId, String[] paths, OutputStream outputStream) throws IOException {
+    public void downloadFiles(String archiveId, String[] paths, OutputStream outputStream, boolean isInternal) throws IOException {
+
+        if (!isInternal) {
+            archiveId = this.getArchiveIdFromIdentifier(archiveId, onlineProfile);
+        }
 
         // Set the base URL up to the archive level
         String baseUrl = url + vault + "/" + archiveId;

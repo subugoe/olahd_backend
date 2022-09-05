@@ -6,6 +6,8 @@ public class DownloadRequest {
 
     private String[] files;
 
+    private boolean internalId = true;
+
     public DownloadRequest() {
     }
 
@@ -15,6 +17,14 @@ public class DownloadRequest {
 
     public void setArchiveId(String archiveId) {
         this.archiveId = archiveId;
+    }
+
+    public boolean isInternalId() {
+        return internalId;
+    }
+
+    public void setInternalId(boolean internalId) {
+        this.internalId = internalId;
     }
 
     public String[] getFiles() {

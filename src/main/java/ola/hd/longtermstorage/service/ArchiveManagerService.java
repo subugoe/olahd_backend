@@ -45,20 +45,23 @@ public interface ArchiveManagerService {
      *
      * @param identifier The identifier of the archive
      * @param type       Full export or quick export
-     * @param isInternal To indicate if the identifier is an internal ID or not (PID, PPN,...)
+     * @param   nal To indicate if the identifier is an internal ID or not (PID, PPN,...)
      * @return The {@link Response} object to get the stream and close it properly.
      * @throws IOException Thrown if something's wrong when connecting to the archive system
      */
     Response export(String identifier, String type, boolean isInternal) throws IOException;
 
     /**
-     * Get a list of files from the archive manager, pack them all in a zip file and return to the user.
+     * Get a list of files from the archive manager, pack them all in a zip file and return to the
+     * user.
      *
      * @param archiveId    The internal ID of the archive.
      * @param files        The list of files to be downloaded.
      * @param outputStream The stream to write the output to.
+     * @param isInternal   To indicate if the identifier is an internal ID (mongodb) or not (PID,
+     *                     PPN,...)
      */
-    void downloadFiles(String archiveId, String[] files, OutputStream outputStream) throws IOException;
+    void downloadFiles(String archiveId, String[] files, OutputStream outputStream, boolean isInternal) throws IOException;
 
     /**
      * Move an archive from a tape to a hard drive

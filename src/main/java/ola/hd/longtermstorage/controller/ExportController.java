@@ -111,7 +111,7 @@ public class ExportController {
         // Build the response stream
         StreamingResponseBody stream = outputStream -> {
             archiveManagerService.downloadFiles(payload.getArchiveId(),
-                    payload.getFiles(), outputStream);
+                    payload.getFiles(), outputStream, payload.isInternalId());
         };
 
         return ResponseEntity.ok()
