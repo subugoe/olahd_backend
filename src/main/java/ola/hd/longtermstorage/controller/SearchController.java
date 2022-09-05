@@ -74,9 +74,9 @@ public class SearchController {
             String data;
 
             if (hit.getType().equals("file")) {
-                data = new String(archiveManagerService.getFile(hit.getId(), hit.getName(), true).getContent());
+                data = new String(archiveManagerService.getFile(hit.getId(), hit.getName(), true, true).getContent());
             } else {
-                data = archiveManagerService.getArchiveInfo(hit.getId(), false, 0, 0);
+                data = archiveManagerService.getArchiveInfo(hit.getId(), false, 0, 0, true);
             }
 
             SearchHitDetail detail = mapper.readValue(data, SearchHitDetail.class);
@@ -86,25 +86,25 @@ public class SearchController {
         return ResponseEntity.ok(results);
     }
 
-    @ApiOperation(value = "Search for an archive based on its internal ID.")
+    @ApiOperation(value = "Search for an archive based on its internal (CDStar-) ID or PID.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Search success", response = String.class),
             @ApiResponse(code = 404, message = "Archive not found", response = String.class)
     })
-    @GetMapping(value = "/search-archive/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> searchArchive(@ApiParam(value = "Internal ID of the archive.", required = true)
-                                           @PathVariable String id,
+    @GetMapping(value = "/search-archive", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> searchArchive(
+            @ApiParam(value = "PID or internal ID of the archive.", required = true)
+            @RequestParam String id,
+            @ApiParam(value = "An option to include all files in return.")
+            @RequestParam(defaultValue = "false") boolean withFile,
+            @ApiParam(value = "How many files should be returned?")
+            @RequestParam(defaultValue = "1000") int limit,
+            @ApiParam(value = "How many files should be skipped from the beginning?")
+            @RequestParam(defaultValue = "0") int offset,
+            @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
+            @RequestParam(defaultValue = "false") boolean internalId) throws IOException {
 
-                                           @ApiParam(value = "An option to include all files in return.")
-                                           @RequestParam(defaultValue = "false") boolean withFile,
-
-                                           @ApiParam(value = "How many files should be returned?")
-                                           @RequestParam(defaultValue = "1000") int limit,
-
-                                           @ApiParam(value = "How many files should be skipped from the beginning?")
-                                           @RequestParam(defaultValue = "0") int offset) throws IOException {
-
-        String info = archiveManagerService.getArchiveInfo(id, withFile, limit, offset);
+        String info = archiveManagerService.getArchiveInfo(id, withFile, limit, offset, internalId);
 
         return ResponseEntity.ok(info);
     }
@@ -114,11 +114,21 @@ public class SearchController {
             @ApiResponse(code = 200, message = "Information found", response = String.class),
             @ApiResponse(code = 404, message = "Information not found", response = String.class)
     })
-    @GetMapping(value = "/search-archive-info/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ArchiveResponse> searchArchiveInfo(@ApiParam(value = "Internal ID of the archive.", required = true)
-                                                             @PathVariable String id) {
+    @GetMapping(value = "/search-archive-info", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ArchiveResponse> searchArchiveInfo(
+            @ApiParam(value = "PID or internal ID of the archive.", required = true)
+            @RequestParam String id,
+            @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
+            @RequestParam(defaultValue = "false") boolean internalId) {
+
+
         // Get the data
-        Archive archive = archiveRepository.findByOnlineIdOrOfflineId(id, id);
+        Archive archive = null;
+        if (internalId) {
+            archive = archiveRepository.findByOnlineIdOrOfflineId(id, id);
+        } else {
+            archive = archiveRepository.findByPid(id);
+        }
 
         // Build the response
         ArchiveResponse response = new ArchiveResponse();

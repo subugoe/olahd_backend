@@ -793,7 +793,12 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     }
 
     @Override
-    public String getArchiveInfo(String id, boolean withFile, int limit, int offset) throws IOException {
+    public String getArchiveInfo(String id, boolean withFile, int limit, int offset, boolean internalId) throws IOException {
+
+        if (!internalId) {
+            id = this.getArchiveIdFromIdentifier(id, onlineProfile);
+        }
+
         String fullUrl = url + vault + "/" + id + "?with=meta";
 
         if (withFile) {
@@ -827,7 +832,12 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     }
 
     @Override
-    public HttpFile getFile(String id, String path, boolean infoOnly) throws IOException {
+    public HttpFile getFile(String id, String path, boolean infoOnly, boolean internalId) throws IOException {
+
+        if (!internalId) {
+            id = this.getArchiveIdFromIdentifier(id, onlineProfile);
+        }
+
         String fullUrl = url + vault + "/" + id + "/" + path;
 
         if (infoOnly) {

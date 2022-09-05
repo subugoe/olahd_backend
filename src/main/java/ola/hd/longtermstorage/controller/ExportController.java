@@ -30,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,8 +60,8 @@ public class ExportController {
     @GetMapping(value = "/export", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<StreamingResponseBody> export(
             @ApiParam(value = "The ID of the work.", required = true) @RequestParam String id,
-            @ApiParam(value = "Is this an internal ID or not (PID, PPN).", required = true) @RequestParam(defaultValue = "false") boolean isInternal) {
-        return exportData(id, "quick", isInternal);
+            @ApiParam(value = "Is this an internal ID or not (PID, PPN).", required = true) @RequestParam(defaultValue = "false") boolean internalId) {
+        return exportData(id, "quick", internalId);
     }
 
     @ApiOperation(value = "Send a request to export data on tapes.",
@@ -121,12 +120,16 @@ public class ExportController {
                 .body(stream);
     }
 
-    @GetMapping(value = "/download-file/{id}", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    @GetMapping(value = "/download-file", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<Resource> downloadFile(
-            @ApiParam(value = "Internal ID of the archive.", required = true) @PathVariable String id,
-            @ApiParam(value = "Path to the requested file", required = true) @RequestParam String path) throws IOException {
+            @ApiParam(value = "PID or internal ID of the archive.", required = true)
+            @RequestParam String id,
+            @ApiParam(value = "Is this an internal ID (CDStar-ID) or not (PID, PPN).", required = true)
+            @RequestParam(defaultValue = "false") boolean internalId,
+            @ApiParam(value = "Path to the requested file", required = true)
+            @RequestParam String path) throws IOException {
 
-        HttpFile httpFile = archiveManagerService.getFile(id, path, false);
+        HttpFile httpFile = archiveManagerService.getFile(id, path, false, internalId);
         ByteArrayResource resource = new ByteArrayResource(httpFile.getContent());
 
         HttpHeaders headers = httpFile.getHeaders();

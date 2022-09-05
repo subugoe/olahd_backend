@@ -6,7 +6,7 @@ public class DownloadRequest {
 
     private String[] files;
 
-    private boolean internalId = true;
+    private boolean internalId = false;
 
     public DownloadRequest() {
     }

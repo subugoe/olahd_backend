@@ -91,14 +91,16 @@ public interface ArchiveManagerService {
     /**
      * Get information about the archive
      *
-     * @param id       The internal ID of the archive
-     * @param withFile Should all files in the archive be returned or not
-     * @param limit    Number of files to be returned in one call
-     * @param offset   Number of files to skip from the beginning
+     * @param id          The ID of the archive
+     * @param withFile    Should all files in the archive be returned or not
+     * @param limit       Number of files to be returned in one call
+     * @param offset      Number of files to skip from the beginning
+     * @param internalId  Is the id a PID (false) or a cdstar-archive-id
+     *
      * @return A JSON contains information about the archive
      * @throws IOException Thrown if something's wrong when connecting to the archive services
      */
-    String getArchiveInfo(String id, boolean withFile, int limit, int offset) throws IOException;
+    String getArchiveInfo(String id, boolean withFile, int limit, int offset, boolean internalId) throws IOException;
 
     /**
      * Get information about a file in the specified archive
@@ -106,11 +108,13 @@ public interface ArchiveManagerService {
      * @param id       The internal ID of the archive
      * @param path     Path to the file
      * @param infoOnly If true, return only the meta-data. Return the file otherwise
+     * @param internalId  Is the id a PID (false) or a cdstar-archive-id
+     *
      * @return An object wrapping necessary headers and an byte array of the result,
-     * either it's a string (file info) or the actual file
+     *         either it's a string (file info) or the actual file
      * @throws IOException Thrown if something's wrong when connecting to the archive services
      */
-    HttpFile getFile(String id, String path, boolean infoOnly) throws IOException;
+    HttpFile getFile(String id, String path, boolean infoOnly, boolean internalId) throws IOException;
 
     /**
      * Get bag-info.txt from OCRD-ZIP for provided id, converted into a Map.
