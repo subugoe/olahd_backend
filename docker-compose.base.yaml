@@ -24,6 +24,7 @@ services:
 
   olahds_web_notifier:
     image: docker.gitlab.gwdg.de/subugoe/metsimporter/web:latest
+    #image: docker.gitlab.gwdg.de/digizeit/digizeit-server/web:live
     #build:                         # on mac osx based host
     #  context: web
     #  dockerfile: Dockerfile
