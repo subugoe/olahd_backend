@@ -20,7 +20,6 @@ RUN set -x && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.olahds_phys/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.phys.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT http://0.0.0.0:$ELASTIC_PORT/meta.olahds_log/ -H 'Content-Type: application/json' --data-binary @/mapping_meta.log.json && \
     /usr/local/bin/wait-for-it.sh -s -t 120 0.0.0.0:$ELASTIC_PORT -- curl -X PUT  http://0.0.0.0:$ELASTIC_PORT/_all/_settings -H 'Content-Type: application/json' -d '{"index.blocks.read_only_allow_delete": null}' && \
-    
     kill $(cat /tmp/es.pid) && \
     rm -rf /mapping_meta.phys.json /mapping_meta.log.json /usr/local/bin/wait-for-it.sh
     
