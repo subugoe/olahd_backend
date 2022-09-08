@@ -2,7 +2,8 @@ version: '3.5'
 services:
 
   reverse-proxy:
-    image: traefik:v2.6
+    image: traefik:v2.8
+    container_name: olahds_reverse_proxy
     command:
       - "--api.insecure=true" # TODO: remove
       - "--providers.docker=true"
