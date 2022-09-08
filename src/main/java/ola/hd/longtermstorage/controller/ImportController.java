@@ -1,6 +1,7 @@
 package ola.hd.longtermstorage.controller;
 
 import gov.loc.repository.bagit.domain.Bag;
+import gov.loc.repository.bagit.domain.Metadata;
 import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
 import gov.loc.repository.bagit.exceptions.FileNotInPayloadDirectoryException;
 import gov.loc.repository.bagit.exceptions.InvalidBagitFileFormatException;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,6 +54,7 @@ import ola.hd.longtermstorage.domain.ImportResult;
 import ola.hd.longtermstorage.domain.ResponseMessage;
 import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
+import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
@@ -168,7 +171,7 @@ public class ImportController {
         String destination = tempDir + File.separator + FilenameUtils.getBaseName(
                 targetFile.getName()) + "_extracted";
 
-        List<AbstractMap.SimpleImmutableEntry<String, String>> bagInfos = extractAndVerifyBag(
+        List<AbstractMap.SimpleImmutableEntry<String, String>> bagInfos = extractAndVerifyOcrdzip(
                 targetFile, destination, tempDir, info);
 
         // Retry policies when a call to another service is failed
@@ -495,7 +498,8 @@ public class ImportController {
     }
 
     /**
-     * Extract bagit, read metadata and verify that the ZIP-file is a valid bagit.
+     * Extract bagit, read metadata and verify that the ZIP-file is a valid bagit. Additionally
+     * validate that bag is valid according to ocrd-zip: https://ocr-d.de/en/spec/ocrd_zip.
      *
      *
      * @param targetFile location of the ZIP-File
@@ -506,7 +510,7 @@ public class ImportController {
      * @return
      * @throws IOException
      */
-    private List<AbstractMap.SimpleImmutableEntry<String, String>> extractAndVerifyBag(
+    private List<AbstractMap.SimpleImmutableEntry<String, String>> extractAndVerifyOcrdzip(
             File targetFile, String destination, String tempDir, TrackingInfo info)
     throws IOException {
         Bag bag;
@@ -528,12 +532,13 @@ public class ImportController {
             // Check for the validity and completeness of a bag
             verifier.isValid(bag, true);
 
+            validateOcrdzip(bag);
         } catch (NoSuchFileException | MissingPayloadManifestException
                 | UnsupportedAlgorithmException | CorruptChecksumException | MaliciousPathException
                 | InvalidPayloadOxumException | FileNotInPayloadDirectoryException
                 | MissingPayloadDirectoryException | InvalidBagitFileFormatException
                 | InterruptedException | ZipException | UnparsableVersionException
-                | MissingBagitFileException | VerificationException ex) {
+                | MissingBagitFileException | VerificationException | OcrdzipInvalidException ex) {
 
             // Clean up the temp
             FileSystemUtils.deleteRecursively(new File(tempDir));
@@ -546,10 +551,13 @@ public class ImportController {
             info.setMessage(message);
             trackingRepository.save(info);
 
+            if (ex.getClass().equals(OcrdzipInvalidException.class)) {
+                message = "Not a valid Ocrd-Zip: "
+                        + StringUtils.join(((OcrdzipInvalidException)ex).getErrors(), ", ");
+            }
             // Throw a friendly message to the client
-            throw new IllegalArgumentException(message, ex);
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, message);
         }
-        // Get meta-data from bag-info.txt
         return bag.getMetadata().getAll();
     }
 
@@ -567,4 +575,52 @@ public class ImportController {
         trackingRepository.save(info);
         throw new HttpClientErrorException(status, msg);
     }
+
+    /**
+     * Validates a bag against ocrd-zip specification: https://ocr-d.de/en/spec/ocrd_zip. This
+     * function assumes path is existing and path is a valid extracted bagit. Because of that these
+     * checks (validate the bagit) have to be done already.
+     *
+     * Many, even from ocr-d provided testdata, does not fully follow the specification. So some
+     * checks are disabled for now.
+     *
+     * @param bag
+     * @param bagInfos
+     * @throws OcrdzipInvalidException - if bag is invalid
+     */
+    private static void validateOcrdzip(Bag bag) throws OcrdzipInvalidException {
+        List<String> res = new ArrayList<>();
+        Metadata metadata = bag.getMetadata();
+//        if (!metadata.contains("BagIt-Profile-Identifier")) {
+//            res.add("bag-info.txt must contain key: 'BagIt-Profile-Identifier'");
+//            // this identifier has no impact of the anything regarding this bagit and it's only
+//            // purpose is to reference the spec. So verification does not help ensure functionality
+//        }
+//        if (!metadata.contains("Ocrd-Identifier")) {
+//            res.add("bag-info.txt must contain key: 'Ocrd-Identifier'");
+//            // spec says "A globally unique identifier" but I have no idea how to verify that
+//        }
+//        if (!metadata.contains("Ocrd-Base-Version-Checksum")) {
+//            res.add("bag-info.txt must contain key: 'Ocrd-Base-Version-Checksum'");
+//        } else {
+//            // I don't understand the intention and function of Ocrd-Base-Version-Checksum yet, so
+//            // this is unfinished here:
+//            String value = metadata.get("Ocrd-Base-Version-Checksum").get(0);
+//        }
+
+        if (!metadata.contains("Ocrd-Mets")) {
+            if (!Files.exists(bag.getRootDir().resolve("mets.xml"))) {
+                res.add("mets.xml not found and 'Ocrd-Mets' not provided in bag-info.txt");
+            }
+        } else {
+            String value = metadata.get("Ocrd-Mets").get(0);
+            if (!Files.exists(bag.getRootDir().resolve("data").resolve(value))) {
+                res.add("Ocrd-Mets is set, but specified file not existing");
+            }
+        }
+        if (!res.isEmpty()) {
+            throw new OcrdzipInvalidException(res);
+        }
+    }
+
 }
