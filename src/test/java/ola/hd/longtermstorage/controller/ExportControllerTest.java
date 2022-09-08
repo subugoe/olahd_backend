@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.security.Principal;
 import javax.servlet.http.HttpServletRequest;
 import ola.hd.longtermstorage.domain.ResponseMessage;
-import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import ola.hd.longtermstorage.service.PidService;
 import ola.hd.longtermstorage.test.tools.OlahdTesttools;
@@ -94,8 +93,7 @@ public class ExportControllerTest {
             exportController.exportFile("not-existing", "irrelevant/path");
         });
         assertTrue(exception.getClass().equals(HttpClientErrorException.class));
-        String expectedMsg = "404 " + ErrMsg.ARCHIVE_NOT_FOUND;
-        assertTrue(exception.getMessage().equals(expectedMsg));
+        assertTrue(exception.getMessage().contains("422"));
     }
 
     @Test
@@ -105,8 +103,7 @@ public class ExportControllerTest {
             exportController.exportFile(testPid, "non/existing/file");
         });
         assertTrue(exception.getClass().equals(HttpClientErrorException.class));
-        String expectedMsg = "404 " + ErrMsg.FILE_NOT_FOUND;
-        assertTrue(exception.getMessage().equals(expectedMsg));
+        assertTrue(exception.getMessage().contains("422"));
     }
 
     @Test

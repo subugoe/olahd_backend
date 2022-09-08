@@ -208,13 +208,13 @@ public class ExportController {
     @ApiOperation(value = "Quickly export the METS-file via PID")
     @ApiResponses({
         @ApiResponse(code = 200, message = "METS-File for specified identifier was found.", response = byte[].class),
-        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class)
+        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class)
     })
     @GetMapping(value = "/export/mets", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<InputStreamResource> exportMetsfile(
             @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id) throws IOException {
         if (id.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.PARAM_ID_IS_EMPTY);
+            throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY);
         }
 
         final String metsPath;
@@ -266,16 +266,17 @@ public class ExportController {
     @ApiOperation(value = "Export a file via PID and path")
     @ApiResponses({
         @ApiResponse(code = 200, message = "File was found.", response = byte[].class),
-        @ApiResponse(code = 404, message = "An archive with the specified identifier or the requested file the was not found.", response = ResponseMessage.class),
+        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class),
+        @ApiResponse(code = 422, message = "A file the specified path is not available.", response = ResponseMessage.class)
     })
     @GetMapping(value = "/export/file", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<InputStreamResource> exportFile(
             @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id,
             @ApiParam(value = "Path to file.", required = true) @RequestParam String path) throws IOException {
         if (id.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.PARAM_ID_IS_EMPTY);
+            throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY);
         } else if (path.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.PARAM_PATH_IS_EMPTY);
+            throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_PATH_IS_EMPTY);
         }
 
         Response res;
@@ -285,7 +286,7 @@ public class ExportController {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
                 String msg = e.getMessage().contains(ErrMsg.ARCHIVE_NOT_FOUND) ?
                         ErrMsg.ID_NOT_FOUND : ErrMsg.FILE_NOT_FOUND + ": " + path;
-                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, msg);
+                throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, msg);
             }
             throw e;
         }
