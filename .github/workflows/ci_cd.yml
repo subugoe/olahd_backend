@@ -53,7 +53,7 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.OLAHD_SSH_KEY }}
       - name: deploy to server
-        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/start-olahd-docker.sh -b develop
+        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/start-olahd-docker.sh
         env:
           SSH_USER: ${{ secrets.OLAHD_SSH_USER }}
           SSH_HOST: ${{ secrets.OLAHD_SSH_HOST_DEV }}
