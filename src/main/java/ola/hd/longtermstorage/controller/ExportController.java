@@ -214,17 +214,34 @@ public class ExportController {
     public ResponseEntity<InputStreamResource> exportMetsfile(
             @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id) throws IOException {
         if (id.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.PARAM_ID_IS_EMPTY);
         }
+
         final String metsPath;
-        Map<String, String> bagInfoMap = archiveManagerService.getBagInfoTxt(id);
+        Map<String, String> bagInfoMap;
+        try {
+            bagInfoMap = archiveManagerService.getBagInfoTxt(id);
+        } catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.ID_NOT_FOUND);
+            }
+            throw e;
+        }
         if (bagInfoMap.containsKey("Ocrd-Mets")) {
             metsPath = bagInfoMap.get("Ocrd-Mets");
         } else {
             metsPath = "data/mets.xml";
         }
 
-        Response res = archiveManagerService.exportFile(id, metsPath);
+        Response res;
+        try {
+            res = archiveManagerService.exportFile(id, metsPath);
+        } catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, ErrMsg.METS_NOT_FOUND);
+            }
+            throw e;
+        }
         Headers headers = res.headers();
 
         return ResponseEntity.ok()
@@ -256,12 +273,23 @@ public class ExportController {
             @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id,
             @ApiParam(value = "Path to file.", required = true) @RequestParam String path) throws IOException {
         if (id.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.PARAM_ID_IS_EMPTY);
         } else if (path.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.FILE_NOT_FOUND);
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.PARAM_PATH_IS_EMPTY);
         }
 
-        Response res = archiveManagerService.exportFile(id, Paths.get("data", path).toString());
+        Response res;
+        try {
+            res = archiveManagerService.exportFile(id, Paths.get("data", path).toString());
+        } catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                String msg = e.getMessage().contains(ErrMsg.ARCHIVE_NOT_FOUND) ?
+                        ErrMsg.ID_NOT_FOUND : ErrMsg.FILE_NOT_FOUND + ": " + path;
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, msg);
+            }
+            throw e;
+        }
+
         Headers headers = res.headers();
 
         return ResponseEntity.ok()
