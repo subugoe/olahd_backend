@@ -38,6 +38,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -47,6 +48,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.component.ExecutorWrapper;
 import ola.hd.longtermstorage.component.MutexFactory;
 import ola.hd.longtermstorage.domain.Archive;
@@ -67,6 +69,7 @@ import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -193,7 +196,7 @@ public class ImportController {
         executor.submit(new Runnable() {
             @Override
             public void run() {
-                sendToElastic(pid);
+                sendToElastic(pid, archiveRepository);
             }
         });
 
@@ -295,7 +298,7 @@ public class ImportController {
                 // New archive in mongoDB for this import
                 Archive archive = new Archive(pid, importResult.getOnlineId(),
                         importResult.getOfflineId());
-
+                setSearchindexFilegrps(archive, destination, bagInfos);
                 if (prevPid != null) {
                     /* - this block finds the prevVersion-Archive in mongoDB, links between it and
                      *   the current uploaded archive and removes its onlineId so that ... I don't
@@ -378,7 +381,7 @@ public class ImportController {
      *
      * @param pid - PID(PPA) of ocrd-zip
      */
-    private void sendToElastic(String pid) {
+    private void sendToElastic(String pid, ArchiveRepository archiveRepository) {
         /* TODO: remove: PID must never be null. Exception must be thrown at first possible
          * occurrence. Search for first possible occurrence and throw Exception there if necessary*/
         if (StringUtils.isBlank(pid)) {
@@ -390,9 +393,10 @@ public class ImportController {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        // TODO: Make it possible to read this two params from bag-info.txt
-        String imageFileGrp = "OCR-D-IMG";
-        String fulltextFileGrp = "OCR-D-GT-SEG-LINE";
+        Archive archiv = archiveRepository.findByPid(pid);
+        String imageFileGrp = ObjectUtils.firstNonNull(archiv.getImageFileGrp(), Constants.DEFAULT_IMAGE_FILEGRP);
+        String fulltextFileGrp = ObjectUtils.firstNonNull(archiv.getFulltextFileGrp(), Constants.DEFAULT_FULLTEXT_FILEGRP);
+
         try {
             final String json = String.format(
                     "{"
@@ -609,7 +613,7 @@ public class ImportController {
 //        }
 
         if (!metadata.contains("Ocrd-Mets")) {
-            if (!Files.exists(bag.getRootDir().resolve("mets.xml"))) {
+            if (!Files.exists(bag.getRootDir().resolve("data").resolve("mets.xml"))) {
                 res.add("mets.xml not found and 'Ocrd-Mets' not provided in bag-info.txt");
             }
         } else {
@@ -621,6 +625,67 @@ public class ImportController {
         if (!res.isEmpty()) {
             throw new OcrdzipInvalidException(res);
         }
+    }
+
+    /**
+     * - Zuerst die schlüssel aus der bag-info.txt lesen. Wenn die gesetzt sind, dann ab dafür
+     * - wenn die schlüssel nicht gesetzt sind, dann
+     *
+     * @param archive
+     * @param bagdir: bag location on disk
+     * @param bagInfos:
+     */
+    private static void setSearchindexFilegrps(Archive archive, String bagdir,
+            List<SimpleImmutableEntry<String, String>> bagInfos) {
+        List<String> fileGrps = new ArrayList(0);
+        try {
+            fileGrps = Files.list(Paths.get(bagdir).resolve("data"))
+                    .filter(Files::isDirectory)
+                    .map(p -> p.getFileName().toString())
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        String imageFilegrp = null;
+        String fulltextFilegrp = null;
+        for (SimpleImmutableEntry<String, String> x : bagInfos) {
+            if (StringUtils.isBlank(x.getValue())) {
+                continue;
+            }
+            if (Constants.BAGINFO_KEY_IMAGE_FILEGRP.equals(x.getKey())) {
+                imageFilegrp = x.getValue();
+            } else if (Constants.BAGINFO_KEY_FULLTEXT_FILEGRP.equals(x.getKey())) {
+                fulltextFilegrp = x.getValue();
+            }
+        }
+
+        if (imageFilegrp != null && fileGrps.contains(imageFilegrp)) {
+            archive.setImageFileGrp(imageFilegrp);
+        } else {
+            if (fileGrps.contains(Constants.DEFAULT_IMAGE_FILEGRP)) {
+                archive.setImageFileGrp(Constants.DEFAULT_IMAGE_FILEGRP);
+            } else {
+                /* TODO: this situation is unexpected. think about moving the whole function to
+                 * validation phase and deny validation if image-file-grp can not be determined */
+            }
+        }
+
+        if (fulltextFilegrp != null && fileGrps.contains(imageFilegrp)) {
+            archive.setFulltextFileGrp(imageFilegrp);
+        } else {
+            for (String canditate: Constants.FULLTEXT_FILEGRPS_CANDITATES) {
+                if (fileGrps.contains(canditate)) {
+                    archive.setFulltextFileGrp(canditate);
+                    break;
+                }
+            }
+        }
+        if (archive.getFulltextFileGrp() == null) {
+            /* TODO: this situation is unexpected. think about moving the whole function to
+             * validation phase and deny validation if fulltext-file-grp can not be determined */
+        }
+
     }
 
 }
