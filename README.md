@@ -96,8 +96,8 @@ This endpoint does not open to public.
 Therefore, authentication is needed to access it.
 ```
 curl -X POST \
-     http://your.domain.com/bag \
-     -u <user:password> \
+     http://your.domain.com/api/bag \
+     --user <user>:<password> \
      -H 'content-type: multipart/form-data' \
      -F file=@<path-to-file>
 ```
@@ -107,8 +107,8 @@ In the response, a PID is returned in the `Location` header.
 To import a new version, in addition to the `.zip` file, a PID of a previous work version must be submitted as well.
 ```
 curl -X POST \
-     http://your.domain.com/bag \
-     -u <user:password> \
+     http://your.domain.com/api/bag \
+     --user <user>:<password> \
      -H 'content-type: multipart/form-data' \
      -F file=@<path-to-file>
      -F prev=<PID-previous-version>
@@ -118,7 +118,7 @@ curl -X POST \
 To perform a search, send a `GET` request to the `/search` endpoint.
 The query is provided via the `q` parameter, e.g. `/search?q=test`
 ```
-curl -X GET http://your.domain.com/search?q=test
+curl -X GET http://your.domain.com/api/search?q=test
 ```
 
 ### Search by meta-data
@@ -129,7 +129,7 @@ To use it, prepend the meta-data with `dc`, e.g. `/search?q=dcCreator:John`
 **IMPORTANT**: a PID always contains a forward slash, which is a special character.
 For that reason, search by identifier (PID) can only be perform as a phrase search and the double quote must be encoded as `%22`.
 ```
-curl -X GET http://your.domain.com/search?q=dcIdentifier:%22your-identifier%22
+curl -X GET http://your.domain.com/api/search?q=dcIdentifier:%22your-identifier%22
 ```
 
 ### Quick export
@@ -137,7 +137,7 @@ Data stored on hard drives can be quickly and publicly exported.
 To do so, send a `GET` request to the `/export` endpoint.
 The `id` must be provided as a URL parameter.
 ```
-curl -X GET http://your.domain.com/export?id=your-id --output export.zip
+curl -X GET http://your.domain.com/api/export?id=your-id --output export.zip
 ```
 
 ### Full export request
@@ -147,13 +147,13 @@ Then, the archive manager will move this file from tapes to hard drives.
 This process takes quite long, hours or days, depending on the real situation.
 To send the request, simply send a `GET` request to the `export-request` endpoint with the `id`.
 ```
-curl -X GET http://your.domain.com/export-request?id=your-id
+curl -X GET http://your.domain.com/api/export-request?id=your-id
 ```
 
 ### Full export
 After the export request was successfully fulfilled, the full export can be made.
 ```
-curl -X GET http://your.domain.com/full-export?id=your-id --output export.zip
+curl -X GET http://your.domain.com/api/full-export?id=your-id --output export.zip
 ```
 
 
