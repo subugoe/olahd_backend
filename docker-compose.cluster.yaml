@@ -60,7 +60,7 @@ services:
       - "27017:27017"
     env_file: .env
     volumes:
-      - ~/olahd-data/mongdb-data:/data/db
+      - ~/olahd-data/mongodb-data:/data/db
     networks:
       olahd:
         aliases:
