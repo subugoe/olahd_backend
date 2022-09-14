@@ -27,14 +27,6 @@ public class Archive {
     @DBRef(lazy = true)
     private List<Archive> nextVersions;
 
-    /** file-group (from mets) used for indexing (searchindex) the images */
-    private String imageFileGrp;
-
-    /**
-     * file-group (from mets) used for indexing (searchindex) the fulltexts
-     */
-    private String fulltextFileGrp;
-
     protected Archive() {
         // no-args constructor required by JPA spec
         // this one is protected since it shouldn't be used directly
@@ -99,21 +91,5 @@ public class Archive {
 
     public void setNextVersions(List<Archive> nextVersions) {
         this.nextVersions = nextVersions;
-    }
-
-    public String getImageFileGrp() {
-        return imageFileGrp;
-    }
-
-    public void setImageFileGrp(String imageFileGrp) {
-        this.imageFileGrp = imageFileGrp;
-    }
-
-    public String getFulltextFileGrp() {
-        return fulltextFileGrp;
-    }
-
-    public void setFulltextFileGrp(String fulltextFileGrp) {
-        this.fulltextFileGrp = fulltextFileGrp;
     }
 }

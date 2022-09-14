@@ -188,15 +188,18 @@ public class ImportController {
         // Store the PID to the tracking database
         info.setPid(pid);
 
+        Pair<String, String> searchFileGrps = readSearchindexFilegrps(destination, bagInfos);
+
         // **here the OCRD-ZIP is saved** to the external Archive
         executor.submit(new BagImport(destination, pid, prev, bagInfos, info, tempDir));
+
 
         trackingRepository.save(info);
 
         executor.submit(new Runnable() {
             @Override
             public void run() {
-                sendToElastic(pid, archiveRepository);
+                sendToElastic(pid, searchFileGrps.getLeft(), searchFileGrps.getRight());
             }
         });
 
@@ -298,7 +301,6 @@ public class ImportController {
                 // New archive in mongoDB for this import
                 Archive archive = new Archive(pid, importResult.getOnlineId(),
                         importResult.getOfflineId());
-                setSearchindexFilegrps(archive, destination, bagInfos);
                 if (prevPid != null) {
                     /* - this block finds the prevVersion-Archive in mongoDB, links between it and
                      *   the current uploaded archive and removes its onlineId so that ... I don't
@@ -382,7 +384,7 @@ public class ImportController {
      *
      * @param pid - PID(PPA) of ocrd-zip
      */
-    private void sendToElastic(String pid, ArchiveRepository archiveRepository) {
+    private void sendToElastic(String pid, String imageFileGrp, String fulltextFileGrp) {
         /* TODO: remove: PID must never be null. Exception must be thrown at first possible
          * occurrence. Search for first possible occurrence and throw Exception there if necessary*/
         if (StringUtils.isBlank(pid)) {
@@ -394,9 +396,8 @@ public class ImportController {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        Archive archiv = archiveRepository.findByPid(pid);
-        String imageFileGrp = ObjectUtils.firstNonNull(archiv.getImageFileGrp(), Constants.DEFAULT_IMAGE_FILEGRP);
-        String fulltextFileGrp = ObjectUtils.firstNonNull(archiv.getFulltextFileGrp(), Constants.DEFAULT_FULLTEXT_FILEGRP);
+        imageFileGrp = ObjectUtils.firstNonNull(imageFileGrp, Constants.DEFAULT_IMAGE_FILEGRP);
+        fulltextFileGrp = ObjectUtils.firstNonNull(fulltextFileGrp, Constants.DEFAULT_FULLTEXT_FILEGRP);
 
         try {
             final String json = String.format(
@@ -636,9 +637,10 @@ public class ImportController {
      * @param bagdir: bag location on disk
      * @param bagInfos:
      */
-    private static void setSearchindexFilegrps(Archive archive, String bagdir,
+    private static Pair<String, String> readSearchindexFilegrps(String bagdir,
             List<SimpleImmutableEntry<String, String>> bagInfos) {
-        List<String> fileGrps = new ArrayList(0);
+        MutablePair<String, String> res = new MutablePair<>();
+        List<String> fileGrps = new ArrayList<>(0);
         try {
             fileGrps = Files.list(Paths.get(bagdir).resolve("data"))
                     .filter(Files::isDirectory)
@@ -662,10 +664,10 @@ public class ImportController {
         }
 
         if (imageFilegrp != null && fileGrps.contains(imageFilegrp)) {
-            archive.setImageFileGrp(imageFilegrp);
+            res.setLeft(imageFilegrp);
         } else {
             if (fileGrps.contains(Constants.DEFAULT_IMAGE_FILEGRP)) {
-                archive.setImageFileGrp(Constants.DEFAULT_IMAGE_FILEGRP);
+                res.setLeft(Constants.DEFAULT_IMAGE_FILEGRP);
             } else {
                 /* TODO: this situation is unexpected. think about moving the whole function to
                  * validation phase and deny validation if image-file-grp can not be determined */
@@ -673,20 +675,20 @@ public class ImportController {
         }
 
         if (fulltextFilegrp != null && fileGrps.contains(imageFilegrp)) {
-            archive.setFulltextFileGrp(imageFilegrp);
+            res.setRight(imageFilegrp);
         } else {
             for (String canditate: Constants.FULLTEXT_FILEGRPS_CANDITATES) {
                 if (fileGrps.contains(canditate)) {
-                    archive.setFulltextFileGrp(canditate);
+                    res.setRight(canditate);
                     break;
                 }
             }
         }
-        if (archive.getFulltextFileGrp() == null) {
+        if (res.getRight() == null) {
             /* TODO: this situation is unexpected. think about moving the whole function to
              * validation phase and deny validation if fulltext-file-grp can not be determined */
         }
-
+        return res;
     }
 
 }
