@@ -20,6 +20,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public AsyncTaskExecutor asyncTaskExecutor() {
+        // FIXME: this causes a warning. Fix it to use ThreadPoolTaskExecutor
         return new SimpleAsyncTaskExecutor("async");
     }
 }

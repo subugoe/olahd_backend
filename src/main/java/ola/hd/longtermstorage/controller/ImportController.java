@@ -316,6 +316,7 @@ public class ImportController {
                 } else {
                     archiveRepository.save(archive);
                 }
+
             } catch (Exception ex) {
                 handleFailedImport(ex, pid, importResult, info);
             } finally {
@@ -416,7 +417,7 @@ public class ImportController {
                     logger.error("Request to web-notifier failed. Message: '{}'. Code: '{}'",
                             response.message(), response.code());
                 } else {
-                    logger.debug("Sending request to web-notifier successfull");
+                    logger.info("Successfully sent request to web-notifier for PID: '" + pid + "'");
                 }
             }
         } catch (Exception e) {
