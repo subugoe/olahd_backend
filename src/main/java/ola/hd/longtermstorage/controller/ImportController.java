@@ -33,14 +33,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.FailsafeException;
 import net.jodah.failsafe.RetryPolicy;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -188,20 +191,10 @@ public class ImportController {
         // Store the PID to the tracking database
         info.setPid(pid);
 
-        Pair<String, String> searchFileGrps = readSearchindexFilegrps(destination, bagInfos);
-
         // **here the OCRD-ZIP is saved** to the external Archive
         executor.submit(new BagImport(destination, pid, prev, bagInfos, info, tempDir));
 
-
         trackingRepository.save(info);
-
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                sendToElastic(pid, searchFileGrps.getLeft(), searchFileGrps.getRight());
-            }
-        });
 
         ResponseMessage responseMessage = new ResponseMessage(HttpStatus.ACCEPTED,
                 "Your data is being processed.");
@@ -318,7 +311,8 @@ public class ImportController {
                 } else {
                     archiveRepository.save(archive);
                 }
-
+                Pair<String, String> searchFileGrps = readSearchindexFilegrps(destination, bagInfos);
+                sendToElastic(pid, searchFileGrps.getLeft(), searchFileGrps.getLeft());
             } catch (Exception ex) {
                 handleFailedImport(ex, pid, importResult, info);
             } finally {
@@ -376,12 +370,6 @@ public class ImportController {
     /**
      * Inform web-notifier about the new ocrd-zip so that it can put it into the search-index.
      *
-     * FIXME: Problem: The indexer could be faster than CDStar: It tries to receive the mets before
-     * it is available in CDStar. Because of that this function sleeps some time before it executes.
-     * Therefore it should be run in a thread as it is done here. It could be cleaner to try to read
-     * it in a loop with a timeout and send after that to elastic or throw Exception
-     *
-     *
      * @param pid - PID(PPA) of ocrd-zip
      */
     private void sendToElastic(String pid, String imageFileGrp, String fulltextFileGrp) {
@@ -392,9 +380,10 @@ public class ImportController {
             return;
         }
         try {
-            Thread.sleep(10_000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            waitTillMetsAvailable(pid);
+        } catch (FailsafeException e) {
+            logger.error("Error waiting for mets.xml availability for pid: '" + pid + "'", e);
+            return;
         }
         imageFileGrp = ObjectUtils.firstNonNull(imageFileGrp, Constants.DEFAULT_IMAGE_FILEGRP);
         fulltextFileGrp = ObjectUtils.firstNonNull(fulltextFileGrp, Constants.DEFAULT_FULLTEXT_FILEGRP);
@@ -424,6 +413,37 @@ public class ImportController {
         } catch (Exception e) {
             logger.error("Error while trying to send request to web-notifier", e);
         }
+    }
+
+    /**
+     * This method tries to read the mets for the provided pid until it is available but not longer
+     * than 'seconds'.
+     *
+     *
+     * @param pid
+     * @param seconds
+     */
+    private void waitTillMetsAvailable(String pid) {
+        RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
+                .withBackoff(1, 60, ChronoUnit.SECONDS)
+                .withMaxDuration(Duration.ofMinutes(10));
+
+        Failsafe.with(retryPolicy).run(() -> {
+            final String metsPath;
+            Map<String, String> bagInfoMap = archiveManagerService.getBagInfoTxt(pid);
+            if (bagInfoMap.containsKey("Ocrd-Mets")) {
+                metsPath = bagInfoMap.get("Ocrd-Mets");
+            } else {
+                metsPath = "data/mets.xml";
+            }
+
+            Response res = archiveManagerService.exportFile(pid, metsPath);
+            if (res.isSuccessful()) {
+                return;
+            } else {
+                throw new Exception("Failed to export mets");
+            }
+        });
     }
 
     /**
