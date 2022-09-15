@@ -33,20 +33,20 @@ services:
 
   olahds_indexer:
     volumes:
-      - ./cfg/local/app.env:/etc/env/app.env
-      - ./cfg/local/app-static.env:/etc/env/app-static.env
-      - ./cfg/local/commons.env:/etc/env/commons.env
-      - ./cfg/local/commons-static.env:/etc/env/commons-static.env
-      - ./cfg/local/iiif.env:/etc/env/iiif.env
+      - ./cfg/cluster/app.env:/etc/env/app.env
+      - ./cfg/cluster/app-static.env:/etc/env/app-static.env
+      - ./cfg/cluster/commons.env:/etc/env/commons.env
+      - ./cfg/cluster/commons-static.env:/etc/env/commons-static.env
+      - ./cfg/cluster/iiif.env:/etc/env/iiif.env
 
 
   olahds_web_notifier:
     volumes:
-      - ./cfg/local/app.env:/etc/env/app.env
-      - ./cfg/local/app-static.env:/etc/env/app-static.env
-      - ./cfg/local/commons.env:/etc/env/commons.env
-      - ./cfg/local/commons-static.env:/etc/env/commons-static.env
-      - ./cfg/local/iiif.env:/etc/env/iiif.env
+      - ./cfg/cluster/app.env:/etc/env/app.env
+      - ./cfg/cluster/app-static.env:/etc/env/app-static.env
+      - ./cfg/cluster/commons.env:/etc/env/commons.env
+      - ./cfg/cluster/commons-static.env:/etc/env/commons-static.env
+      - ./cfg/cluster/iiif.env:/etc/env/iiif.env
     networks:
       olahd:
         aliases:
