@@ -425,7 +425,8 @@ public class ImportController {
      */
     private void waitTillMetsAvailable(String pid) {
         RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
-                .withBackoff(1, 60, ChronoUnit.SECONDS)
+                .withBackoff(10, 120, ChronoUnit.SECONDS)
+                .withMaxRetries(-1)
                 .withMaxDuration(Duration.ofMinutes(10));
 
         Failsafe.with(retryPolicy).run(() -> {
