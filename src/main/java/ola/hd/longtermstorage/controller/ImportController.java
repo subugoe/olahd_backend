@@ -56,6 +56,7 @@ import ola.hd.longtermstorage.component.ExecutorWrapper;
 import ola.hd.longtermstorage.component.MutexFactory;
 import ola.hd.longtermstorage.domain.Archive;
 import ola.hd.longtermstorage.domain.ImportResult;
+import ola.hd.longtermstorage.domain.IndexingConfig;
 import ola.hd.longtermstorage.domain.ResponseMessage;
 import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
@@ -72,7 +73,6 @@ import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -187,6 +187,9 @@ public class ImportController {
 
         // Create a PID with meta-data from bag-info.txt
         String pid = Failsafe.with(retryPolicy).get(() -> pidService.createPid(bagInfos));
+        if (StringUtils.isBlank(pid)) {
+            exitUploadWithExeption("No PID received", info, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         // Store the PID to the tracking database
         info.setPid(pid);
@@ -311,8 +314,8 @@ public class ImportController {
                 } else {
                     archiveRepository.save(archive);
                 }
-                Pair<String, String> searchFileGrps = readSearchindexFilegrps(destination, bagInfos);
-                sendToElastic(pid, searchFileGrps.getLeft(), searchFileGrps.getLeft());
+                IndexingConfig conf = readSearchindexFilegrps(destination, bagInfos);
+                sendToElastic(pid, conf);
             } catch (Exception ex) {
                 handleFailedImport(ex, pid, importResult, info);
             } finally {
@@ -372,28 +375,26 @@ public class ImportController {
      *
      * @param pid - PID(PPA) of ocrd-zip
      */
-    private void sendToElastic(String pid, String imageFileGrp, String fulltextFileGrp) {
-        /* TODO: remove: PID must never be null. Exception must be thrown at first possible
-         * occurrence. Search for first possible occurrence and throw Exception there if necessary*/
-        if (StringUtils.isBlank(pid)) {
-            logger.error("pid is null, cannot send to ElasticSearch");
-            return;
-        }
+    private void sendToElastic(String pid, IndexingConfig conf) {
         try {
             waitTillMetsAvailable(pid);
         } catch (FailsafeException e) {
             logger.error("Error waiting for mets.xml availability for pid: '" + pid + "'", e);
             return;
         }
-        imageFileGrp = ObjectUtils.firstNonNull(imageFileGrp, Constants.DEFAULT_IMAGE_FILEGRP);
-        fulltextFileGrp = ObjectUtils.firstNonNull(fulltextFileGrp, Constants.DEFAULT_FULLTEXT_FILEGRP);
+
+        String gtConf = "";
+        if (conf.getGt() != null) {
+            gtConf = ", \"isGt\": " + conf.getGt();
+        }
 
         try {
             final String json = String.format(
                     "{"
                     + "\"document\":\"%s\", \"context\":\"ocrd\", \"product\":\"olahds\","
-                    + "\"imageFileGrp\":\"%s\", \"fulltextFileGrp\":\"%s\", \"ftype\":\"PAGEXML_1\""
-                    + "}", pid, imageFileGrp, fulltextFileGrp);
+                    + "\"imageFileGrp\":\"%s\", \"fulltextFileGrp\":\"%s\", \"ftype\":\"%s\"%s}",
+                    pid, conf.getImageFileGrp(), conf.getFulltextFileGrp(),
+                    conf.getFulltextFtype(), gtConf);
 
             RequestBody body = RequestBody.create(okhttp3.MediaType.parse(
                     "application/json; charset=utf-8"), json);
@@ -425,7 +426,7 @@ public class ImportController {
      */
     private void waitTillMetsAvailable(String pid) {
         RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
-                .withBackoff(10, 120, ChronoUnit.SECONDS)
+                .withBackoff(5, 120, ChronoUnit.SECONDS)
                 .withMaxRetries(-1)
                 .withMaxDuration(Duration.ofMinutes(10));
 
@@ -559,7 +560,7 @@ public class ImportController {
             // Check for the validity and completeness of a bag
             verifier.isValid(bag, true);
 
-            validateOcrdzip(bag);
+            validateOcrdzip(bag, destination);
         } catch (NoSuchFileException | MissingPayloadManifestException
                 | UnsupportedAlgorithmException | CorruptChecksumException | MaliciousPathException
                 | InvalidPayloadOxumException | FileNotInPayloadDirectoryException
@@ -615,17 +616,13 @@ public class ImportController {
      * @param bagInfos
      * @throws OcrdzipInvalidException - if bag is invalid
      */
-    private static void validateOcrdzip(Bag bag) throws OcrdzipInvalidException {
+    private static void validateOcrdzip(Bag bag, String bagdir) throws OcrdzipInvalidException {
         List<String> res = new ArrayList<>();
         Metadata metadata = bag.getMetadata();
 //        if (!metadata.contains("BagIt-Profile-Identifier")) {
 //            res.add("bag-info.txt must contain key: 'BagIt-Profile-Identifier'");
 //            // this identifier has no impact of the anything regarding this bagit and it's only
 //            // purpose is to reference the spec. So verification does not help ensure functionality
-//        }
-//        if (!metadata.contains("Ocrd-Identifier")) {
-//            res.add("bag-info.txt must contain key: 'Ocrd-Identifier'");
-//            // spec says "A globally unique identifier" but I have no idea how to verify that
 //        }
 //        if (!metadata.contains("Ocrd-Base-Version-Checksum")) {
 //            res.add("bag-info.txt must contain key: 'Ocrd-Base-Version-Checksum'");
@@ -634,6 +631,13 @@ public class ImportController {
 //            // this is unfinished here:
 //            String value = metadata.get("Ocrd-Base-Version-Checksum").get(0);
 //        }
+        if (!metadata.contains("Ocrd-Identifier")) {
+            res.add("bag-info.txt must contain key: 'Ocrd-Identifier'");
+            // spec says "A globally unique identifier" but I have no idea how to verify that so
+            // only presence of key is verified
+            // TODO: it can at least be checked if the provided ocrd-identifier is used somewhere
+            // else in the mongo-database
+        }
 
         if (!metadata.contains("Ocrd-Mets")) {
             if (!Files.exists(bag.getRootDir().resolve("data").resolve("mets.xml"))) {
@@ -645,34 +649,67 @@ public class ImportController {
                 res.add("Ocrd-Mets is set, but specified file not existing");
             }
         }
+
+        boolean imageFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_IMAGE_FILEGRP);
+        boolean fullFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_FULLTEXT_FILEGRP);
+        if (imageFgrpPresent || fullFgrpPresent) {
+            List<String> fileGrps = new ArrayList<>(0);
+            try {
+                fileGrps = Files.list(Paths.get(bagdir).resolve("data"))
+                        .filter(Files::isDirectory)
+                        .map(p -> p.getFileName().toString())
+                        .collect(Collectors.toList());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            if (imageFgrpPresent) {
+                String imageFileGrp = metadata.get(Constants.BAGINFO_KEY_IMAGE_FILEGRP).get(0);
+                if (!fileGrps.contains(imageFileGrp)) {
+                    res.add(String.format("'%s' is provided, but specified File-Grp (%s) is not"
+                            + " existing", Constants.BAGINFO_KEY_IMAGE_FILEGRP, imageFileGrp));
+                }
+            }
+            if (fullFgrpPresent) {
+                String fullFileGrp = metadata.get(Constants.BAGINFO_KEY_FULLTEXT_FILEGRP).get(0);
+                if (!fileGrps.contains(fullFileGrp)) {
+                    res.add(String.format("'%s' is provided, but specified File-Grp (%s) is not"
+                            + " existing", Constants.BAGINFO_KEY_FULLTEXT_FILEGRP, fullFileGrp));
+                }
+            }
+        }
+
+        if (metadata.contains(Constants.BAGINFO_KEY_FTYPE)) {
+            // TODO: validate Ftype (I don't know yet which values are possible)
+        }
+
+        if (metadata.contains(Constants.BAGINFO_KEY_IS_GT)) {
+            res.add(String.format("'%s' is provided, but specified value may only be 'true' or"
+                    + " 'false'", Constants.BAGINFO_KEY_IS_GT));
+        }
+
+        // This has to be the last command in this method
         if (!res.isEmpty()) {
             throw new OcrdzipInvalidException(res);
         }
     }
 
     /**
-     * - Zuerst die schlüssel aus der bag-info.txt lesen. Wenn die gesetzt sind, dann ab dafür
-     * - wenn die schlüssel nicht gesetzt sind, dann
+     * Read indexing configuration from bag-info.txt.
+     *
+     * In bag-info.txt configuration for the indexing can be provided
      *
      * @param archive
      * @param bagdir: bag location on disk
      * @param bagInfos:
      */
-    private static Pair<String, String> readSearchindexFilegrps(String bagdir,
+    private static IndexingConfig readSearchindexFilegrps(String bagdir,
             List<SimpleImmutableEntry<String, String>> bagInfos) {
-        MutablePair<String, String> res = new MutablePair<>();
-        List<String> fileGrps = new ArrayList<>(0);
-        try {
-            fileGrps = Files.list(Paths.get(bagdir).resolve("data"))
-                    .filter(Files::isDirectory)
-                    .map(p -> p.getFileName().toString())
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        IndexingConfig res = new IndexingConfig();
 
         String imageFilegrp = null;
         String fulltextFilegrp = null;
+        Boolean gt = null;
+        String ftype = null;
         for (SimpleImmutableEntry<String, String> x : bagInfos) {
             if (StringUtils.isBlank(x.getValue())) {
                 continue;
@@ -681,33 +718,29 @@ public class ImportController {
                 imageFilegrp = x.getValue();
             } else if (Constants.BAGINFO_KEY_FULLTEXT_FILEGRP.equals(x.getKey())) {
                 fulltextFilegrp = x.getValue();
+            } else if (Constants.BAGINFO_KEY_IS_GT.equals(x.getKey())) {
+                gt = Boolean.valueOf(x.getValue());
+            } else if (Constants.BAGINFO_KEY_FTYPE.equals(x.getKey())) {
+                ftype = x.getValue();
             }
         }
-
-        if (imageFilegrp != null && fileGrps.contains(imageFilegrp)) {
-            res.setLeft(imageFilegrp);
+        if (imageFilegrp != null) {
+            res.setImageFileGrp(imageFilegrp);
         } else {
-            if (fileGrps.contains(Constants.DEFAULT_IMAGE_FILEGRP)) {
-                res.setLeft(Constants.DEFAULT_IMAGE_FILEGRP);
-            } else {
-                /* TODO: this situation is unexpected. think about moving the whole function to
-                 * validation phase and deny validation if image-file-grp can not be determined */
-            }
+            res.setImageFileGrp(Constants.DEFAULT_IMAGE_FILEGRP);
         }
-
-        if (fulltextFilegrp != null && fileGrps.contains(imageFilegrp)) {
-            res.setRight(imageFilegrp);
+        if (fulltextFilegrp != null) {
+            res.setFulltextFileGrp(fulltextFilegrp);
         } else {
-            for (String canditate: Constants.FULLTEXT_FILEGRPS_CANDITATES) {
-                if (fileGrps.contains(canditate)) {
-                    res.setRight(canditate);
-                    break;
-                }
-            }
+            res.setFulltextFileGrp(Constants.DEFAULT_FULLTEXT_FILEGRP);
         }
-        if (res.getRight() == null) {
-            /* TODO: this situation is unexpected. think about moving the whole function to
-             * validation phase and deny validation if fulltext-file-grp can not be determined */
+        if (ftype != null) {
+            res.setFulltextFtype(ftype);
+        } else {
+            res.setFulltextFtype(Constants.DEFAULT_FULLTEXT_FTYPE);
+        }
+        if (gt != null) {
+            res.setGt(gt);
         }
         return res;
     }
