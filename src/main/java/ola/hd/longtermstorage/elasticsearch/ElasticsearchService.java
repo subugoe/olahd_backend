@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import ola.hd.longtermstorage.elasticsearch.mapping.LogicalEntry;
 import ola.hd.longtermstorage.elasticsearch.mapping.PhysicalEntry;
+import ola.hd.longtermstorage.exceptions.ElasticServiceException;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -17,6 +18,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;;
@@ -113,5 +115,36 @@ public class ElasticsearchService {
             result.add(entry.getParent().getRecordIdentifier());
         }
         return result;
+    }
+
+    /**
+     * Get the id for the first logical index element of a pid.
+     *
+     * After saving each ocrd-zip is indexed in the logical index. There can be multiple entries for
+     * an ocrd-zip but only one of them with the flag IsFirst set to true. Each entry has a pid.
+     * This query finds the logical entries for a pid with IsFirst set to true.
+     *
+     * @param pid - PID of ocrd-zip for which the index entry is requested
+     * @return
+     * @throws IOException
+     */
+    public String getLogIdForPid(String pid) throws IOException {
+        SearchRequest request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        request.source(sourceBuilder);
+        sourceBuilder.query(QueryBuilders.boolQuery()
+                .must(QueryBuilders.termQuery("pid", pid))
+                .must(QueryBuilders.termQuery("IsFirst", true)));
+        sourceBuilder.fetchSource(false);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        SearchHits hits = response.getHits();
+        if (hits.getTotalHits() == 1 ) {
+            return hits.getAt(0).getId();
+        } else if (hits.getTotalHits() > 1) {
+            throw new ElasticServiceException("Found more than one hit (IsFirst is true) in the"
+                    + " logical Index for a pid");
+        } else {
+            return null;
+        }
     }
 }

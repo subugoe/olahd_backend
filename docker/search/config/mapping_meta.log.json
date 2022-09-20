@@ -843,6 +843,9 @@
               }
             }
           },
+          "pid": {
+            "type": "keyword"
+          },
           "preceding": {
             "type": "text",
             "fields": {

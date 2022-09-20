@@ -255,4 +255,28 @@ public class SearchController {
         String jsonString = mapper.writeValueAsString(res);
         return ResponseEntity.ok(jsonString);
     }
+
+    /**
+     * get the id for the logical index by pid
+     *
+     * @param index
+     * @param id
+     * @return
+     * @throws IOException
+     */
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Search success", response = SearchResults.class)
+    })
+    @GetMapping(value = "/search-es/logid4pid", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getLogIdForPid(
+            @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam String pid
+            ) throws IOException {
+        String docId = elasticsearchService.getLogIdForPid(pid);
+        if (docId == null) {
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonString = mapper.writeValueAsString(docId);
+        return ResponseEntity.ok(jsonString);
+    }
 }
