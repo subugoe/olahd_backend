@@ -137,6 +137,7 @@ public class SearchController {
         response.setPid(archive.getPid());
         response.setOnlineId(archive.getOnlineId());
         response.setOfflineId(archive.getOfflineId());
+        response.setLogId(elasticsearchService.getLogIdForPid(archive.getPid()));
 
         // Set previous version
         Archive prevArchive = archive.getPreviousVersion();
@@ -145,6 +146,7 @@ public class SearchController {
             prevRes.setPid(prevArchive.getPid());
             prevRes.setOnlineId(prevArchive.getOnlineId());
             prevRes.setOfflineId(prevArchive.getOfflineId());
+            prevRes.setLogId(elasticsearchService.getLogIdForPid(prevArchive.getPid()));
 
             response.setPreviousVersion(prevRes);
         }
@@ -157,6 +159,7 @@ public class SearchController {
                 nextRes.setPid(nextArchive.getPid());
                 nextRes.setOnlineId(nextArchive.getOnlineId());
                 nextRes.setOfflineId(nextArchive.getOfflineId());
+                nextRes.setLogId(elasticsearchService.getLogIdForPid(nextArchive.getPid()));
 
                 response.addNextVersion(nextRes);
             }

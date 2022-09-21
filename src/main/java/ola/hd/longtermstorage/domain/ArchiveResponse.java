@@ -1,7 +1,6 @@
 package ola.hd.longtermstorage.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +15,9 @@ public class ArchiveResponse {
 
     // CDSTAR-ID of an offline archive
     private String offlineId;
+
+    /** id of the corresponding logical-index-entry*/
+    private String logId;
 
     private ArchiveResponse previousVersion;
 
@@ -70,5 +72,13 @@ public class ArchiveResponse {
 
     public void setNextVersions(List<ArchiveResponse> nextVersions) {
         this.nextVersions = nextVersions;
+    }
+
+    public String getLogId() {
+        return logId;
+    }
+
+    public void setLogId(String logId) {
+        this.logId = logId;
     }
 }

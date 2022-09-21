@@ -128,23 +128,28 @@ public class ElasticsearchService {
      * @return
      * @throws IOException
      */
-    public String getLogIdForPid(String pid) throws IOException {
+    public String getLogIdForPid(String pid) {
         SearchRequest request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         request.source(sourceBuilder);
         sourceBuilder.query(QueryBuilders.boolQuery()
-                .must(QueryBuilders.termQuery("pid", pid))
-                .must(QueryBuilders.termQuery("IsFirst", true)));
+                .filter(QueryBuilders.termQuery("pid", pid))
+                .filter(QueryBuilders.termQuery("IsFirst", true)))
+                .size(1);
         sourceBuilder.fetchSource(false);
-        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-        SearchHits hits = response.getHits();
-        if (hits.getTotalHits() == 1 ) {
-            return hits.getAt(0).getId();
-        } else if (hits.getTotalHits() > 1) {
-            throw new ElasticServiceException("Found more than one hit (IsFirst is true) in the"
-                    + " logical Index for a pid");
-        } else {
-            return null;
+        try {
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHits hits = response.getHits();
+            if (hits.getTotalHits() == 1 ) {
+                return hits.getAt(0).getId();
+            } else if (hits.getTotalHits() > 1) {
+                throw new ElasticServiceException("Found more than one hit (IsFirst is true) in the"
+                        + " logical Index for a pid");
+            } else {
+                return null;
+            }
+        } catch (IOException e) {
+            throw new ElasticServiceException("Error executing search request", e);
         }
     }
 }
