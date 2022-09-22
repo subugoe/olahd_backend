@@ -55,18 +55,15 @@ public class SearchController {
             @ApiResponse(code = 200, message = "Search success", response = SearchResults.class)
     })
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> search(@ApiParam(value = "The query used to search.", required = true)
-                                    @RequestParam(name = "q")
-                                            String query,
-                                    @ApiParam(value = "Max returned results.")
-                                    @RequestParam(defaultValue = "25")
-                                            int limit,
-                                    @ApiParam(value = "Scroll ID for pagination")
-                                    @RequestParam(defaultValue = "")
-                                            String scroll) throws IOException {
+    public ResponseEntity<?> search(
+            @RequestParam(name = "q") @ApiParam(value = "The query used to search.", required = true)
+            String query,
+            @RequestParam(defaultValue = "25") @ApiParam(value = "Max returned results.", example = "25")
+            int limit,
+            @RequestParam(defaultValue = "") @ApiParam(value = "Scroll ID for pagination")
+            String scroll) throws IOException {
 
         SearchRequest searchRequest = new SearchRequest(query, limit, scroll);
-
         SearchResults results = searchService.search(searchRequest);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -93,16 +90,16 @@ public class SearchController {
     })
     @GetMapping(value = "/search-archive", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> searchArchive(
-            @ApiParam(value = "PID or internal ID of the archive.", required = true)
-            @RequestParam String id,
-            @ApiParam(value = "An option to include all files in return.")
-            @RequestParam(defaultValue = "false") boolean withFile,
-            @ApiParam(value = "How many files should be returned?")
-            @RequestParam(defaultValue = "1000") int limit,
-            @ApiParam(value = "How many files should be skipped from the beginning?")
-            @RequestParam(defaultValue = "0") int offset,
-            @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
-            @RequestParam(defaultValue = "false") boolean internalId) throws IOException {
+            @RequestParam @ApiParam(value = "PID or internal ID of the archive.", required = true)
+            String id,
+            @RequestParam(defaultValue = "false") @ApiParam(value = "An option to include all files in return.")
+            boolean withFile,
+            @RequestParam(defaultValue = "1000") @ApiParam(value = "How many files should be returned?", example = "1000")
+            int limit,
+            @RequestParam(defaultValue = "0") @ApiParam(value = "How many files should be skipped from the beginning?", example = "0")
+            int offset,
+            @RequestParam(defaultValue = "false") @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
+            boolean internalId) throws IOException {
 
         String info = archiveManagerService.getArchiveInfo(id, withFile, limit, offset, internalId);
 
@@ -116,11 +113,10 @@ public class SearchController {
     })
     @GetMapping(value = "/search-archive-info", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ArchiveResponse> searchArchiveInfo(
-            @ApiParam(value = "PID or internal ID of the archive.", required = true)
-            @RequestParam String id,
-            @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
-            @RequestParam(defaultValue = "false") boolean internalId) {
-
+            @RequestParam @ApiParam(value = "PID or internal ID of the archive.", required = true)
+            String id,
+            @RequestParam(defaultValue = "false") @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
+            boolean internalId) {
 
         // Get the data
         Archive archive = null;
@@ -167,63 +163,30 @@ public class SearchController {
 
         return ResponseEntity.ok(response);
     }
+
     /**
-     * curl -X GET "http://localhost:8080/search-es/creator?text=eiffer"
+     * Execute an uri search on both indexes: meta.olahds_log and meta.olahds_phys.
      *
-     * @param text
-     * @return
-     * @throws IOException
-     */
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Search success", response = SearchResults.class)
-    })
-    @GetMapping(value = "/search-es/creator", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> searchCreator(@RequestParam(name = "text") String text) throws IOException {
-
-        List<String> hits = elasticsearchService.searchCreator(text);
-
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonString = mapper.writeValueAsString(hits);
-
-        return ResponseEntity.ok(jsonString);
-    }
-
-    /**
-     * `curl -X GET "http://localhost:8080/search-es/fulltext?text=owing%20to%20Lemma"`
+     * This is similar to the prototypes cdstar-search functionality
      *
-     * @param text
-     * @return
-     * @throws IOException
-     */
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Search success", response = SearchResults.class)
-    })
-    @GetMapping(value = "/search-es/fulltext", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> search(@RequestParam(name = "text") String text) throws IOException {
-
-        List<String> hits = elasticsearchService.searchFulltext(text);
-
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonString = mapper.writeValueAsString(hits);
-
-        return ResponseEntity.ok(jsonString);
-    }
-
-    /**
      * `curl "localhost:8080/search-es/query-all?q=berlin&from=0&size=1" | jq`
      *
      * @param text
      * @return
      * @throws IOException
      */
+    @ApiOperation(value = "Make an uri search on the logical and physical index")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "Search success", response = SearchResults.class)
+        @ApiResponse(code = 200, message = "Search success")
     })
     @GetMapping(value = "/search-es/query-all", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> searchEsQuery(
-            @RequestParam(name = "q") String query,
-            @RequestParam(name = "from") int from,
-            @RequestParam(name = "size") int size) throws IOException {
+            @RequestParam(name = "q") @ApiParam(value = "The query used to search", required = true)
+            String query,
+            @RequestParam(name = "from") @ApiParam(value = "Number of hits to skip", required = true, example = "0")
+            int from,
+            @RequestParam(name = "size") @ApiParam(value = "Maximum number of hits to return", required = true, example = "10")
+            int size) throws IOException {
 
         Object hits = elasticsearchService.bigQuery(query, from, size);
 
@@ -236,6 +199,8 @@ public class SearchController {
     }
 
     /**
+     * Get an index entry by its id
+     *
      * `curl "http://localhost:8080/search-es/meta.phys/EBBlgIEBI6n_xy-wUbKr" | jq`
      *
      * @param index
@@ -243,12 +208,18 @@ public class SearchController {
      * @return
      * @throws IOException
      */
+    @ApiOperation(value = "Get index entry by id")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "Search success", response = SearchResults.class)
+        @ApiResponse(code = 200, message = "Index entry was found"),
+        @ApiResponse(code = 404, message = "Index or entry for id not found")
     })
     @GetMapping(value = "/search-es/{index:" + LOGICAL_INDEX_NAME + "|" + PHYSICAL_INDEX_NAME
             + "}/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> searchEsElementById(@PathVariable String index, @PathVariable String id)
+    public ResponseEntity<?> searchEsElementById(
+            @PathVariable @ApiParam("The name of the index to query")
+            String index,
+            @PathVariable @ApiParam("Id of the index entry to fetch")
+            String id)
             throws IOException {
         Map<String, Object> res = elasticsearchService.getElement(index, id);
         if (res == null) {
@@ -260,19 +231,22 @@ public class SearchController {
     }
 
     /**
-     * get the id for the logical index by pid
+     * Get the id for the logical index by pid
      *
      * @param index
      * @param id
      * @return
      * @throws IOException
      */
+    @ApiOperation(value = "Get the id of the logical index entry for a pid and IsFirst = true")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "Search success", response = SearchResults.class)
+        @ApiResponse(code = 200, message = "index entry for pid was found"),
+        @ApiResponse(code = 404, message = "no index entry for pid found")
     })
     @GetMapping(value = "/search-es/logid4pid", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getLogIdForPid(
-            @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam String pid
+            @RequestParam@ApiParam(value = "The PID or the PPN of the work.", required = true)
+            String pid
             ) throws IOException {
         String docId = elasticsearchService.getLogIdForPid(pid);
         if (docId == null) {
