@@ -8,15 +8,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import ola.hd.longtermstorage.domain.FilterSearchRequest;
 import ola.hd.longtermstorage.elasticsearch.mapping.LogicalEntry;
 import ola.hd.longtermstorage.elasticsearch.mapping.PhysicalEntry;
 import ola.hd.longtermstorage.exceptions.ElasticServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -150,6 +153,42 @@ public class ElasticsearchService {
             }
         } catch (IOException e) {
             throw new ElasticServiceException("Error executing search request", e);
+        }
+    }
+
+    /**
+     * Execute a query with filters
+     *
+     * @return
+     * @throws IOException
+     */
+    public SearchHits filterSearch(FilterSearchRequest filter) throws IOException {
+        SearchRequest request = null;
+        if (Boolean.TRUE.equals(filter.getPages())) {
+            request = new SearchRequest().indices(LOGICAL_INDEX_NAME, PHYSICAL_INDEX_NAME);
+        } else {
+            request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
+        }
+
+        SearchSourceBuilder builder = new SearchSourceBuilder();
+        BoolQueryBuilder query = QueryBuilders.boolQuery();
+        if (StringUtils.isNotBlank(filter.getTitle())) {
+            query.must(QueryBuilders.matchQuery("bytitle", filter.getTitle()));
+        }
+        if (StringUtils.isNotBlank(filter.getAuthor())) {
+            query.must(QueryBuilders.matchQuery("bycreator", filter.getAuthor()));
+        }
+        if (filter.getYear() > 0) {
+            query.must(QueryBuilders.matchQuery("publish_infos.year_publish", filter.getYear()));
+        }
+        builder.query(query);
+        request.source(builder);
+
+        try {
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            return response.getHits();
+        } catch (IOException e) {
+            throw new ElasticServiceException("Error executing filter-search request", e);
         }
     }
 }
