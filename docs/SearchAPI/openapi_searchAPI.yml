@@ -20,20 +20,8 @@ tags:
   - name: iiifsearch
     description: iiif Search API request, e.g. to support fulltext highlighting or search within the document.
 paths:
-  /search/term:
-    get:
-      tags:
-        - search
-      produces:
-        - application/json
-      parameters:
-        - $ref: "#/parameters/term"
-        - $ref: "#/parameters/limit"
-        - $ref: "#/parameters/offset"
-      responses:
-        '200':
-          description: OK
-  /search/term/faceting:
+
+  /search:
     get:
       tags:
         - search
@@ -50,7 +38,7 @@ paths:
       responses:
         '200':
           description: OK
-  /search/term/{filter}:
+  /search/{filter}:
     get:
       tags:
         - search
