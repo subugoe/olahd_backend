@@ -1,0 +1,187 @@
+swagger: '2.0'
+info:
+  description: This is the documentation for the OLA-HD Service Search API, which specifies functions for the search in the underlying search database and thus a comfortable access to the index.
+  title: OLA-HD Service Search API
+  version: '1.0'
+  contact:
+    name: Onur Yuecel
+    url: https://www.sub.uni-goettingen.de
+    email: yuecel@sub.uni-goettingen.de
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0
+host: api.server.test
+basePath: /
+schemes:
+  - https
+tags:
+  - name: search
+    description: This endpoint is used to get search results from the index database (index).
+  - name: iiifsearch
+    description: iiif Search API request, e.g. to support fulltext highlighting or search within the document.
+paths:
+  /search/term:
+    get:
+      tags:
+        - search
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/term"
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+      responses:
+        '200':
+          description: OK
+  /search/term/faceting:
+    get:
+      tags:
+        - search
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/term"
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/q[0][field]"
+        - $ref: "#/parameters/q[1][value]"
+        - $ref: "#/parameters/q[0][field]"
+        - $ref: "#/parameters/q[1][value]"
+      responses:
+        '200':
+          description: OK
+  /search/term/{filter}:
+    get:
+      tags:
+        - search
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/term"
+        - $ref: "#/parameters/filter"
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/q[0][field]"
+        - $ref: "#/parameters/q[1][value]"
+        - $ref: "#/parameters/q[0][field]"
+        - $ref: "#/parameters/q[1][value]"
+      responses:
+        '200':
+          description: OK
+  /search/iiifpagesearch/term:
+    get:
+      tags:
+        - iiifsearch
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/definitions/iiifonpage"
+      responses:
+        '200':
+          description: OK
+  /search/iiifdocsearch/term:
+    get:
+      tags:
+        - iiifsearch
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/definitions/iiifindoc"
+      responses:
+        '200':
+          description: OK
+
+  /search/detail/{id}:
+    get:
+      tags:
+        - search
+      parameters:
+        - $ref: "#/parameters/id"
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            $ref: '#/definitions/detail'
+parameters:
+  id:
+    name: id
+    in: path
+    description: "The ID of the archive object to present in the detail view."
+    required: true
+    type: "string"
+  term:
+    name: searchterm
+    in: query
+    type: string
+    description: 'Parameter contains the search term.'
+  limit:
+    name: limit
+    in: query
+    type: integer
+    description: 'Number of results in the hitlist from search results'
+  offset:
+    name: offset
+    in: query
+    type: integer
+    description: 'Starting point of the next resultset from search results to support pagination'
+  q[0][field]:
+    name: q[0][field]
+    in: query
+    type: string
+    description: 'Contains the facete name of the first facete (Array position 0), e.g. "author". The number of field query parameters (q[][field]) is not fixed, but must fit to the value parameters.'
+  q[0][value]:
+    name: q[0][value]
+    in: query
+    type: string
+    description: 'Contains the facete value of the first facete (Array position 0), e.g. "Goethe". The number of field query parameters (q[][value]) is not fixed, but must fit to the field parameters.'
+  q[1][field]:
+    name: q[1][field]
+    in: query
+    type: string
+    description: 'Contains the facete name of the second facete (Array position 1), e.g. "year". The number of field query parameters (q[][field]) is not fixed, but must fit to the value parameters.'
+  q[1][value]:
+    name: q[1][value]
+    in: query
+    type: string
+    description: 'Contains the facete value of the second facete (Array position 1), e.g. "1900"'
+  filter: 
+    name: filter
+    in: path
+    description: "The filter is a comma separated list from previus search(es), to save the context (current resultset) and start an new search from this context. This is more a kind of filtering the resultset with the new search term."
+    required: true
+    type: "array"
+    items: {
+      type: "string"
+    }
+    collectionFormat: "csv"
+
+definitions:
+  detail:
+    description: "Descibes the details of a search hit."
+    type: object
+    properties:
+      title:
+        type: string
+      year:
+        type: integer
+      creator:
+        type: string
+      publisher:
+        type: string
+      filetree:
+        type: object
+        $ref: "#/definitions/filetree"
+    required:
+    - title
+    - year
+    - creator
+  filetree:
+    description: "Representation of the filestructure"
+    type: object
+  iiifonpage:
+    description: "iiif Search API based page search, response manifest object"
+    type: object
+  iiifindoc:
+    description: "iiif Search API based document search, response manifest object"
+    type: object

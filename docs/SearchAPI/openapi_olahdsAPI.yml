@@ -1,0 +1,767 @@
+swagger: '2.0'
+info:
+  description: This is the documentation for the API of the Long-term Archive System
+  version: '1.0'
+  title: OLA-HD Long-term Archive
+  termsOfService: urn:tos
+  contact:
+    name: Triet Doan
+    url: https://www.gwdg.de/
+    email: triet.doan@gwdg.de
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0
+host: ola-hd.sub.uni-goettingen.de
+basePath: /
+tags:
+  - name: admin-controller
+    description: This endpoint is used to get information for administration purposes.
+  - name: authentication-controller
+    description: This endpoint is used to get an access token.
+  - name: export-controller
+    description: This endpoint is used to export data from the system.
+  - name: import-controller
+    description: This endpoint is used to import a ZIP file into the system
+  - name: search-controller
+    description: This endpoint is used to search in the system.
+schemes:
+  - http
+paths:
+  /admin/import-status:
+    get:
+      tags:
+        - admin-controller
+      summary: Get information about import process.
+      operationId: GetImportDataUsingGET
+      produces:
+        - application/json
+      parameters:
+        - name: limit
+          in: query
+          description: limit
+          required: false
+          type: integer
+          format: int32
+        - name: page
+          in: query
+          description: page
+          required: false
+          type: integer
+          format: int32
+        - name: username
+          in: query
+          description: username
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Query success
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/TrackingInfo'
+      deprecated: false
+  /bag:
+    post:
+      tags:
+        - import-controller
+      summary: Import a ZIP file into a system. It may be an independent ZIP, or a new version of another ZIP. In the second case, a PID of the previous ZIP must be provided.
+      operationId: importDataUsingPOST
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: file
+          in: formData
+          description: The file to be imported.
+          required: true
+          type: file
+        - name: prev
+          in: formData
+          description: The PID of the previous version
+          required: false
+          type: string
+      responses:
+        '202':
+          description: The ZIP has a valid BagIt structure. The system is saving it to the archive.
+          headers:
+            Location:
+              type: string
+              description: The PID of the ZIP.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+        '400':
+          description: The ZIP has an invalid BagIt structure.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+        '401':
+          description: Invalid credentials.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+        '415':
+          description: The request is not a multipart request.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+      security:
+        - bearer: []
+        - basicAuth: []
+      deprecated: false
+  /download:
+    post:
+      tags:
+        - export-controller
+      summary: downloadFiles
+      operationId: downloadFilesUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/octet-stream
+        - application/json
+      parameters:
+        - in: body
+          name: payload
+          description: payload
+          required: true
+          schema:
+            $ref: '#/definitions/DownloadRequest'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/StreamingResponseBody'
+      deprecated: false
+  /download-file/{id}:
+    get:
+      tags:
+        - export-controller
+      summary: downloadFile
+      operationId: downloadFileUsingGET
+      produces:
+        - application/xml
+        - application/octet-stream
+        - text/plain
+      parameters:
+        - name: id
+          in: path
+          description: Internal ID of the archive.
+          required: true
+          type: string
+        - name: path
+          in: query
+          description: Path to the requested file
+          required: true
+          type: string
+          allowEmptyValue: false
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Resource'
+      deprecated: false
+  /export:
+    get:
+      tags:
+        - export-controller
+      summary: Quickly export a ZIP file via PID. This ZIP file only contains files stored on hard disks.
+      operationId: exportUsingGET
+      produces:
+        - application/octet-stream
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: The ID of the work.
+          required: true
+          type: string
+          allowEmptyValue: false
+        - name: isInternal
+          in: query
+          description: Is this an internal ID or not (PID, PPN).
+          required: true
+          type: boolean
+          default: false
+          allowEmptyValue: false
+          x-example: false
+      responses:
+        '200':
+          description: An archive with the specified identifier was found.
+          schema:
+            type: string
+            format: byte
+        '404':
+          description: An archive with the specified identifier was not found.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+      deprecated: false
+  /export-request:
+    get:
+      tags:
+        - export-controller
+      summary: Send a request to export data on tapes.
+      operationId: fullExportRequestUsingGET
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: The PID or the PPN of the work.
+          required: true
+          type: string
+          allowEmptyValue: false
+      responses:
+        '200':
+          description: The archive is already on the hard drive.
+          schema:
+            type: string
+            format: byte
+        '202':
+          description: Request accepted. Data is being transfer from tape to hard drive.
+          schema:
+            type: string
+            format: byte
+        '404':
+          description: An archive with the specified identifier was not found.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+      security:
+        - bearer: []
+        - basicAuth: []
+      deprecated: false
+  /full-export:
+    get:
+      tags:
+        - export-controller
+      summary: Export the cold archive which was already moved to the hard drive.
+      operationId: fullExportUsingGET
+      produces:
+        - application/octet-stream
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: The PID or the PPN of the work.
+          required: true
+          type: string
+          allowEmptyValue: false
+        - name: isInternal
+          in: query
+          description: Is this an internal ID or not (PID, PPN).
+          required: true
+          type: boolean
+          default: false
+          allowEmptyValue: false
+          x-example: false
+      responses:
+        '200':
+          description: An archive with the specified identifier was found.
+          schema:
+            type: string
+            format: byte
+        '404':
+          description: An archive with the specified identifier was not found.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+        '409':
+          description: The archive is still on tape. A full export request must be made first.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+      security:
+        - bearer: []
+        - basicAuth: []
+      deprecated: false
+  /login:
+    post:
+      tags:
+        - authentication-controller
+      summary: Submit the valid username and password to get back an access token.
+      operationId: loginUsingPOST
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - in: formData
+          name: password
+          description: password
+          required: true
+          schema:
+            type: string
+        - in: formData
+          name: username
+          description: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Login successfully
+          schema:
+            $ref: '#/definitions/TokenResponse'
+        '401':
+          description: Invalid credentials.
+          schema:
+            $ref: '#/definitions/ResponseMessage'
+      deprecated: false
+  /search:
+    get:
+      tags:
+        - search-controller
+      summary: Search on archive.
+      operationId: searchUsingGET
+      produces:
+        - application/json
+      parameters:
+        - name: limit
+          in: query
+          description: Max returned results.
+          required: false
+          type: integer
+          default: 25
+          format: int32
+          allowEmptyValue: false
+        - name: q
+          in: query
+          description: The query used to search.
+          required: true
+          type: string
+          allowEmptyValue: false
+        - name: scroll
+          in: query
+          description: Scroll ID for pagination
+          required: false
+          type: string
+          allowEmptyValue: false
+      responses:
+        '200':
+          description: Search success
+          schema:
+            $ref: '#/definitions/SearchResults'
+      deprecated: false
+  /search-archive-info/{id}:
+    get:
+      tags:
+        - search-controller
+      summary: Get the information of an archive from the system database.
+      operationId: searchArchiveInfoUsingGET
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: Internal ID of the archive.
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Information found
+          schema:
+            type: string
+        '404':
+          description: Information not found
+          schema:
+            type: string
+      deprecated: false
+  /search-archive/{id}:
+    get:
+      tags:
+        - search-controller
+      summary: Search for an archive based on its internal ID.
+      operationId: searchArchiveUsingGET
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: Internal ID of the archive.
+          required: true
+          type: string
+        - name: limit
+          in: query
+          description: How many files should be returned?
+          required: false
+          type: integer
+          default: 1000
+          format: int32
+          allowEmptyValue: false
+        - name: offset
+          in: query
+          description: How many files should be skipped from the beginning?
+          required: false
+          type: integer
+          default: 0
+          format: int32
+          allowEmptyValue: false
+        - name: withFile
+          in: query
+          description: An option to include all files in return.
+          required: false
+          type: boolean
+          default: false
+          allowEmptyValue: false
+          x-example: false
+      responses:
+        '200':
+          description: Search success
+          schema:
+            type: string
+        '404':
+          description: Archive not found
+          schema:
+            type: string
+      deprecated: false
+securityDefinitions:
+  basicAuth:
+    type: basic
+  bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+definitions:
+  ArchiveResponse:
+    type: object
+    properties:
+      nextVersions:
+        type: array
+        items:
+          $ref: '#/definitions/ArchiveResponse'
+      offlineId:
+        type: string
+      onlineId:
+        type: string
+      pid:
+        type: string
+      previousVersion:
+        $ref: '#/definitions/ArchiveResponse'
+    title: ArchiveResponse
+  DownloadRequest:
+    type: object
+    properties:
+      archiveId:
+        type: string
+      files:
+        type: array
+        items:
+          type: string
+    title: DownloadRequest
+  File:
+    type: object
+    properties:
+      absolute:
+        type: boolean
+      absoluteFile:
+        $ref: '#/definitions/File'
+      absolutePath:
+        type: string
+      canonicalFile:
+        $ref: '#/definitions/File'
+      canonicalPath:
+        type: string
+      directory:
+        type: boolean
+      file:
+        type: boolean
+      freeSpace:
+        type: integer
+        format: int64
+      hidden:
+        type: boolean
+      name:
+        type: string
+      parent:
+        type: string
+      parentFile:
+        $ref: '#/definitions/File'
+      path:
+        type: string
+      totalSpace:
+        type: integer
+        format: int64
+      usableSpace:
+        type: integer
+        format: int64
+    title: File
+  InputStream:
+    type: object
+    title: InputStream
+  Resource:
+    type: object
+    properties:
+      description:
+        type: string
+      file:
+        $ref: '#/definitions/File'
+      filename:
+        type: string
+      inputStream:
+        $ref: '#/definitions/InputStream'
+      open:
+        type: boolean
+      readable:
+        type: boolean
+      uri:
+        $ref: '#/definitions/URI'
+      url:
+        $ref: '#/definitions/URL'
+    title: Resource
+  ResponseMessage:
+    type: object
+    properties:
+      httpCode:
+        type: integer
+        format: int32
+        description: The HTTP status code
+      httpStatus:
+        type: string
+        description: The HTTP status
+        enum:
+          - 100 CONTINUE
+          - 101 SWITCHING_PROTOCOLS
+          - 102 PROCESSING
+          - 103 CHECKPOINT
+          - 200 OK
+          - 201 CREATED
+          - 202 ACCEPTED
+          - 203 NON_AUTHORITATIVE_INFORMATION
+          - 204 NO_CONTENT
+          - 205 RESET_CONTENT
+          - 206 PARTIAL_CONTENT
+          - 207 MULTI_STATUS
+          - 208 ALREADY_REPORTED
+          - 226 IM_USED
+          - 300 MULTIPLE_CHOICES
+          - 301 MOVED_PERMANENTLY
+          - 302 FOUND
+          - 302 MOVED_TEMPORARILY
+          - 303 SEE_OTHER
+          - 304 NOT_MODIFIED
+          - 305 USE_PROXY
+          - 307 TEMPORARY_REDIRECT
+          - 308 PERMANENT_REDIRECT
+          - 400 BAD_REQUEST
+          - 401 UNAUTHORIZED
+          - 402 PAYMENT_REQUIRED
+          - 403 FORBIDDEN
+          - 404 NOT_FOUND
+          - 405 METHOD_NOT_ALLOWED
+          - 406 NOT_ACCEPTABLE
+          - 407 PROXY_AUTHENTICATION_REQUIRED
+          - 408 REQUEST_TIMEOUT
+          - 409 CONFLICT
+          - 410 GONE
+          - 411 LENGTH_REQUIRED
+          - 412 PRECONDITION_FAILED
+          - 413 PAYLOAD_TOO_LARGE
+          - 413 REQUEST_ENTITY_TOO_LARGE
+          - 414 URI_TOO_LONG
+          - 414 REQUEST_URI_TOO_LONG
+          - 415 UNSUPPORTED_MEDIA_TYPE
+          - 416 REQUESTED_RANGE_NOT_SATISFIABLE
+          - 417 EXPECTATION_FAILED
+          - 418 I_AM_A_TEAPOT
+          - 419 INSUFFICIENT_SPACE_ON_RESOURCE
+          - 420 METHOD_FAILURE
+          - 421 DESTINATION_LOCKED
+          - 422 UNPROCESSABLE_ENTITY
+          - 423 LOCKED
+          - 424 FAILED_DEPENDENCY
+          - 425 TOO_EARLY
+          - 426 UPGRADE_REQUIRED
+          - 428 PRECONDITION_REQUIRED
+          - 429 TOO_MANY_REQUESTS
+          - 431 REQUEST_HEADER_FIELDS_TOO_LARGE
+          - 451 UNAVAILABLE_FOR_LEGAL_REASONS
+          - 500 INTERNAL_SERVER_ERROR
+          - 501 NOT_IMPLEMENTED
+          - 502 BAD_GATEWAY
+          - 503 SERVICE_UNAVAILABLE
+          - 504 GATEWAY_TIMEOUT
+          - 505 HTTP_VERSION_NOT_SUPPORTED
+          - 506 VARIANT_ALSO_NEGOTIATES
+          - 507 INSUFFICIENT_STORAGE
+          - 508 LOOP_DETECTED
+          - 509 BANDWIDTH_LIMIT_EXCEEDED
+          - 510 NOT_EXTENDED
+          - 511 NETWORK_AUTHENTICATION_REQUIRED
+      message:
+        type: string
+        description: The message used to provide more information
+      path:
+        type: string
+        description: The address where the request was sent to
+      pid:
+        type: string
+        description: PID of the uploaded data
+      timestamp:
+        type: string
+        format: date-time
+        description: The time when the request was made
+    title: ResponseMessage
+    description: The response from the server
+  SearchHit:
+    type: object
+    properties:
+      detail:
+        $ref: '#/definitions/SearchHitDetail'
+      id:
+        type: string
+      name:
+        type: string
+      score:
+        type: number
+        format: float
+      type:
+        type: string
+    title: SearchHit
+  SearchHitDetail:
+    type: object
+    properties:
+      created:
+        type: string
+        format: date-time
+      file_count:
+        type: integer
+        format: int32
+      id:
+        type: string
+      meta:
+        type: object
+      modified:
+        type: string
+        format: date-time
+      name:
+        type: string
+      size:
+        type: integer
+        format: int32
+      state:
+        type: string
+      type:
+        type: string
+    title: SearchHitDetail
+  SearchResults:
+    type: object
+    properties:
+      count:
+        type: integer
+        format: int32
+      hits:
+        type: array
+        items:
+          $ref: '#/definitions/SearchHit'
+      scroll:
+        type: string
+      total:
+        type: integer
+        format: int32
+    title: SearchResults
+  StreamingResponseBody:
+    type: object
+    title: StreamingResponseBody
+  TokenResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiredTime:
+        type: integer
+        format: int64
+      tokenType:
+        type: string
+    title: TokenResponse
+  TrackingInfo:
+    type: object
+    properties:
+      id:
+        type: string
+      message:
+        type: string
+      pid:
+        type: string
+      status:
+        type: string
+        enum:
+          - PROCESSING
+          - SUCCESS
+          - FAILED
+      timestamp:
+        type: string
+        format: date-time
+      username:
+        type: string
+    title: TrackingInfo
+  TrackingResponse:
+    type: object
+    properties:
+      archiveResponse:
+        $ref: '#/definitions/ArchiveResponse'
+      trackingInfo:
+        $ref: '#/definitions/TrackingInfo'
+    title: TrackingResponse
+  URI:
+    type: object
+    properties:
+      absolute:
+        type: boolean
+      authority:
+        type: string
+      fragment:
+        type: string
+      host:
+        type: string
+      opaque:
+        type: boolean
+      path:
+        type: string
+      port:
+        type: integer
+        format: int32
+      query:
+        type: string
+      rawAuthority:
+        type: string
+      rawFragment:
+        type: string
+      rawPath:
+        type: string
+      rawQuery:
+        type: string
+      rawSchemeSpecificPart:
+        type: string
+      rawUserInfo:
+        type: string
+      scheme:
+        type: string
+      schemeSpecificPart:
+        type: string
+      userInfo:
+        type: string
+    title: URI
+  URL:
+    type: object
+    properties:
+      authority:
+        type: string
+      content:
+        type: object
+      defaultPort:
+        type: integer
+        format: int32
+      file:
+        type: string
+      host:
+        type: string
+      path:
+        type: string
+      port:
+        type: integer
+        format: int32
+      protocol:
+        type: string
+      query:
+        type: string
+      ref:
+        type: string
+      userInfo:
+        type: string
+    title: URL
