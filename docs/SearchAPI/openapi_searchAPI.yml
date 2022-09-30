@@ -182,10 +182,13 @@ definitions:
     properties:
       title:
         type: string
+        example: Siddhartha
       year:
         type: integer
+        example: 1922
       creator:
         type: string
+        example: Hermann Hesse
       publisher:
         type: string
       filetree:
