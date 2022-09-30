@@ -32,6 +32,8 @@ paths:
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/extended"
+        - $ref: "#/parameters/metadatasearch"
+        - $ref: "#/parameters/fulltextsearch"
         - $ref: "#/parameters/q[0][field]"
         - $ref: "#/parameters/q[0][value]"
         - $ref: "#/parameters/q[1][field]"
@@ -144,6 +146,18 @@ parameters:
     type: boolean
     description: If false, an initial search is started and no facets or filters are applied
     default: false
+  metadatasearch:
+    name: metadatasearch
+    in: query
+    type: boolean
+    description: If true, search over the metadata
+    default: true
+  fulltextsearch:
+    name: fulltextsearch
+    in: query
+    type: boolean
+    description: If true, search over the fulltexts
+    default: false
   q[0][field]:
     name: q[0][field]
     in: query
@@ -225,8 +239,69 @@ definitions:
     description: "Representation of search results"
     type: object
     properties:
-      filegroups:
+      hits:
+        type: integer
+        example: 899
+      offset:
+        type: integer
+        example: 0
+      limit:
+        type: integer
+        example: 15
+      metadatasearch:
+        type: boolean
+      fulltextsearch:
+        type: boolean
+      searchterm:
         type: string
+        example: "Brahmanen"
+      hitlist:
+        type: array
+        items:
+          type: object
+          properties:
+            title:
+              type: string
+              example: "Siddhartha: Eine indische Dichtung"
+            year:
+              type: integer
+              example: 1922
+            creator:
+              type: string
+              example: Hermann Hesse 
+            fulltextsnippets:
+              type: array
+              items: 
+                type: object
+                properties:
+                  value:
+                    type: string
+                    example: "...Sohn des Brahmanen..."
+                  page:
+                    type: integer
+                    example: 7
+      facetes:
+        type: array
+        items:
+          type: object
+          properties: 
+            name:
+              type: string
+              example: Creators
+            values:
+              type: array
+              items: 
+                type: object
+                properties:
+                  value:
+                    type: string
+                    example: Hermann Hesse
+                  occurences:
+                    type: integer
+                    example: 6
+                
+            
+      
   
   # iiifonpage:
   #   description: "iiif Search API based page search, response manifest object"
