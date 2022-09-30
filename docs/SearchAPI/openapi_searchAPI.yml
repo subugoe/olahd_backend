@@ -28,61 +28,35 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: "#/parameters/term"
+        - $ref: "#/parameters/searchterm"
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/extended"
         - $ref: "#/parameters/q[0][field]"
-        - $ref: "#/parameters/q[1][value]"
-        - $ref: "#/parameters/q[0][field]"
+        - $ref: "#/parameters/q[0][value]"
+        - $ref: "#/parameters/q[1][field]"
         - $ref: "#/parameters/q[1][value]"
       responses:
         '200':
           description: OK
-  /search/{filter}:
+          schema:
+            type: object
+            $ref: '#/definitions/resultset'
+        '204':
+          description: "Empty search result"
+        '400':
+          description: "Wrong API request"
+        # '404':
+        #   description: "Record not found"
+        '500':
+          description: "Something went wrong"
+  
+  /search/{id}:
     get:
       tags:
         - search
       produces:
         - application/json
-      parameters:
-        - $ref: "#/parameters/term"
-        - $ref: "#/parameters/filter"
-        - $ref: "#/parameters/limit"
-        - $ref: "#/parameters/offset"
-        - $ref: "#/parameters/q[0][field]"
-        - $ref: "#/parameters/q[1][value]"
-        - $ref: "#/parameters/q[0][field]"
-        - $ref: "#/parameters/q[1][value]"
-      responses:
-        '200':
-          description: OK
-  /search/iiifpagesearch/term:
-    get:
-      tags:
-        - iiifsearch
-      produces:
-        - application/json
-      parameters:
-        - $ref: "#/definitions/iiifonpage"
-      responses:
-        '200':
-          description: OK
-  /search/iiifdocsearch/term:
-    get:
-      tags:
-        - iiifsearch
-      produces:
-        - application/json
-      parameters:
-        - $ref: "#/definitions/iiifindoc"
-      responses:
-        '200':
-          description: OK
-
-  /search/detail/{id}:
-    get:
-      tags:
-        - search
       parameters:
         - $ref: "#/parameters/id"
       responses:
@@ -91,6 +65,57 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/detail'
+        '204':
+          description: "Empty search result"
+        '400':
+          description: "Wrong API request"
+        '404':
+          description: "Record not found"
+        '500':
+          description: "Something went wrong"
+
+  # /search/{filter}:
+  #   get:
+  #     tags:
+  #       - search
+  #     produces:
+  #       - application/json
+  #     parameters:
+  #       - $ref: "#/parameters/searchterm"
+  #       - $ref: "#/parameters/filter"
+  #       - $ref: "#/parameters/limit"
+  #       - $ref: "#/parameters/offset"
+  #       - $ref: "#/parameters/q[0][field]"
+  #       - $ref: "#/parameters/q[0][value]"
+  #       - $ref: "#/parameters/q[1][field]"
+  #       - $ref: "#/parameters/q[1][value]"
+  #     responses:
+  #       '200':
+  #         description: OK
+
+  # /search/iiifpagesearch/searchterm:
+  #   get:
+  #     tags:
+  #       - iiifsearch
+  #     produces:
+  #       - application/json
+  #     parameters:
+  #       - $ref: "#/definitions/iiifonpage"
+  #     responses:
+  #       '200':
+  #         description: OK
+  # /search/iiifdocsearch/searchterm:
+  #   get:
+  #     tags:
+  #       - iiifsearch
+  #     produces:
+  #       - application/json
+  #     parameters:
+  #       - $ref: "#/definitions/iiifindoc"
+  #     responses:
+  #       '200':
+  #         description: OK
+
 parameters:
   id:
     name: id
@@ -98,7 +123,7 @@ parameters:
     description: "The ID of the archive object to present in the detail view."
     required: true
     type: "string"
-  term:
+  searchterm:
     name: searchterm
     in: query
     type: string
@@ -113,6 +138,12 @@ parameters:
     in: query
     type: integer
     description: 'Starting point of the next resultset from search results to support pagination'
+  extended:
+    name: extended
+    in: query
+    type: boolean
+    description: If false, an initial search is started and no facets or filters are applied
+    default: false
   q[0][field]:
     name: q[0][field]
     in: query
@@ -133,16 +164,16 @@ parameters:
     in: query
     type: string
     description: 'Contains the facete value of the second facete (Array position 1), e.g. "1900"'
-  filter: 
-    name: filter
-    in: path
-    description: "The filter is a comma separated list from previus search(es), to save the context (current resultset) and start an new search from this context. This is more a kind of filtering the resultset with the new search term."
-    required: true
-    type: "array"
-    items: {
-      type: "string"
-    }
-    collectionFormat: "csv"
+  # filter: 
+  #   name: filter
+  #   in: path
+  #   description: "The filter is a comma separated list from previus search(es), to save the context (current resultset) and start an new search from this context. This is more a kind of filtering the resultset with the new search term."
+  #   required: true
+  #   type: "array"
+  #   items: {
+  #     type: "string"
+  #   }
+  #   collectionFormat: "csv"
 
 definitions:
   detail:
@@ -167,9 +198,36 @@ definitions:
   filetree:
     description: "Representation of the filestructure"
     type: object
-  iiifonpage:
-    description: "iiif Search API based page search, response manifest object"
+    properties:
+      data:
+        type: object
+        properties: 
+          filegroups:
+            type: array
+            items:
+                type: object
+                properties: 
+                  filegroupname:
+                    type: string
+                    example: OCR-D-IMG
+                  filenames:
+                    type: array
+                    items:
+                      type: string
+                      example: 00000001.tif
+  
+  # data/OCR-D-IMG/00000001.tif
+
+  resultset:
+    description: "Representation of search results"
     type: object
-  iiifindoc:
-    description: "iiif Search API based document search, response manifest object"
-    type: object
+    properties:
+      filegroups:
+        type: string
+  
+  # iiifonpage:
+  #   description: "iiif Search API based page search, response manifest object"
+  #   type: object
+  # iiifindoc:
+  #   description: "iiif Search API based document search, response manifest object"
+  #   type: object
