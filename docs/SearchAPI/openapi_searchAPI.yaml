@@ -34,15 +34,14 @@ paths:
         - $ref: "#/parameters/extended"
         - $ref: "#/parameters/metadatasearch"
         - $ref: "#/parameters/fulltextsearch"
-        - $ref: "#/parameters/q[0][field]"
-        - $ref: "#/parameters/q[0][value]"
-        - $ref: "#/parameters/q[1][field]"
-        - $ref: "#/parameters/q[1][value]"
+        - $ref: "#/parameters/q0field"
+        - $ref: "#/parameters/q0value"
+        - $ref: "#/parameters/q1field"
+        - $ref: "#/parameters/q1value"
       responses:
         '200':
           description: OK
           schema:
-            type: object
             $ref: '#/definitions/resultset'
         '204':
           description: "Empty search result"
@@ -65,7 +64,6 @@ paths:
         '200':
           description: OK
           schema:
-            type: object
             $ref: '#/definitions/detail'
         '204':
           description: "Empty search result"
@@ -87,10 +85,10 @@ paths:
   #       - $ref: "#/parameters/filter"
   #       - $ref: "#/parameters/limit"
   #       - $ref: "#/parameters/offset"
-  #       - $ref: "#/parameters/q[0][field]"
-  #       - $ref: "#/parameters/q[0][value]"
-  #       - $ref: "#/parameters/q[1][field]"
-  #       - $ref: "#/parameters/q[1][value]"
+  #       - $ref: "#/parameters/q0field"
+  #       - $ref: "#/parameters/q0value"
+  #       - $ref: "#/parameters/q1field"
+  #       - $ref: "#/parameters/q1value"
   #     responses:
   #       '200':
   #         description: OK
@@ -158,23 +156,23 @@ parameters:
     type: boolean
     description: If true, search over the fulltexts
     default: false
-  q[0][field]:
-    name: q[0][field]
+  q0field:
+    name: q0field
     in: query
     type: string
     description: 'Contains the facete name of the first facete (Array position 0), e.g. "author". The number of field query parameters (q[][field]) is not fixed, but must fit to the value parameters.'
-  q[0][value]:
-    name: q[0][value]
+  q0value:
+    name: q0value
     in: query
     type: string
     description: 'Contains the facete value of the first facete (Array position 0), e.g. "Goethe". The number of field query parameters (q[][value]) is not fixed, but must fit to the field parameters.'
-  q[1][field]:
-    name: q[1][field]
+  q1field:
+    name: q1field
     in: query
     type: string
     description: 'Contains the facete name of the second facete (Array position 1), e.g. "year". The number of field query parameters (q[][field]) is not fixed, but must fit to the value parameters.'
-  q[1][value]:
-    name: q[1][value]
+  q1value:
+    name: q1value
     in: query
     type: string
     description: 'Contains the facete value of the second facete (Array position 1), e.g. "1900"'
@@ -206,7 +204,6 @@ definitions:
       publisher:
         type: string
       filetree:
-        type: object
         $ref: "#/definitions/filetree"
     required:
     - title
