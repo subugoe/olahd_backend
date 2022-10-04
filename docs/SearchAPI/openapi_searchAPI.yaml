@@ -162,7 +162,7 @@ parameters:
     in: query
     type: string
     description: Defines sorting fields and direction as a comma separated list according to the following pattern field|{asc|desc}
-    default: true
+    default: title|asc
   q0field:
     name: q0field
     in: query
@@ -372,7 +372,7 @@ definitions:
                     example: 7
                   pagepath:
                     type: string
-                    example: "OCR-D-IMG/00000001.tif"
+                    example: "OCR-D-IMG/00000007.tif"
       facetes:
         type: array
         items:
