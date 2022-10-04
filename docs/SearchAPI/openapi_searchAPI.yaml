@@ -34,6 +34,7 @@ paths:
         - $ref: "#/parameters/extended"
         - $ref: "#/parameters/metadatasearch"
         - $ref: "#/parameters/fulltextsearch"
+        - $ref: "#/parameters/sort"
         - $ref: "#/parameters/q0field"
         - $ref: "#/parameters/q0value"
         - $ref: "#/parameters/q1field"
@@ -156,6 +157,12 @@ parameters:
     type: boolean
     description: If true, search over the fulltexts
     default: false
+  sort:
+    name: sort
+    in: query
+    type: string
+    description: Defines sorting fields and direction as a comma separated list according to the following pattern field|{asc|desc}
+    default: true
   q0field:
     name: q0field
     in: query
@@ -192,17 +199,59 @@ definitions:
     description: "Descibes the details of a search hit."
     type: object
     properties:
+      PID:
+        type: string
+        example: "21.T11998/0000-001C-350F-7"
+      ID:
+        type: string
+        example: "PPN4711"
       title:
         type: string
-        example: Siddhartha
-      year:
+        example: "Siddhartha"
+      subtitle:
+        type: string
+        example: "Eine indische Dichtung"
+      placeOfPublish:
+        type: string
+        example: Berlin
+      yearOfPublish:
         type: integer
         example: 1922
-      creator:
-        type: string
-        example: Hermann Hesse
       publisher:
         type: string
+        example: Fischer
+      creator:
+        type: string
+        example: Hermann Hesse 
+      genre:
+        type: string
+        example: prose
+      label:
+        type: string
+        example: monograph
+      classification:
+        type: string
+        example: 
+          - 17.97 Texte eines einzelnen Autors
+          - 18.10 Deutsche Literatur
+      copyright:
+        type: string
+        example: ???
+      accesscondition:
+        type: string
+        example: ???
+      license:
+        type: string
+        example: ???
+      licenseURL:
+        type: string
+        example: ???
+      owner:
+        type: string
+        example: ???
+      ownerURL:
+        type: string
+        example: ???  
       filetree:
         $ref: "#/definitions/filetree"
     required:
@@ -216,6 +265,18 @@ definitions:
       data:
         type: object
         properties: 
+          metsfile:
+            type: string
+            example: mets.xml
+          bagitfiles:
+            type: array
+            items:
+              type: string
+              example:
+                - bag-info.txt
+                - bagit.txt
+                - manifest-sha512.txt
+                - tagmanifest-sha512.txt
           filegroups:
             type: array
             items:
@@ -228,7 +289,10 @@ definitions:
                     type: array
                     items:
                       type: string
-                      example: 00000001.tif
+                      example: 
+                        - 00000001.tif
+                        - 00000002.tif
+                        - 00000003.tif
   
   # data/OCR-D-IMG/00000001.tif
 
@@ -252,20 +316,47 @@ definitions:
       searchterm:
         type: string
         example: "Brahmanen"
+      sort:
+        type: string
+        example: creator|asc,yearOfPublish|asc
       hitlist:
         type: array
         items:
           type: object
           properties:
+            PID:
+              type: string
+              example: "21.T11998/0000-001C-350F-7"
+            ID:
+              type: string
+              example: "PPN4711"
             title:
               type: string
-              example: "Siddhartha: Eine indische Dichtung"
-            year:
+              example: "Siddhartha"
+            subtitle:
+              type: string
+              example: "Eine indische Dichtung"
+            placeOfPublish:
+              type: string
+              example: Berlin
+            yearOfPublish:
               type: integer
               example: 1922
+            publisher:
+              type: string
+              example: Fischer
             creator:
               type: string
-              example: Hermann Hesse 
+              example: Hermann Hesse
+            copyright:
+              type: string
+              example: ???
+            accesscondition:
+              type: string
+              example: ???
+            license:
+              type: string
+              example: ???
             fulltextsnippets:
               type: array
               items: 
@@ -273,10 +364,15 @@ definitions:
                 properties:
                   value:
                     type: string
-                    example: "...Sohn des Brahmanen..."
+                    example: 
+                      - "...Sohn des Brahmanen..."
+                      - "...unter den Brahmanen..."
                   page:
                     type: integer
                     example: 7
+                  pagepath:
+                    type: string
+                    example: "OCR-D-IMG/00000001.tif"
       facetes:
         type: array
         items:
