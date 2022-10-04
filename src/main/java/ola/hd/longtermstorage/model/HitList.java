@@ -3,18 +3,22 @@ package ola.hd.longtermstorage.model;
 public class HitList {
 
 	    private String title;
-	    private String year;
+		private String subtitle;
+		private String placeOfPublish;
+		private int yearOfPublish;
+		private String publisher;
 	    private String creator;
 	    private FulltextSnippets fulltextSnippets;
 
-	public HitList(String title, String year, String creator, FulltextSnippets fulltextSnippets) {
+	public HitList(String title, String subtitle, String placeOfPublish, int yearOfPublish, String publisher, String creator, FulltextSnippets fulltextSnippets) {
 		this.title = title;
-		this.year = year;
+		this.subtitle = subtitle;
+		this.placeOfPublish = placeOfPublish;
+		this.yearOfPublish = yearOfPublish;
+		this.publisher = publisher;
 		this.creator = creator;
 		this.fulltextSnippets = fulltextSnippets;
 	}
-
-	//getters and setters
 
 	public String getTitle() {
 		return title;
@@ -24,12 +28,36 @@ public class HitList {
 		this.title = title;
 	}
 
-	public String getYear() {
-		return year;
+	public String getSubtitle() {
+		return subtitle;
 	}
 
-	public void setYear(String year) {
-		this.year = year;
+	public void setSubtitle(String subtitle) {
+		this.subtitle = subtitle;
+	}
+
+	public String getPlaceOfPublish() {
+		return placeOfPublish;
+	}
+
+	public void setPlaceOfPublish(String placeOfPublish) {
+		this.placeOfPublish = placeOfPublish;
+	}
+
+	public int getYearOfPublish() {
+		return yearOfPublish;
+	}
+
+	public void setYearOfPublish(int yearOfPublish) {
+		this.yearOfPublish = yearOfPublish;
+	}
+
+	public String getPublisher() {
+		return publisher;
+	}
+
+	public void setPublisher(String publisher) {
+		this.publisher = publisher;
 	}
 
 	public String getCreator() {
