@@ -1,16 +1,25 @@
 package ola.hd.longtermstorage.model;
 
-import java.io.File;
 
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+@Document(indexName = "detail", type = "detail")
 public class Detail {
 
+	@Field(type = FieldType.Text)
 	private String title;
+	@Field(type = FieldType.Integer)
 	private int year;
+	@Field(type = FieldType.Text)
 	private String creator;
+	@Field(type = FieldType.Text)
 	private String publisher;
-	private File fileTree;
+	@Field(type = FieldType.Text)
+	private String fileTree;
 
-	public Detail(String title, int year, String creator, String publisher, File fileTree) {
+	public Detail(String title, int year, String creator, String publisher, String fileTree) {
 		this.title = title;
 		this.year = year;
 		this.creator = creator;
@@ -50,11 +59,11 @@ public class Detail {
 		this.publisher = publisher;
 	}
 
-	public File getFileTree() {
+	public String getFileTree() {
 		return fileTree;
 	}
 
-	public void setFileTree(File fileTree) {
+	public void setFileTree(String fileTree) {
 		this.fileTree = fileTree;
 	}
 

@@ -1,14 +1,27 @@
 package ola.hd.longtermstorage.model;
 
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+@Document(indexName = "resultSet", type = "resultSet")
 public class ResultSet {
 
+		@Field(type = FieldType.Integer)
 		private int hits;
+		@Field(type = FieldType.Integer)
 		private int offset;
+		@Field(type = FieldType.Integer)
 		private	int limit;
+		@Field(type = FieldType.Boolean)
 		private	boolean metadataSearch;
+		@Field(type = FieldType.Boolean)
 		private	boolean fulltextSearch;
+	 	@Field(type = FieldType.Text)
 		private	String searchTerm;
+		@Field(type = FieldType.Text)
 		private HitList hitlist;
+		@Field(type = FieldType.Text)
 		private Facets facets;
 
 	    public ResultSet(String searchTerm, int hits, int offset, int limit, boolean metadataSearch, boolean fulltextSearch, HitList hitlist, Facets facets ) {

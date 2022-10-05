@@ -1,7 +1,15 @@
 package ola.hd.longtermstorage.model;
 
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+@Document(indexName = "facets", type = "facets")
 public class Facets {
+
+    @Field(type = FieldType.Text)
     String name;
+    @Field(type = FieldType.Text)
     Values values;
 
     public Facets(String name, Values values) {

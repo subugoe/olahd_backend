@@ -1,7 +1,15 @@
 package ola.hd.longtermstorage.model;
 
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+@Document(indexName = "fulltextSnippets", type = "fulltextSnippets")
 public class FulltextSnippets {
+
+    @Field(type = FieldType.Text)
     private String value;
+    @Field(type = FieldType.Integer)
     private int page;
 
     public FulltextSnippets(String value, int page) {
