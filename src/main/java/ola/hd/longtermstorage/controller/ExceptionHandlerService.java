@@ -62,7 +62,7 @@ public class ExceptionHandlerService extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex,
             HttpHeaders headers, HttpStatus status, WebRequest request) {
-        String message = "Request parameter(s) missing.";
+        String message = "Request parameter missing: " + ex.getParameterName();
         String uri = request.getDescription(false).replace("uri=", "");
         return new ResponseEntity<>(new ResponseMessage(status, message, uri), status);
     }
