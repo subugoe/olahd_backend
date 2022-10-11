@@ -14,4 +14,7 @@ public class ErrMsg {
     public static final String PARAM_PATH_IS_EMPTY = "Parameter path may not be empty";
     public static final String ID_NOT_FOUND = "no archive available for provided id";
     public static final String METS_NOT_FOUND = "mets-file not found in archive";
+    public static final String RECORD_NOT_FOUND = "Record not found";
+    public static final String ID_OR_TERM_MISSING = "One of the Request parameters id and searchterm is required";
+
 }

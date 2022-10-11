@@ -12,6 +12,7 @@ import ola.hd.longtermstorage.domain.FilterSearchRequest;
 import ola.hd.longtermstorage.elasticsearch.mapping.LogicalEntry;
 import ola.hd.longtermstorage.elasticsearch.mapping.PhysicalEntry;
 import ola.hd.longtermstorage.exceptions.ElasticServiceException;
+import ola.hd.longtermstorage.model.Detail;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -191,4 +192,52 @@ public class ElasticsearchService {
             throw new ElasticServiceException("Error executing filter-search request", e);
         }
     }
+
+    /**
+     * Get logical index-element by pid and with IsFirst = true.
+     *
+     * After saving, each ocrd-zip is indexed in the logical index. There can be multiple entries for
+     * an ocrd-zip but only one of them with the flag IsFirst set to true. Each entry has a pid.
+     * This query finds the logical entries for a pid with IsFirst set to true.
+     *
+     * @param pid - PID of ocrd-zip for which the index entry is requested
+     * @return
+     * @throws IOException
+     */
+    public Detail getDetailsForPid(String pid) {
+        SearchRequest request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        request.source(sourceBuilder);
+        sourceBuilder.query(QueryBuilders.boolQuery()
+                .must(QueryBuilders.matchQuery("pid", pid))
+                .must(QueryBuilders.matchQuery("IsFirst", true)))
+                .size(1)
+                .fetchSource(new String[]{"bytitle", "bycreator", "publish_infos"}, null);
+
+        Map<String, Object> hit = null;
+        try {
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHits hits = response.getHits();
+            if (hits.getTotalHits() == 0 ) {
+                return null;
+            } else if (hits.getTotalHits() > 1) {
+                throw new ElasticServiceException("Found more than one hit (IsFirst is true) in the"
+                        + " logical Index for a pid");
+            }
+            hit = hits.getAt(0).getSourceAsMap();
+        } catch (IOException e) {
+            throw new ElasticServiceException("Error executing search request", e);
+        }
+        String title = hit.getOrDefault("bytitle", "").toString();
+        String creator = hit.getOrDefault("bycreator", "").toString();
+        String publisher = ElasticUtils.readPublisherFromSearchHit(hit);
+        Integer year = ElasticUtils.readYearFromSearchHit(hit);
+        // TODO: fileTree must be provided as an object it cannot be a string. Models have to be
+        //       changed
+        String fileTree = "";
+
+        Detail res = new Detail(title, year, creator, publisher, fileTree);
+        return res;
+    }
+
 }

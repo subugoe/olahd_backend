@@ -15,14 +15,13 @@ import java.util.Map;
 import ola.hd.longtermstorage.domain.Archive;
 import ola.hd.longtermstorage.domain.ArchiveResponse;
 import ola.hd.longtermstorage.domain.FilterSearchRequest;
-import ola.hd.longtermstorage.domain.SearchHit;
-import ola.hd.longtermstorage.domain.SearchHitDetail;
-import ola.hd.longtermstorage.domain.SearchRequest;
-import ola.hd.longtermstorage.domain.SearchResults;
 import ola.hd.longtermstorage.elasticsearch.ElasticsearchService;
+import ola.hd.longtermstorage.model.Detail;
+import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import ola.hd.longtermstorage.service.SearchService;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.search.SearchHits;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,39 +51,6 @@ public class SearchController {
         this.archiveManagerService = archiveManagerService;
         this.archiveRepository = archiveRepository;
         this.elasticsearchService = elasticsearchService;
-    }
-
-    @ApiOperation(value = "Search on archive.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Search success", response = SearchResults.class)
-    })
-    @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> search(
-            @RequestParam(name = "q") @ApiParam(value = "The query used to search.", required = true)
-            String query,
-            @RequestParam(defaultValue = "25") @ApiParam(value = "Max returned results.", example = "25")
-            int limit,
-            @RequestParam(defaultValue = "") @ApiParam(value = "Scroll ID for pagination")
-            String scroll) throws IOException {
-
-        SearchRequest searchRequest = new SearchRequest(query, limit, scroll);
-        SearchResults results = searchService.search(searchRequest);
-
-        ObjectMapper mapper = new ObjectMapper();
-        for (SearchHit hit : results.getHits()) {
-            String data;
-
-            if (hit.getType().equals("file")) {
-                data = new String(archiveManagerService.getFile(hit.getId(), hit.getName(), true, true).getContent());
-            } else {
-                data = archiveManagerService.getArchiveInfo(hit.getId(), false, 0, 0, true);
-            }
-
-            SearchHitDetail detail = mapper.readValue(data, SearchHitDetail.class);
-            hit.setDetail(detail);
-        }
-
-        return ResponseEntity.ok(results);
     }
 
     @ApiOperation(value = "Search for an archive based on its internal (CDStar-) ID or PID.")
@@ -287,4 +253,67 @@ public class SearchController {
             .replaceAll("\"index\"\\s*:", "\"_index\":");
         return ResponseEntity.ok(jsonString);
     }
+
+    /**
+     * Search the index
+     *
+     * @param id
+     * @param searchterm
+     * @param limit
+     * @param offset
+     * @param extended
+     * @param isGT
+     * @param metadatasearch
+     * @param fulltextsearch
+     * @param sort
+     * @param field
+     * @param value
+     * @return
+     * @throws IOException
+     */
+    @ApiOperation(value = "Facet Search")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Ok")
+    })
+    @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> search(
+            @RequestParam(required=false) @ApiParam(value = "The PID or the PPN of the work.", required = false)
+            String id,
+            @RequestParam(required=false) @ApiParam(value = "Search Term", required = false)
+            String searchterm,
+            @RequestParam(defaultValue="25") @ApiParam(value="Number of results in the hitlist from search results")
+            int limit,
+            @RequestParam(defaultValue="0") @ApiParam(value="Starting point of the next resultset from search results to support pagination")
+            int offset,
+            @RequestParam(defaultValue="false") @ApiParam(value="If false, an initial search is started and no facets or filters are applied")
+            boolean extended,
+            @RequestParam(defaultValue="false") @ApiParam(value="If true, search only for GT data")
+            boolean isGT,
+            @RequestParam(defaultValue="true") @ApiParam(value="If true, search over the metadata")
+            boolean metadatasearch,
+            @RequestParam(defaultValue="false") @ApiParam(value="If true, search over the fulltexts")
+            boolean fulltextsearch,
+            @RequestParam(defaultValue="title|asc") @ApiParam(value="Defines sorting fields and direction as a comma separated list according to the following pattern field|{asc|desc}")
+            String sort,
+            @RequestParam(required=false) @ApiParam(value="Contains the facete names")
+            String[] field,
+            @RequestParam(required=false) @ApiParam(value="Contains the facete values")
+            String[] value
+            ) throws IOException {
+        if (StringUtils.isBlank(id) && StringUtils.isBlank(searchterm)) {
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.ID_OR_TERM_MISSING);
+        }
+        if (StringUtils.isNotBlank(id)) {
+            Detail detail = elasticsearchService.getDetailsForPid(id);
+            if (detail == null) {
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.RECORD_NOT_FOUND);
+            } else {
+                return ResponseEntity.ok(detail);
+            }
+        } else {
+            // TODO: to be implemented: make a facet search
+        }
+        return null;
+    }
+
 }
