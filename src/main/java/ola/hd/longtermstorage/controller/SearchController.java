@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import ola.hd.longtermstorage.domain.Archive;
 import ola.hd.longtermstorage.domain.ArchiveResponse;
-import ola.hd.longtermstorage.domain.FilterSearchRequest;
 import ola.hd.longtermstorage.elasticsearch.ElasticsearchService;
 import ola.hd.longtermstorage.model.Detail;
 import ola.hd.longtermstorage.msg.ErrMsg;
@@ -22,15 +21,12 @@ import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import ola.hd.longtermstorage.service.SearchService;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.search.SearchHits;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
@@ -224,33 +220,6 @@ public class SearchController {
         }
         ObjectMapper mapper = new ObjectMapper();
         String jsonString = mapper.writeValueAsString(docId);
-        return ResponseEntity.ok(jsonString);
-    }
-
-    /**
-     * Search with filter functionality
-     *
-     * XXX: purpose of this function is to give a first draft/template for a filter/facet search.
-     *      remove if not longer needed/used in the frontend
-     *
-     *
-     * @return
-     * @throws IOException
-     */
-    @ApiOperation(value = "Search index with filters")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Search success")
-    })
-    @PostMapping(value = "/search-es/filter-search", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> filterSearch(@RequestBody FilterSearchRequest filter) throws IOException {
-        SearchHits hits = elasticsearchService.filterSearch(filter);
-        ObjectMapper mapper = new ObjectMapper();
-        /* if elasticsearch is queried via kibana or cmd, the names are _source, _id and _index. So
-         * this is changed here for now to be interchangeable while developing*/
-        String jsonString = mapper.writeValueAsString(hits)
-            .replaceAll("\"sourceAsMap\"\\s*:", "\"_source\":")
-            .replaceAll("\"id\"\\s*:", "\"_id\":")
-            .replaceAll("\"index\"\\s*:", "\"_index\":");
         return ResponseEntity.ok(jsonString);
     }
 

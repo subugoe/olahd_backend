@@ -4,23 +4,16 @@ import static ola.hd.longtermstorage.Constants.LOGICAL_INDEX_NAME;
 import static ola.hd.longtermstorage.Constants.PHYSICAL_INDEX_NAME;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import ola.hd.longtermstorage.domain.FilterSearchRequest;
-import ola.hd.longtermstorage.elasticsearch.mapping.LogicalEntry;
-import ola.hd.longtermstorage.elasticsearch.mapping.PhysicalEntry;
 import ola.hd.longtermstorage.exceptions.ElasticServiceException;
 import ola.hd.longtermstorage.model.Detail;
-import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -37,10 +30,6 @@ import org.springframework.stereotype.Service;;
 @Service
 public class ElasticsearchService {
 
-    @Autowired
-    private LogicalRepository logicalRepository;
-    @Autowired
-    private PhysicalRepository physicalRepository;
     @Autowired
     private RestHighLevelClient client;
 
@@ -87,41 +76,6 @@ public class ElasticsearchService {
     }
 
     /**
-     * Test method for fulltext search
-     *
-     * TODO: remove if not needed/used somewhere
-     * @param text
-     * @return
-     */
-    public List<String> searchFulltext(String text) {
-        List<String> result = new ArrayList<>();
-        text = text.replaceAll(" ", "%20");
-        for (PhysicalEntry entry: physicalRepository.fulltextSearch(text)) {
-            /* TODO: Logical-index does not yet contain link to corresponding OCRD-ZIP. This should
-             * be returned here instead*/
-            result.add(entry.getFilename());
-        }
-        return result;
-    }
-
-    /**
-     * search logical index for creator
-     *
-     * TODO: remove if not needed/used somewhere
-     * @param name - name or part of name of creator
-     * @return id's of matching entries
-     */
-    public List<String> searchCreator(String text) {
-        List<String> result = new ArrayList<>();
-        for (LogicalEntry entry: logicalRepository.findByBycreatorContaining(text)) {
-            /* TODO: Logical-index does not yet contain link to corresponding OCRD-ZIP. This should
-             * be returned here instead*/
-            result.add(entry.getParent().getRecordIdentifier());
-        }
-        return result;
-    }
-
-    /**
      * Get the id for the first logical index element of a pid.
      *
      * After saving each ocrd-zip is indexed in the logical index. There can be multiple entries for
@@ -157,41 +111,41 @@ public class ElasticsearchService {
         }
     }
 
-    /**
-     * Execute a query with filters
-     *
-     * @return
-     * @throws IOException
-     */
-    public SearchHits filterSearch(FilterSearchRequest filter) throws IOException {
-        SearchRequest request = null;
-        if (Boolean.TRUE.equals(filter.getPages())) {
-            request = new SearchRequest().indices(LOGICAL_INDEX_NAME, PHYSICAL_INDEX_NAME);
-        } else {
-            request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
-        }
-
-        SearchSourceBuilder builder = new SearchSourceBuilder();
-        BoolQueryBuilder query = QueryBuilders.boolQuery();
-        if (StringUtils.isNotBlank(filter.getTitle())) {
-            query.must(QueryBuilders.matchQuery("bytitle", filter.getTitle()));
-        }
-        if (StringUtils.isNotBlank(filter.getAuthor())) {
-            query.must(QueryBuilders.matchQuery("bycreator", filter.getAuthor()));
-        }
-        if (filter.getYear() > 0) {
-            query.must(QueryBuilders.matchQuery("publish_infos.year_publish", filter.getYear()));
-        }
-        builder.query(query);
-        request.source(builder);
-
-        try {
-            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-            return response.getHits();
-        } catch (IOException e) {
-            throw new ElasticServiceException("Error executing filter-search request", e);
-        }
-    }
+//    /**
+//     * Execute a query with filters
+//     *
+//     * @return
+//     * @throws IOException
+//     */
+//    public SearchHits filterSearch(FilterSearchRequest filter) throws IOException {
+//        SearchRequest request = null;
+//        if (Boolean.TRUE.equals(filter.getPages())) {
+//            request = new SearchRequest().indices(LOGICAL_INDEX_NAME, PHYSICAL_INDEX_NAME);
+//        } else {
+//            request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
+//        }
+//
+//        SearchSourceBuilder builder = new SearchSourceBuilder();
+//        BoolQueryBuilder query = QueryBuilders.boolQuery();
+//        if (StringUtils.isNotBlank(filter.getTitle())) {
+//            query.must(QueryBuilders.matchQuery("bytitle", filter.getTitle()));
+//        }
+//        if (StringUtils.isNotBlank(filter.getAuthor())) {
+//            query.must(QueryBuilders.matchQuery("bycreator", filter.getAuthor()));
+//        }
+//        if (filter.getYear() > 0) {
+//            query.must(QueryBuilders.matchQuery("publish_infos.year_publish", filter.getYear()));
+//        }
+//        builder.query(query);
+//        request.source(builder);
+//
+//        try {
+//            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+//            return response.getHits();
+//        } catch (IOException e) {
+//            throw new ElasticServiceException("Error executing filter-search request", e);
+//        }
+//    }
 
     /**
      * Get logical index-element by pid and with IsFirst = true.
