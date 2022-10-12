@@ -163,7 +163,7 @@ public class ElasticsearchService {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         request.source(sourceBuilder);
         sourceBuilder.query(QueryBuilders.boolQuery()
-                .must(QueryBuilders.matchQuery("pid", pid))
+                .must(QueryBuilders.matchQuery("pid.keyword", pid))
                 .must(QueryBuilders.matchQuery("IsFirst", true)))
                 .size(1)
                 .fetchSource(new String[]{"bytitle", "bycreator", "publish_infos"}, null);

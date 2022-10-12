@@ -401,9 +401,6 @@
               }
             }
           },
-          "pid": {
-            "type": "keyword"
-          },
           "publish_infos": {
             "properties": {
               "place_info": {
