@@ -184,7 +184,7 @@ public class ElasticsearchService {
             throw new ElasticServiceException("Error executing search request", e);
         }
 
-        String PID = "";
+        String PID  = hit.getOrDefault("pid", "").toString();
         String ID = "";
         String title = hit.getOrDefault("bytitle", "").toString();
         String subtitle = "";
