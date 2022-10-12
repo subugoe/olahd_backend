@@ -1,30 +1,185 @@
 package ola.hd.longtermstorage.model;
 
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+
+import java.io.File;
 
 @Document(indexName = "detail", type = "detail")
 public class Detail {
 
 	@Field(type = FieldType.Text)
-	private String title;
-	@Field(type = FieldType.Integer)
-	private int year;
+	private String PID;
+	@Id
+	@Field(type = FieldType.Keyword)
+	private String ID;
 	@Field(type = FieldType.Text)
-	private String creator;
+	private String title;
+	@Field(type = FieldType.Text)
+	private String subtitle;
+	@Field(type = FieldType.Text)
+	private String placeOfPublish;
+	@Field(type = FieldType.Integer)
+	private int yearOfPublish;
 	@Field(type = FieldType.Text)
 	private String publisher;
 	@Field(type = FieldType.Text)
-	private String fileTree;
+	private String creator;
+	@Field(type = FieldType.Text)
+	private String genre;
+	@Field(type = FieldType.Text)
+	private String label;
+	@Field(type = FieldType.Text)
+	private String classification;
+	@Field(type = FieldType.Text)
+	private String copyright;
+	@Field(type = FieldType.Text)
+	private String license;
+	@Field(type = FieldType.Text)
+	private String licenseURL;
+	@Field(type = FieldType.Text)
+	private String owner;
+	@Field(type = FieldType.Text)
+	private String ownerURL;
+	@Field(type = FieldType.Boolean)
+	private boolean isGT;
+	@Field(type = FieldType.Text)
+	private FileTree fileTree;
 
-	public Detail(String title, int year, String creator, String publisher, String fileTree) {
+	public Detail(String PID, String ID, String title, String subtitle, String placeOfPublish, int yearOfPublish, String publisher, String creator, String genre, String label, String classification, String copyright, String license, String licenseURL, String owner, String ownerURL, boolean isGT, FileTree fileTree) {
+		this.PID = PID;
+		this.ID = ID;
 		this.title = title;
-		this.year = year;
-		this.creator = creator;
+		this.subtitle = subtitle;
+		this.placeOfPublish = placeOfPublish;
+		this.yearOfPublish = yearOfPublish;
 		this.publisher = publisher;
+		this.creator = creator;
+		this.genre = genre;
+		this.label = label;
+		this.classification = classification;
+		this.copyright = copyright;
+		this.license = license;
+		this.licenseURL = licenseURL;
+		this.owner = owner;
+		this.ownerURL = ownerURL;
+		this.isGT = isGT;
 		this.fileTree = fileTree;
+	}
+
+	public String getPID() {
+		return PID;
+	}
+
+	public void setPID(String PID) {
+		this.PID = PID;
+	}
+
+	public String getID() {
+		return ID;
+	}
+
+	public void setID(String ID) {
+		this.ID = ID;
+	}
+
+	public String getSubtitle() {
+		return subtitle;
+	}
+
+	public void setSubtitle(String subtitle) {
+		this.subtitle = subtitle;
+	}
+
+	public String getPlaceOfPublish() {
+		return placeOfPublish;
+	}
+
+	public void setPlaceOfPublish(String placeOfPublish) {
+		this.placeOfPublish = placeOfPublish;
+	}
+
+	public int getYearOfPublish() {
+		return yearOfPublish;
+	}
+
+	public void setYearOfPublish(int yearOfPublish) {
+		this.yearOfPublish = yearOfPublish;
+	}
+
+	public String getGenre() {
+		return genre;
+	}
+
+	public void setGenre(String genre) {
+		this.genre = genre;
+	}
+
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
+	public String getClassification() {
+		return classification;
+	}
+
+	public void setClassification(String classification) {
+		this.classification = classification;
+	}
+
+	public String getCopyright() {
+		return copyright;
+	}
+
+	public void setCopyright(String copyright) {
+		this.copyright = copyright;
+	}
+
+	public String getLicense() {
+		return license;
+	}
+
+	public void setLicense(String license) {
+		this.license = license;
+	}
+
+	public String getLicenseURL() {
+		return licenseURL;
+	}
+
+	public void setLicenseURL(String licenseURL) {
+		this.licenseURL = licenseURL;
+	}
+
+	public String getOwner() {
+		return owner;
+	}
+
+	public void setOwner(String owner) {
+		this.owner = owner;
+	}
+
+	public String getOwnerURL() {
+		return ownerURL;
+	}
+
+	public void setOwnerURL(String ownerURL) {
+		this.ownerURL = ownerURL;
+	}
+
+	public boolean isGT() {
+		return isGT;
+	}
+
+	public void setGT(boolean GT) {
+		isGT = GT;
 	}
 
 	public String getTitle() {
@@ -33,14 +188,6 @@ public class Detail {
 
 	public void setTitle(String title) {
 		this.title = title;
-	}
-
-	public int getYear() {
-		return year;
-	}
-
-	public void setYear(int year) {
-		this.year = year;
 	}
 
 	public String getCreator() {
@@ -59,11 +206,11 @@ public class Detail {
 		this.publisher = publisher;
 	}
 
-	public String getFileTree() {
+	public FileTree getFileTree() {
 		return fileTree;
 	}
 
-	public void setFileTree(String fileTree) {
+	public void setFileTree(FileTree fileTree) {
 		this.fileTree = fileTree;
 	}
 

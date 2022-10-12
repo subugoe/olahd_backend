@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import ola.hd.longtermstorage.exceptions.ElasticServiceException;
 import ola.hd.longtermstorage.model.Detail;
+import ola.hd.longtermstorage.model.FileTree;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -182,15 +183,30 @@ public class ElasticsearchService {
         } catch (IOException e) {
             throw new ElasticServiceException("Error executing search request", e);
         }
+
+        String PID = "";
+        String ID = "";
         String title = hit.getOrDefault("bytitle", "").toString();
-        String creator = hit.getOrDefault("bycreator", "").toString();
+        String subtitle = "";
+        String placeOfPublish = "";
+        int yearOfPublish = ElasticUtils.readYearFromSearchHit(hit);
         String publisher = ElasticUtils.readPublisherFromSearchHit(hit);
-        Integer year = ElasticUtils.readYearFromSearchHit(hit);
+        String creator = hit.getOrDefault("bycreator", "").toString();
+        String genre = "";
+        String label = "";
+        String classification = "";
+        String copyright = "";
+        String license = "";
+        String licenseURL = "";
+        String owner = "";
+        String ownerURL = "";
+        boolean isGT = false;
         // TODO: fileTree must be provided as an object it cannot be a string. Models have to be
         //       changed
-        String fileTree = "";
+        FileTree fileTree = null;
 
-        Detail res = new Detail(title, year, creator, publisher, fileTree);
+        Detail res = new Detail( PID,  ID,  title,  subtitle,  placeOfPublish, yearOfPublish,  publisher,  creator,  genre,  label,  classification,  copyright,  license,  licenseURL,  owner,  ownerURL,  isGT,  fileTree);
+
         return res;
     }
 
