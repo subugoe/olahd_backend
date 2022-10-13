@@ -9,17 +9,22 @@ import java.util.Map;
 import ola.hd.longtermstorage.exceptions.ElasticServiceException;
 import ola.hd.longtermstorage.model.Detail;
 import ola.hd.longtermstorage.model.FileTree;
+import ola.hd.longtermstorage.model.ResultSet;
+import ola.hd.longtermstorage.msg.ErrMsg;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;;
 
 /**
  * Service used to do something with our elasticsearch-service.
@@ -208,6 +213,56 @@ public class ElasticsearchService {
         Detail res = new Detail( PID,  ID,  title,  subtitle,  placeOfPublish, yearOfPublish,  publisher,  creator,  genre,  label,  classification,  copyright,  license,  licenseURL,  owner,  ownerURL,  isGT,  fileTree);
 
         return res;
+    }
+
+    /**
+     * Execute facet search with elasticsearch
+s     *
+     * @param searchterm
+     * @param limit
+     * @param offset
+     * @param extended
+     * @param isGT
+     * @param metadatasearch
+     * @param fulltextsearch
+     * @param sort
+     * @param field
+     * @param value
+     * @return
+     */
+    public ResultSet facetSearch(String searchterm, int limit, int offset, boolean extended, boolean isGT,
+            boolean metadatasearch, boolean fulltextsearch, String sort, String[] field, String[] value) {
+        SearchRequest request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        request.source(sourceBuilder);
+        BoolQueryBuilder query = null;
+
+        if (metadatasearch) {
+            query = QueryBuilders.boolQuery()
+                .must(QueryBuilders.matchQuery("metadata", searchterm));
+        } else if (fulltextsearch) {
+            throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "to be implemented");
+        } else {
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.FULL_OR_METASEARCH);
+        }
+
+        if (field != null) {
+            for (int i = 0; i < field.length; i++) {
+                String fieldName = ElasticUtils.getFilternameForField(field[i]);
+                query.filter(QueryBuilders.termQuery(fieldName, value[i]));
+            }
+        }
+
+        try {
+            sourceBuilder.query(query);
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHits hits = response.getHits();
+
+            return ElasticUtils.resultSetFromHits(hits, searchterm, metadatasearch, fulltextsearch,
+                    offset, limit);
+        } catch (IOException e) {
+            throw new ElasticServiceException("Error executing search request", e);
+        }
     }
 
 }

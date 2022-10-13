@@ -16,10 +16,10 @@ import ola.hd.longtermstorage.domain.Archive;
 import ola.hd.longtermstorage.domain.ArchiveResponse;
 import ola.hd.longtermstorage.elasticsearch.ElasticsearchService;
 import ola.hd.longtermstorage.model.Detail;
+import ola.hd.longtermstorage.model.ResultSet;
 import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
-import ola.hd.longtermstorage.service.SearchService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,15 +35,13 @@ import org.springframework.web.client.HttpClientErrorException;
 @RestController
 public class SearchController {
 
-    private final SearchService searchService;
     private final ArchiveManagerService archiveManagerService;
     private final ArchiveRepository archiveRepository;
     private final ElasticsearchService elasticsearchService;
 
     @Autowired
-    public SearchController(SearchService searchService, ArchiveManagerService archiveManagerService,
-                            ArchiveRepository archiveRepository, ElasticsearchService elasticsearchService) {
-        this.searchService = searchService;
+    public SearchController(ArchiveManagerService archiveManagerService,
+            ArchiveRepository archiveRepository, ElasticsearchService elasticsearchService) {
         this.archiveManagerService = archiveManagerService;
         this.archiveRepository = archiveRepository;
         this.elasticsearchService = elasticsearchService;
@@ -280,9 +278,9 @@ public class SearchController {
                 return ResponseEntity.ok(detail);
             }
         } else {
-            // TODO: to be implemented: make a facet search
+            ResultSet resultSet = elasticsearchService.facetSearch(searchterm, limit, offset, extended, isGT, metadatasearch, fulltextsearch, sort, field, value);
+            return ResponseEntity.ok(resultSet);
         }
-        return null;
     }
 
 }
