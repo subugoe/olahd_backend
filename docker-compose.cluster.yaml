@@ -86,7 +86,7 @@ services:
     container_name: olahds_search
     volumes:
       - ./docker/search/config/stopwords.txt:/usr/share/elasticsearch/config/stopwords.txt:ro
-      - ~/olahd-data/elastic-data:/usr/share/elasticsearch/data
+      - es_data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -103,4 +103,5 @@ services:
 
 volumes:
   redisdata:
+  es_data:
   # TODO has to be chanched to container external storage
