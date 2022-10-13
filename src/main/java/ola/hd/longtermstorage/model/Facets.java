@@ -1,5 +1,6 @@
 package ola.hd.longtermstorage.model;
 
+import java.util.List;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
@@ -8,11 +9,11 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 public class Facets {
 
     @Field(type = FieldType.Text)
-    String name;
+    private String name;
     @Field(type = FieldType.Text)
-    Values values;
+    private List<Values> values;
 
-    public Facets(String name, Values values) {
+    public Facets(String name, List<Values> values) {
         this.name = name;
         this.values = values;
     }
@@ -25,11 +26,12 @@ public class Facets {
         this.name = name;
     }
 
-    public Values getValues() {
+    public List<Values> getValues() {
         return values;
     }
 
-    public void setValues(Values values) {
+    public void setValues(List<Values> values) {
         this.values = values;
     }
+
 }

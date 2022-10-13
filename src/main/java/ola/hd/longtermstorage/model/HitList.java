@@ -1,20 +1,27 @@
 package ola.hd.longtermstorage.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class HitList {
-    private String PID;
-    private String ID;
+
+    @JsonProperty("PID")
+    private String pid;
+    @JsonProperty("ID")
+    private String id;
     private String title;
     private String subtitle;
     private String placeOfPublish;
     private int yearOfPublish;
     private String publisher;
     private String creator;
+    @JsonProperty("isGT")
+    private Boolean gt;
     private FulltextSnippets fulltextSnippets;
 
-    public HitList(String PID, String ID, String title, String subtitle, String placeOfPublish, int yearOfPublish,
-            String publisher, String creator, FulltextSnippets fulltextSnippets) {
-        this.PID = PID;
-        this.ID = ID;
+    public HitList(String pid, String id, String title, String subtitle, String placeOfPublish, int yearOfPublish,
+            String publisher, String creator, FulltextSnippets fulltextSnippets, Boolean gt) {
+        this.pid = pid;
+        this.id = id;
         this.title = title;
         this.subtitle = subtitle;
         this.placeOfPublish = placeOfPublish;
@@ -22,22 +29,7 @@ public class HitList {
         this.publisher = publisher;
         this.creator = creator;
         this.fulltextSnippets = fulltextSnippets;
-    }
-
-    public String getPID() {
-        return PID;
-    }
-
-    public void setPID(String PID) {
-        this.PID = PID;
-    }
-
-    public String getID() {
-        return ID;
-    }
-
-    public void setID(String ID) {
-        this.ID = ID;
+        this.gt = gt;
     }
 
     public String getTitle() {
@@ -94,6 +86,38 @@ public class HitList {
 
     public void setFulltextSnippets(FulltextSnippets fulltextSnippets) {
         this.fulltextSnippets = fulltextSnippets;
+    }
+
+    public String getPid() {
+        return pid;
+    }
+
+    public void setPid(String pid) {
+        this.pid = pid;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public boolean isGt() {
+        return gt;
+    }
+
+    public void setGt(boolean gt) {
+        this.gt = gt;
+    }
+
+    public Boolean getGt() {
+        return gt;
+    }
+
+    public void setGt(Boolean gt) {
+        this.gt = gt;
     }
 
 }
