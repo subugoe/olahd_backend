@@ -20,6 +20,9 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -253,13 +256,23 @@ s     *
             }
         }
 
+        // Facets:
+        TermsAggregationBuilder aggregation = AggregationBuilders.terms("Creators")
+                .field("bycreator.keyword");
+        sourceBuilder.aggregation(aggregation);
+
         try {
             sourceBuilder.query(query);
+            sourceBuilder.size(limit);
+            sourceBuilder.from(offset);
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
             SearchHits hits = response.getHits();
+            Aggregations aggs = response.getAggregations();
 
-            return ElasticUtils.resultSetFromHits(hits, searchterm, metadatasearch, fulltextsearch,
-                    offset, limit);
+            ResultSet res = ElasticUtils.resultSetFromHits(hits, searchterm, metadatasearch,
+                    fulltextsearch, offset, limit);
+            res.setFacets(ElasticUtils.aggsToFacets(aggs));
+            return res;
         } catch (IOException e) {
             throw new ElasticServiceException("Error executing search request", e);
         }
