@@ -55,6 +55,7 @@ import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.component.ExecutorWrapper;
 import ola.hd.longtermstorage.component.MutexFactory;
 import ola.hd.longtermstorage.domain.Archive;
+import ola.hd.longtermstorage.domain.BagImportParams;
 import ola.hd.longtermstorage.domain.ImportResult;
 import ola.hd.longtermstorage.domain.IndexingConfig;
 import ola.hd.longtermstorage.domain.ResponseMessage;
@@ -65,6 +66,7 @@ import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import ola.hd.longtermstorage.service.PidService;
+import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
@@ -74,8 +76,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,15 +170,14 @@ public class ImportController {
 
         String tempDir = uploadDir + File.separator + UUID.randomUUID();
 
-        Pair<File, String> requestParams = readParams(request, info, tempDir);
+        BagImportParams requestParams = readParams(request, info, tempDir);
 
-        File targetFile = requestParams.getLeft();  // The uploaded file (ZIP)
-        String prev = requestParams.getRight();  // A PID pointing to the previous version
+        File targetFile = requestParams.getFile();  // The uploaded file (ZIP)
         String destination = tempDir + File.separator + FilenameUtils.getBaseName(
                 targetFile.getName()) + "_extracted";
 
         List<AbstractMap.SimpleImmutableEntry<String, String>> bagInfos = extractAndVerifyOcrdzip(
-                targetFile, destination, tempDir, info);
+                targetFile, destination, tempDir, info, requestParams);
 
         // Retry policies when a call to another service is failed
         RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
@@ -195,7 +194,7 @@ public class ImportController {
         info.setPid(pid);
 
         // **here the OCRD-ZIP is saved** to the external Archive
-        executor.submit(new BagImport(destination, pid, prev, bagInfos, info, tempDir));
+        executor.submit(new BagImport(destination, pid, requestParams, bagInfos, info, tempDir));
 
         trackingRepository.save(info);
 
@@ -213,7 +212,7 @@ public class ImportController {
     private class BagImport implements Runnable {
         private String destination;
         private String pid;
-        private String prevPid;
+        private BagImportParams requestParams;
         private String exportUrl;
         private List<AbstractMap.SimpleImmutableEntry<String, String>> bagInfos;
         private TrackingInfo info;
@@ -236,13 +235,13 @@ public class ImportController {
          * @param info        information stored about upload: success, failure etc.
          * @param tempDir     ZIP-file was stored here in the beginning of import
          */
-        private BagImport(String destination, String pid, String prevPid,
+        private BagImport(String destination, String pid, BagImportParams requestParams,
                 List<SimpleImmutableEntry<String, String>> bagInfos, TrackingInfo info,
                 String tempDir) {
             super();
             this.destination = destination;
             this.pid = pid;
-            this.prevPid = prevPid;
+            this.requestParams = requestParams;
             this.bagInfos = bagInfos;
             this.tempDir = tempDir;
             this.info = info;
@@ -257,6 +256,7 @@ public class ImportController {
         @Override
         public void run() {
             ImportResult importResult = null;
+            String prevPid = this.requestParams.getPrev();
             try {
                 if (prevPid != null) {
                     importResult = Failsafe.with(retryPolicy).get(
@@ -314,7 +314,7 @@ public class ImportController {
                 } else {
                     archiveRepository.save(archive);
                 }
-                IndexingConfig conf = readSearchindexFilegrps(destination, bagInfos);
+                IndexingConfig conf = readSearchindexFilegrps(destination, bagInfos, requestParams);
                 sendToElastic(pid, conf);
             } catch (Exception ex) {
                 handleFailedImport(ex, pid, importResult, info);
@@ -465,10 +465,10 @@ public class ImportController {
      * @throws HttpClientErrorException if not exactly one ZIP-file is provided, or when io-error
      *                                  occurred while writing to temporary-directory
      */
-    private Pair<File, String> readParams(HttpServletRequest request, TrackingInfo info,
+    private BagImportParams readParams(HttpServletRequest request, TrackingInfo info,
             String tempDir)
     throws FileUploadException, IOException {
-        MutablePair<File, String> res = new MutablePair<>(null, null);
+        BagImportParams res = new BagImportParams();
         File targetFile = null;
 
         // 'fileCount' to make sure that there is only 1 file uploaded
@@ -488,7 +488,7 @@ public class ImportController {
                 }
 
                 targetFile = new File(tempDir + File.separator + item.getName());
-                res.setLeft(targetFile);
+                res.setFile(targetFile);
                 try (InputStream uploadedStream = item.openStream();
                      OutputStream out = FileUtils.openOutputStream(targetFile)) {
                     IOUtils.copy(uploadedStream, out);
@@ -502,7 +502,21 @@ public class ImportController {
                 try (InputStream stream = item.openStream()) {
                     String formFieldName = item.getFieldName();
                     if (formFieldName.equals("prev")) {
-                        res.setRight(Streams.asString(stream));
+                        res.setPrev(Streams.asString(stream));
+                    } else if (formFieldName.equalsIgnoreCase("gt") || formFieldName.equalsIgnoreCase("isgt")) {
+                        String value = Streams.asString(stream);
+                        res.setIsGt(Utils.stringToBool(value));
+                        if (StringUtils.isNotBlank(value) && res.getIsGt() == null) {
+                            exitUploadWithExeption(String.format("'%s' was given with value '%s'"
+                            + " but must be either true or false", formFieldName, value), info,
+                            HttpStatus.BAD_REQUEST);
+                        }
+                    } else if (formFieldName.equalsIgnoreCase("fulltext-filegrp") || formFieldName.equalsIgnoreCase("fulltextfilegrp")) {
+                        res.setFulltextFilegrp(Streams.asString(stream).trim());
+                    } else if (formFieldName.equalsIgnoreCase("image-filegrp") || formFieldName.equalsIgnoreCase("imagefilegrp")) {
+                        res.setFulltextFilegrp(Streams.asString(stream).trim());
+                    } else if (formFieldName.equalsIgnoreCase("fulltext-ftype ") || formFieldName.equalsIgnoreCase("fulltextftype")) {
+                        res.setFulltextFtype(Streams.asString(stream).trim());
                     }
                 }
             }
@@ -539,7 +553,8 @@ public class ImportController {
      * @throws IOException
      */
     private List<AbstractMap.SimpleImmutableEntry<String, String>> extractAndVerifyOcrdzip(
-            File targetFile, String destination, String tempDir, TrackingInfo info)
+            File targetFile, String destination, String tempDir, TrackingInfo info,
+            BagImportParams params)
     throws IOException {
         Bag bag;
         try (BagVerifier verifier = new BagVerifier(); ZipFile zipFile = new ZipFile(targetFile)) {
@@ -560,7 +575,7 @@ public class ImportController {
             // Check for the validity and completeness of a bag
             verifier.isValid(bag, true);
 
-            validateOcrdzip(bag, destination);
+            validateOcrdzip(bag, destination, params);
         } catch (NoSuchFileException | MissingPayloadManifestException
                 | UnsupportedAlgorithmException | CorruptChecksumException | MaliciousPathException
                 | InvalidPayloadOxumException | FileNotInPayloadDirectoryException
@@ -616,7 +631,8 @@ public class ImportController {
      * @param bagInfos
      * @throws OcrdzipInvalidException - if bag is invalid
      */
-    private static void validateOcrdzip(Bag bag, String bagdir) throws OcrdzipInvalidException {
+    private static void validateOcrdzip(Bag bag, String bagdir, BagImportParams params) throws OcrdzipInvalidException {
+        //TODO: hier weiter: hier muss ich noch sichergehen, dass wenn die params für ftype und so angegeben sind, dass die filegruppen es auch gibt
         List<String> res = new ArrayList<>();
         Metadata metadata = bag.getMetadata();
 //        if (!metadata.contains("BagIt-Profile-Identifier")) {
@@ -650,9 +666,12 @@ public class ImportController {
             }
         }
 
+        // validate provided filegrps are actually existing in ocrdzip
         boolean imageFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_IMAGE_FILEGRP);
         boolean fullFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_FULLTEXT_FILEGRP);
-        if (imageFgrpPresent || fullFgrpPresent) {
+        boolean imageFgrpParam = StringUtils.isNotBlank(params.getImageFilegrp());
+        boolean fullFgrpParam = StringUtils.isNotBlank(params.getFulltextFilegrp());
+        if (imageFgrpPresent || fullFgrpPresent || imageFgrpParam || fullFgrpParam) {
             List<String> fileGrps = new ArrayList<>(0);
             try {
                 fileGrps = Files.list(Paths.get(bagdir).resolve("data"))
@@ -676,10 +695,28 @@ public class ImportController {
                             + " existing", Constants.BAGINFO_KEY_FULLTEXT_FILEGRP, fullFileGrp));
                 }
             }
+            if (imageFgrpParam) {
+                String imageFileGrp = params.getImageFilegrp();
+                if (!fileGrps.contains(imageFileGrp)) {
+                    res.add(String.format("Parameter '%s' is provided, but specified File-Grp (%s) "
+                            + "is not existing", "Image-Filegrp", imageFileGrp));
+                }
+            }
+            if (fullFgrpParam) {
+                String fullFileGrp = params.getFulltextFilegrp();
+                if (!fileGrps.contains(fullFileGrp)) {
+                    res.add(String.format("Parameter '%s' is provided, but specified File-Grp (%s) "
+                            + "is not existing", "Fulltext-Filegrp", fullFileGrp));
+                }
+            }
         }
 
         if (metadata.contains(Constants.BAGINFO_KEY_FTYPE)) {
             // TODO: validate Ftype (I don't know yet which values are possible)
+        }
+
+        if (StringUtils.isNotBlank(params.getFulltextFtype())) {
+           //TODO: validate Ftype (I don't know yet which values are possible)
         }
 
         if (metadata.contains(Constants.BAGINFO_KEY_IS_GT)) {
@@ -697,19 +734,22 @@ public class ImportController {
      * Read indexing configuration from bag-info.txt.
      *
      * In bag-info.txt configuration for the indexing can be provided
+     * @param requestParams
      *
      * @param archive
      * @param bagdir: bag location on disk
      * @param bagInfos:
      */
     private static IndexingConfig readSearchindexFilegrps(String bagdir,
-            List<SimpleImmutableEntry<String, String>> bagInfos) {
+            List<SimpleImmutableEntry<String, String>> bagInfos, BagImportParams requestParams) {
         IndexingConfig res = new IndexingConfig();
 
         String imageFilegrp = null;
         String fulltextFilegrp = null;
         Boolean gt = null;
         String ftype = null;
+
+        //read data from bag-info.txt-keys
         for (SimpleImmutableEntry<String, String> x : bagInfos) {
             if (StringUtils.isBlank(x.getValue())) {
                 continue;
@@ -739,7 +779,10 @@ public class ImportController {
         } else {
             res.setFulltextFtype(Constants.DEFAULT_FULLTEXT_FTYPE);
         }
-        if (gt != null) {
+
+        if (requestParams.getIsGt() != null) {
+            res.setGt(requestParams.getIsGt());
+        } else if (gt != null) {
             res.setGt(gt);
         }
         return res;

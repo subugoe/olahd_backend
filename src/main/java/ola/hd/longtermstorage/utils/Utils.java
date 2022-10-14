@@ -1,8 +1,10 @@
 package ola.hd.longtermstorage.utils;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -48,5 +50,27 @@ public class Utils {
             }
         }
         return res;
+    }
+
+    private static final Set<String> trueSet = new HashSet<String>(Arrays.asList("1", "true", "yes"));
+    private static final Set<String> falseSet = new HashSet<String>(Arrays.asList("0", "false", "no"));
+
+    /**
+     * Parse booleans from string with 1, true, yes, 0, false, no
+     *
+     * @param s
+     * @return
+     */
+    public static Boolean stringToBool(String s) {
+        if (StringUtils.isBlank(s)) {
+            return null;
+        }
+        s = s.trim().toLowerCase();
+        if (trueSet.contains(s)) {
+            return true;
+        } else if (falseSet.contains(s)) {
+            return false;
+        }
+        return null;
     }
 }
