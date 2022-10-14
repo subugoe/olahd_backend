@@ -4,8 +4,11 @@ import static ola.hd.longtermstorage.Constants.LOGICAL_INDEX_NAME;
 import static ola.hd.longtermstorage.Constants.PHYSICAL_INDEX_NAME;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import ola.hd.longtermstorage.exceptions.ElasticServiceException;
 import ola.hd.longtermstorage.model.Detail;
 import ola.hd.longtermstorage.model.FileTree;
@@ -249,11 +252,21 @@ s     *
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.FULL_OR_METASEARCH);
         }
 
+        // Filters:
         if (field != null) {
+            Map<String, List<String>> filters = new HashMap<>();
             for (int i = 0; i < field.length; i++) {
                 String fieldName = ElasticUtils.getFilternameForField(field[i]);
-                query.filter(QueryBuilders.termQuery(fieldName, value[i]));
+                filters.putIfAbsent(fieldName, new ArrayList<>());
+                filters.get(fieldName).add(value[i]);
             }
+            BoolQueryBuilder boolFilter = QueryBuilders.boolQuery();
+            for (Entry<String, List<String>> entry : filters.entrySet()) {
+                for (String filterValue : entry.getValue()) {
+                    boolFilter.should(QueryBuilders.termQuery(entry.getKey(), filterValue));
+                }
+            }
+            query.filter(boolFilter);
         }
 
         // Facets:
