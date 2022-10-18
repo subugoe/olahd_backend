@@ -589,6 +589,12 @@ public class ImportController {
             String message = "Invalid file input. The uploaded file must be a ZIP file with BagIt "
                     + "structure.";
 
+            // Try to give more detailed error description
+            if (ex instanceof CorruptChecksumException && ex.getMessage() != null) {
+                message += " Details: " + ex.getMessage()
+                        + " There may be further bagit-validation-errors";
+            }
+
             // Save to the tracking database
             info.setStatus(TrackingStatus.FAILED);
             info.setMessage(message);
