@@ -272,7 +272,10 @@ s     *
         // Facets:
         TermsAggregationBuilder aggregation = AggregationBuilders.terms("Creators")
                 .field("bycreator.keyword");
+        TermsAggregationBuilder aggregation1 = AggregationBuilders.terms("Titles")
+                .field("bytitle.keyword");
         sourceBuilder.aggregation(aggregation);
+        sourceBuilder.aggregation(aggregation1);
 
         try {
             sourceBuilder.query(query);
