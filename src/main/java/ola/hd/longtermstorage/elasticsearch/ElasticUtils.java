@@ -162,8 +162,8 @@ public class ElasticUtils {
             return facets;
         }
 
-        List<Values> values = new ArrayList<>();
         for (Map.Entry<String, Aggregation> entry : map.entrySet()) {
+            List<Values> values = new ArrayList<>();
             Terms terms = (Terms)entry.getValue();
             List<? extends Bucket> buckets = terms.getBuckets();
             for (Bucket x : buckets) {
