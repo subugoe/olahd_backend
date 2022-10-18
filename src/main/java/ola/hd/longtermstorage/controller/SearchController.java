@@ -254,8 +254,8 @@ public class SearchController {
             int offset,
             @RequestParam(defaultValue="false") @ApiParam(value="If false, an initial search is started and no facets or filters are applied")
             boolean extended,
-            @RequestParam(defaultValue="false") @ApiParam(value="If true, search only for GT data")
-            boolean isGT,
+            @RequestParam(required=false) @ApiParam(value="If true, search only for GT data")
+            Boolean isGT,
             @RequestParam(defaultValue="true") @ApiParam(value="If true, search over the metadata")
             boolean metadatasearch,
             @RequestParam(defaultValue="false") @ApiParam(value="If true, search over the fulltexts")

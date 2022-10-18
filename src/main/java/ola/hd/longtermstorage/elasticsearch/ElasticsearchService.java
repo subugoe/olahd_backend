@@ -236,7 +236,7 @@ s     *
      * @param value
      * @return
      */
-    public ResultSet facetSearch(String searchterm, int limit, int offset, boolean extended, boolean isGT,
+    public ResultSet facetSearch(String searchterm, int limit, int offset, boolean extended, Boolean isGt,
             boolean metadatasearch, boolean fulltextsearch, String sort, String[] field, String[] value) {
         SearchRequest request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
@@ -249,7 +249,11 @@ s     *
         } else if (fulltextsearch) {
             throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "to be implemented");
         } else {
-            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.FULL_OR_METASEARCH);
+           throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.FULL_OR_METASEARCH);
+        }
+
+        if (isGt != null) {
+            query.must(QueryBuilders.matchQuery("IsGT", isGt));
         }
 
         // Filters:
@@ -260,6 +264,9 @@ s     *
                 filters.putIfAbsent(fieldName, new ArrayList<>());
                 filters.get(fieldName).add(value[i]);
             }
+            // TODO: if more than one facet should be used this has to be changed. If there is more
+            //       than one filter for one field connect them with should and connect filters for
+            //       different facets with must
             BoolQueryBuilder boolFilter = QueryBuilders.boolQuery();
             for (Entry<String, List<String>> entry : filters.entrySet()) {
                 for (String filterValue : entry.getValue()) {
