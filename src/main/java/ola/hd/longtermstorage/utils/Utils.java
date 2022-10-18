@@ -17,7 +17,7 @@ public class Utils {
 
     private static final String BAGINFO_REGEX_LINEBREAK = "\\r?\\n|\\r";
     private static final String BAGINFO_REGEX_KEY_VALUE_SEPARATOR= ":\\s{0,1}";
-    private static final String BAGINFO_REGEX_INDENT_LINE = "\"^\\\\s+.*\"";
+    private static final String BAGINFO_REGEX_INDENT_LINE = "^\\s+.*";
 
     /**
      * Read String of bag-info.txt-file to Map. Inspired by
@@ -40,11 +40,10 @@ public class Utils {
             }
             if (line.matches(BAGINFO_REGEX_INDENT_LINE) && lastKey != null) {
                 String oldVal = res.get(lastKey);
-                res.put(lastKey, oldVal + " " + line.stripLeading());
+                res.put(lastKey, oldVal + line.stripLeading());
             } else {
                 String[] parts = line.split(BAGINFO_REGEX_KEY_VALUE_SEPARATOR, 2);
-                lastKey = parts[0].trim();
-
+                lastKey = parts[0];
                 String value = parts[1];
                 res.put(lastKey, value);
             }
