@@ -89,7 +89,7 @@ public class ElasticUtils {
             int yearOfPublish = ElasticUtils.readYearFromSearchHit(hitmap);
             String publisher = ElasticUtils.readPublisherFromSearchHit(hitmap);
             String creator = hitmap.getOrDefault("bycreator", "").toString();
-            Boolean gt = (Boolean)hitmap.getOrDefault("isGT", Boolean.FALSE);
+            Boolean gt = (Boolean)hitmap.getOrDefault("IsGt", false);
             FulltextSnippets fulltextSnippets = null;
             HitList res = new HitList(pid, id, title, subtitle, placeOfPublish, yearOfPublish,
                     publisher, creator, fulltextSnippets, gt);
