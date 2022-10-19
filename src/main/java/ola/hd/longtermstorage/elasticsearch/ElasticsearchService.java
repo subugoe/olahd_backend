@@ -257,23 +257,22 @@ s     *
         }
 
         // Filters:
-        if (field != null) {
+        if (field != null && field.length > 0) {
             Map<String, List<String>> filters = new HashMap<>();
             for (int i = 0; i < field.length; i++) {
                 String fieldName = ElasticUtils.getFilternameForField(field[i]);
                 filters.putIfAbsent(fieldName, new ArrayList<>());
                 filters.get(fieldName).add(value[i]);
             }
-            // TODO: if more than one facet should be used this has to be changed. If there is more
-            //       than one filter for one field connect them with should and connect filters for
-            //       different facets with must
-            BoolQueryBuilder boolFilter = QueryBuilders.boolQuery();
+            BoolQueryBuilder boolMust = QueryBuilders.boolQuery();
             for (Entry<String, List<String>> entry : filters.entrySet()) {
+                BoolQueryBuilder boolShould = QueryBuilders.boolQuery();
                 for (String filterValue : entry.getValue()) {
-                    boolFilter.should(QueryBuilders.termQuery(entry.getKey(), filterValue));
+                    boolShould.should(QueryBuilders.termQuery(entry.getKey(), filterValue));
                 }
+                boolMust.must(boolShould);
             }
-            query.filter(boolFilter);
+            query.filter(boolMust);
         }
 
         // Facets will be added here after filtering is complete:
