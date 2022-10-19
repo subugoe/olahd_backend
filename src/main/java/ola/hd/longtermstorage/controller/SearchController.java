@@ -22,10 +22,13 @@ import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringArrayPropertyEditor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -219,6 +222,20 @@ public class SearchController {
         ObjectMapper mapper = new ObjectMapper();
         String jsonString = mapper.writeValueAsString(docId);
         return ResponseEntity.ok(jsonString);
+    }
+
+    /**
+     * Fix for using arrays as path parameters. In
+     * {@linkplain #search(String, String, int, int, boolean, Boolean, boolean, boolean, String, String[], String[])}
+     * string arrays are used which "sometimes" do not work properly when `,` is contained. In this
+     * case "sometimes" the comma is interpreted as a value seperator. See
+     * https://stackoverflow.com/questions/4998748/how-to-prevent-parameter-binding-from-interpreting-commas-in-spring-3-0-5
+     *
+     * @param binder
+     */
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(String[].class, new StringArrayPropertyEditor(null));
     }
 
     /**
