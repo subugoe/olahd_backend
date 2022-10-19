@@ -276,18 +276,18 @@ s     *
         }
 
         // Facets
-        TermsAggregationBuilder aggregation = AggregationBuilders.terms("Creators")
-                .field("bycreator.keyword");
-        TermsAggregationBuilder aggregation1 = AggregationBuilders.terms("Creators")
+        TermsAggregationBuilder aggregation = AggregationBuilders.terms("Titles")
                 .field("bytitle.keyword");
-        TermsAggregationBuilder aggregation2 = AggregationBuilders.terms("Subtitles")
-                .field("title.subtitle.keyword");
-        TermsAggregationBuilder aggregation3 = AggregationBuilders.terms("Publisher")
+        TermsAggregationBuilder aggregation1 = AggregationBuilders.terms("Creators")
+                .field("bycreator.keyword");
+        TermsAggregationBuilder aggregation2 = AggregationBuilders.terms("Publisher")
                 .field("publish_infos.publisher.keyword");
+        TermsAggregationBuilder aggregation3 = AggregationBuilders.terms("Publish Place")
+                .field("publish_infos.place_publish.keyword");
         TermsAggregationBuilder aggregation4 = AggregationBuilders.terms("Publish Year")
                 .field("publish_infos.year_publish");
-        TermsAggregationBuilder aggregation5 = AggregationBuilders.terms("Publish Place")
-                .field("publish_infos.place_publish.keyword");
+        TermsAggregationBuilder aggregation5 = AggregationBuilders.terms("Subtitles")
+                .field("title.subtitle.keyword");
 
         sourceBuilder.aggregation(aggregation);
         sourceBuilder.aggregation(aggregation1);
