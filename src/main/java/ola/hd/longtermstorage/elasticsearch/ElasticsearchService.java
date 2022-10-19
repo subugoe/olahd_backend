@@ -275,10 +275,26 @@ s     *
             query.filter(boolMust);
         }
 
-        // Facets will be added here after filtering is complete:
+        // Facets
         TermsAggregationBuilder aggregation = AggregationBuilders.terms("Creators")
-                .field("bycreator.keyword");;
+                .field("bycreator.keyword");
+        TermsAggregationBuilder aggregation1 = AggregationBuilders.terms("Creators")
+                .field("bytitle.keyword");
+        TermsAggregationBuilder aggregation2 = AggregationBuilders.terms("Subtitles")
+                .field("title.subtitle.keyword");
+        TermsAggregationBuilder aggregation3 = AggregationBuilders.terms("Publisher")
+                .field("publish_infos.publisher.keyword");
+        TermsAggregationBuilder aggregation4 = AggregationBuilders.terms("Publish Year")
+                .field("publish_infos.year_publish");
+        TermsAggregationBuilder aggregation5 = AggregationBuilders.terms("Publish Place")
+                .field("publish_infos.place_publish.keyword");
+
         sourceBuilder.aggregation(aggregation);
+        sourceBuilder.aggregation(aggregation1);
+        sourceBuilder.aggregation(aggregation2);
+        sourceBuilder.aggregation(aggregation3);
+        sourceBuilder.aggregation(aggregation4);
+        sourceBuilder.aggregation(aggregation5);
 
         try {
             sourceBuilder.query(query);
