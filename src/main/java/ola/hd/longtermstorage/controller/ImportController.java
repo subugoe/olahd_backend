@@ -515,7 +515,7 @@ public class ImportController {
                         res.setFulltextFilegrp(Streams.asString(stream).trim());
                     } else if (formFieldName.equalsIgnoreCase("image-filegrp") || formFieldName.equalsIgnoreCase("imagefilegrp")) {
                         res.setFulltextFilegrp(Streams.asString(stream).trim());
-                    } else if (formFieldName.equalsIgnoreCase("fulltext-ftype ") || formFieldName.equalsIgnoreCase("fulltextftype")) {
+                    } else if (formFieldName.equalsIgnoreCase("fulltext-ftype") || formFieldName.equalsIgnoreCase("fulltextftype")) {
                         res.setFulltextFtype(Streams.asString(stream).trim());
                     }
                 }
@@ -638,7 +638,6 @@ public class ImportController {
      * @throws OcrdzipInvalidException - if bag is invalid
      */
     private static void validateOcrdzip(Bag bag, String bagdir, BagImportParams params) throws OcrdzipInvalidException {
-        //TODO: hier weiter: hier muss ich noch sichergehen, dass wenn die params für ftype und so angegeben sind, dass die filegruppen es auch gibt
         List<String> res = new ArrayList<>();
         Metadata metadata = bag.getMetadata();
 //        if (!metadata.contains("BagIt-Profile-Identifier")) {
@@ -718,11 +717,21 @@ public class ImportController {
         }
 
         if (metadata.contains(Constants.BAGINFO_KEY_FTYPE)) {
-            // TODO: validate Ftype (I don't know yet which values are possible)
+            String ftype = metadata.get(Constants.BAGINFO_KEY_FTYPE).get(0);
+            if (!Constants.POSSIBLE_FULLTEXT_FTYPES.contains(ftype)) {
+                res.add(String.format("'%s' is provided, but value (%s) is invalid. Valid are "
+                        + "following values: '%s'", Constants.BAGINFO_KEY_FTYPE, ftype, String.join(
+                        ", ", Constants.POSSIBLE_FULLTEXT_FTYPES)));
+            }
         }
 
         if (StringUtils.isNotBlank(params.getFulltextFtype())) {
-           //TODO: validate Ftype (I don't know yet which values are possible)
+            String ftype = params.getFulltextFtype();
+            if (!Constants.POSSIBLE_FULLTEXT_FTYPES.contains(ftype)) {
+                res.add(String.format("Parameter '%s' is provided, but the value (%s) is invalid. "
+                        + "Valid are the following values: '%s'", "fulltext-ftype", ftype, String.
+                        join(", ", Constants.POSSIBLE_FULLTEXT_FTYPES)));
+            }
         }
 
         if (metadata.contains(Constants.BAGINFO_KEY_IS_GT)) {

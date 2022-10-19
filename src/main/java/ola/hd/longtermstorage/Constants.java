@@ -1,5 +1,8 @@
 package ola.hd.longtermstorage;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Constants for the whole application
  *
@@ -10,6 +13,9 @@ public class Constants {
     public static final String DEFAULT_IMAGE_FILEGRP = "OCR-D-IMG";
     public static final String DEFAULT_FULLTEXT_FILEGRP = "OCR-D-GT-SEG-LINE";
     public static final String DEFAULT_FULLTEXT_FTYPE = "PAGEXML_1";
+
+    public static final List<String> POSSIBLE_FULLTEXT_FTYPES = Arrays
+            .asList(new String[] { "PAGEXML_1", "ALTO_1", "TEI_2", "TEI_2a" });
 
     public static final String BAGINFO_KEY_IMAGE_FILEGRP = "Olahd-Search-Image-Filegrp";
     public static final String BAGINFO_KEY_FULLTEXT_FILEGRP = "Olahd-Search-Fulltext-Filegrp";
