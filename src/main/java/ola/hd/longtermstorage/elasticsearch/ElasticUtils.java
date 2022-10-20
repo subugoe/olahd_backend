@@ -141,7 +141,19 @@ public class ElasticUtils {
     public static String getFilternameForField(String field) {
         // TODO: use a hashmap here
         if (Stream.of("author", "creator", "creators").anyMatch(field::equalsIgnoreCase)) {
-            return "creator_infos.name.keyword";
+            return "bycreator.keyword";
+        }
+        if (Stream.of("Titles").anyMatch(field::equalsIgnoreCase)) {
+            return "bytitle.keyword";
+        }
+        if (Stream.of("Publisher").anyMatch(field::equalsIgnoreCase)) {
+            return "publish_infos.publisher.keyword";
+        }
+        if (Stream.of("Place").anyMatch(field::equalsIgnoreCase)) {
+            return "publish_infos.place_publish.keyword";
+        }
+        if (Stream.of("Publish Year").anyMatch(field::equalsIgnoreCase)) {
+            return "publish_infos.year_publish";
         }
         return field;
     }
