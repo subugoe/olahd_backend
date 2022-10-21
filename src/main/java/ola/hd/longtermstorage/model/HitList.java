@@ -32,6 +32,10 @@ public class HitList {
         this.gt = gt;
     }
 
+    public HitList() {
+
+    }
+
     public String getTitle() {
         return title;
     }

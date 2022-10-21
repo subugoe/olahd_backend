@@ -25,6 +25,9 @@ public class ResultSet {
         this.facets = facets;
     }
 
+    public ResultSet() {
+    }
+
     public int getHits() {
         return hits;
     }

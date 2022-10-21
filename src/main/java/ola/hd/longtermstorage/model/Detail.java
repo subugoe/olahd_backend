@@ -6,8 +6,6 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
-import java.io.File;
-
 @Document(indexName = "detail", type = "detail")
 public class Detail {
 
@@ -68,6 +66,9 @@ public class Detail {
 		this.ownerURL = ownerURL;
 		this.isGT = isGT;
 		this.fileTree = fileTree;
+	}
+
+	public Detail() {
 	}
 
 	public String getPID() {
