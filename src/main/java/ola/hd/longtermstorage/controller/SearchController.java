@@ -186,9 +186,6 @@ public class SearchController {
             @RequestParam(required=false) @ApiParam(value="Contains the facete values")
             String[] value
             ) throws IOException {
-        if (StringUtils.isBlank(id) && StringUtils.isBlank(searchterm)) {
-            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.ID_OR_TERM_MISSING);
-        }
         if (field != null) {
             if (value ==null || field.length != value.length) {
                 throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.FIELD_NOT_EQUALS_VALUE);

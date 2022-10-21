@@ -128,6 +128,13 @@ public class ElasticQueryHelper {
 
     private BoolQueryBuilder createQuery() {
         BoolQueryBuilder res = null;
+        if (searchterm == null || searchterm.isEmpty()) {
+            if (Boolean.TRUE.equals(this.isGt)) {
+                return QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("IsGT", true));
+            } else {
+                return QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery());
+            }
+        }
         if (metadatasearch && fulltextsearch) {
             BoolQueryBuilder boolMust = QueryBuilders.boolQuery();
             BoolQueryBuilder boolShould = QueryBuilders.boolQuery();
@@ -140,7 +147,7 @@ public class ElasticQueryHelper {
             res = QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("fulltext", searchterm));
         }
         if (Boolean.TRUE.equals(this.isGt)) {
-            res.must(QueryBuilders.matchQuery("IsGT", isGt));
+            res.must(QueryBuilders.matchQuery("IsGT", true));
         }
         return res;
     }
