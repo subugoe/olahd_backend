@@ -1,9 +1,5 @@
 package ola.hd.longtermstorage.controller;
 
-import static ola.hd.longtermstorage.Constants.LOGICAL_INDEX_NAME;
-import static ola.hd.longtermstorage.Constants.PHYSICAL_INDEX_NAME;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -11,9 +7,9 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import ola.hd.longtermstorage.domain.Archive;
 import ola.hd.longtermstorage.domain.ArchiveResponse;
+import ola.hd.longtermstorage.elasticsearch.ElasticQueryHelper;
 import ola.hd.longtermstorage.elasticsearch.ElasticsearchService;
 import ola.hd.longtermstorage.model.Detail;
 import ola.hd.longtermstorage.model.ResultSet;
@@ -29,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
@@ -132,103 +127,10 @@ public class SearchController {
     }
 
     /**
-     * Execute an uri search on both indexes: meta.olahds_log and meta.olahds_phys.
-     *
-     * This is similar to the prototypes cdstar-search functionality
-     *
-     * `curl "localhost:8080/search-es/query-all?q=berlin&from=0&size=1" | jq`
-     *
-     * @param text
-     * @return
-     * @throws IOException
-     */
-    @ApiOperation(value = "Make an uri search on the logical and physical index")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Search success")
-    })
-    @GetMapping(value = "/search-es/query-all", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> searchEsQuery(
-            @RequestParam(name = "q") @ApiParam(value = "The query used to search", required = true)
-            String query,
-            @RequestParam(name = "from") @ApiParam(value = "Number of hits to skip", required = true, example = "0")
-            int from,
-            @RequestParam(name = "size") @ApiParam(value = "Maximum number of hits to return", required = true, example = "10")
-            int size) throws IOException {
-
-        Object hits = elasticsearchService.bigQuery(query, from, size);
-
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonString = mapper.writeValueAsString(hits)
-            .replaceAll("\"sourceAsMap\"\\s*:", "\"_source\":")
-            .replaceAll("\"id\"\\s*:", "\"_id\":")
-            .replaceAll("\"index\"\\s*:", "\"_index\":");
-        return ResponseEntity.ok(jsonString);
-    }
-
-    /**
-     * Get an index entry by its id
-     *
-     * `curl "http://localhost:8080/search-es/meta.phys/EBBlgIEBI6n_xy-wUbKr" | jq`
-     *
-     * @param index
-     * @param id
-     * @return
-     * @throws IOException
-     */
-    @ApiOperation(value = "Get index entry by id")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Index entry was found"),
-        @ApiResponse(code = 404, message = "Index or entry for id not found")
-    })
-    @GetMapping(value = "/search-es/{index:" + LOGICAL_INDEX_NAME + "|" + PHYSICAL_INDEX_NAME
-            + "}/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> searchEsElementById(
-            @PathVariable @ApiParam("The name of the index to query")
-            String index,
-            @PathVariable @ApiParam("Id of the index entry to fetch")
-            String id)
-            throws IOException {
-        Map<String, Object> res = elasticsearchService.getElement(index, id);
-        if (res == null) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
-        }
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonString = mapper.writeValueAsString(res);
-        return ResponseEntity.ok(jsonString);
-    }
-
-    /**
-     * Get the id for the logical index by pid
-     *
-     * @param index
-     * @param id
-     * @return
-     * @throws IOException
-     */
-    @ApiOperation(value = "Get the id of the logical index entry for a pid and IsFirst = true")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "index entry for pid was found"),
-        @ApiResponse(code = 404, message = "no index entry for pid found")
-    })
-    @GetMapping(value = "/search-es/logid4pid", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getLogIdForPid(
-            @RequestParam@ApiParam(value = "The PID or the PPN of the work.", required = true)
-            String pid
-            ) throws IOException {
-        String docId = elasticsearchService.getLogIdForPid(pid);
-        if (docId == null) {
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
-        }
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonString = mapper.writeValueAsString(docId);
-        return ResponseEntity.ok(jsonString);
-    }
-
-    /**
      * Fix for using arrays as path parameters. In
      * {@linkplain #search(String, String, int, int, boolean, Boolean, boolean, boolean, String, String[], String[])}
      * string arrays are used which "sometimes" do not work properly when `,` is contained. In this
-     * case "sometimes" the comma is interpreted as a value seperator. See
+     * case "sometimes" the comma is interpreted as a value separator. See
      * https://stackoverflow.com/questions/4998748/how-to-prevent-parameter-binding-from-interpreting-commas-in-spring-3-0-5
      *
      * @param binder
@@ -245,7 +147,7 @@ public class SearchController {
      * @param searchterm
      * @param limit
      * @param offset
-     * @param extended
+     * @param extended - false: don't apply filters
      * @param isGT
      * @param metadatasearch
      * @param fulltextsearch
@@ -287,6 +189,17 @@ public class SearchController {
         if (StringUtils.isBlank(id) && StringUtils.isBlank(searchterm)) {
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.ID_OR_TERM_MISSING);
         }
+        if (field != null) {
+            if (value ==null || field.length != value.length) {
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.FIELD_NOT_EQUALS_VALUE);
+            }
+            for (String x : field) {
+                if (!ElasticQueryHelper.FILTER_MAP.containsKey(x)) {
+                    throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.UNKNOWN_FILTER);
+                }
+            }
+        }
+
         if (StringUtils.isNotBlank(id)) {
             Detail detail = elasticsearchService.getDetailsForPid(id);
             if (detail == null) {
@@ -295,7 +208,8 @@ public class SearchController {
                 return ResponseEntity.ok(detail);
             }
         } else {
-            ResultSet resultSet = elasticsearchService.facetSearch(searchterm, limit, offset, extended, isGT, metadatasearch, fulltextsearch, sort, field, value);
+            ResultSet resultSet = elasticsearchService.facetSearch(searchterm, limit, offset,
+                    extended, isGT, metadatasearch, fulltextsearch, sort, field, value);
             return ResponseEntity.ok(resultSet);
         }
     }
