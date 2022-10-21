@@ -157,7 +157,9 @@ public class ElasticQueryHelper {
     }
 
     private TermsAggregationBuilder createMergeAggregation() {
-        TermsAggregationBuilder res = AggregationBuilders.terms(HITS_AGG).field("pid.keyword");
+        TermsAggregationBuilder res = AggregationBuilders.terms(HITS_AGG)
+                .field("pid.keyword")
+                .size(99999); // currently we need to get everything for now to get the hit count
         TermsAggregationBuilder sub1 = AggregationBuilders.terms("group-by-log")
                 .field("log.keyword")
                 .missing("zzz")

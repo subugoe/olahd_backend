@@ -44,7 +44,7 @@ public class ElasticResponseHelper {
         Aggregations aggs = response.getAggregations();
         Terms hits = (Terms)aggs.get(ElasticQueryHelper.HITS_AGG);
 
-        ResultSet res = putHitAggsIntoResponseModel(hits);
+        ResultSet res = putHitAggsIntoResponseModel(hits, offset, limit);
         List<Facets> facets = this.createFacetsFromAggs(aggs);
         res.setFacets(facets);
         res.setSearchTerm(searchterm);
@@ -76,20 +76,25 @@ public class ElasticResponseHelper {
         return res;
     }
 
-
-
     /**
      * Convert aggregations with the hits to ResultSet as specified by the API
      *
      * @param hits
+     * @param limit
+     * @param offset
      * @return
      */
-    private ResultSet putHitAggsIntoResponseModel(Terms hits) {
+    private ResultSet putHitAggsIntoResponseModel(Terms hits, int offset, int limit) {
         ResultSet res = new ResultSet();
         List<HitList> hitlist = new ArrayList<>();
         res.setHitlist(hitlist);
+        int count = hits.getBuckets().size();
+        res.setHits(count);
+        if (offset > count) {
+            return res;
+        }
 
-        for (Bucket hit: hits.getBuckets()) {
+        for (Bucket hit: hits.getBuckets().subList(offset, Math.min(offset+limit, count))) {
             HitList hitResult = new HitList();
             hitlist.add(hitResult);
             Terms sub1agg = hit.getAggregations().get("group-by-log");
@@ -110,7 +115,6 @@ public class ElasticResponseHelper {
             hitResult.setCreator(readCreatorFromSearchHit(hitmap));
             hitResult.setGt(readIsGtFromSearchHit(hitmap));
         }
-        res.setHits(hitlist.size());
         return res;
     }
 
