@@ -17,6 +17,8 @@ import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringArrayPropertyEditor;
 import org.springframework.http.HttpStatus;
@@ -36,6 +38,8 @@ public class SearchController {
     private final ArchiveManagerService archiveManagerService;
     private final ArchiveRepository archiveRepository;
     private final ElasticsearchService elasticsearchService;
+
+    private static final Logger logger = LoggerFactory.getLogger(SearchController.class);
 
     @Autowired
     public SearchController(ArchiveManagerService archiveManagerService,
@@ -195,6 +199,11 @@ public class SearchController {
                     throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.UNKNOWN_FILTER);
                 }
             }
+        }
+        if (value != null && value.length > 0) {
+            logger.info("value >" + String.join("|", value) + "<");
+        } else {
+            logger.info("value is empty");
         }
 
         if (StringUtils.isNotBlank(id)) {
