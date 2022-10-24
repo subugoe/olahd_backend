@@ -200,11 +200,6 @@ public class SearchController {
                 }
             }
         }
-        if (value != null && value.length > 0) {
-            logger.info("value >" + String.join("|", value) + "<");
-        } else {
-            logger.info("value is empty");
-        }
 
         if (StringUtils.isNotBlank(id)) {
             Detail detail = elasticsearchService.getDetailsForPid(id);
