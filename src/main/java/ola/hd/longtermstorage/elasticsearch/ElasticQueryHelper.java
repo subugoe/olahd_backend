@@ -150,10 +150,10 @@ public class ElasticQueryHelper {
             boolShould.should(QueryBuilders.matchQuery("metadata", searchterm));
             boolShould.should(QueryBuilders.matchQuery("fulltext", searchterm));
             res = QueryBuilders.boolQuery().must(boolMust.must(boolShould));
-        } else if (metadatasearch) {
-            res = QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("metadata", searchterm));
-        } else {
+        } else if (fulltextsearch) {
             res = QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("fulltext", searchterm));
+        } else {
+            res = QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("metadata", searchterm));
         }
         if (Boolean.TRUE.equals(this.isGt)) {
             res.must(QueryBuilders.matchQuery("IsGT", true));
