@@ -379,11 +379,12 @@ public class ElasticResponseHelper {
     }
 
     private static Boolean readIsGtFromSearchHit(Map<String, Object> hit) {
+        Boolean result = null;
         try {
-            return Utils.stringToBool(hit.get("IsGt").toString());
+            result = Utils.stringToBool(hit.get("IsGt").toString());
         } catch (Exception e) {
             //pass: just skip if value is not available
         }
-        return null;
+        return result != null ? result : false;
     }
 }
