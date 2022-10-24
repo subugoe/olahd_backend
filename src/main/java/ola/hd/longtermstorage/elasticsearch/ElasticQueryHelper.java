@@ -11,11 +11,17 @@ import java.util.Map.Entry;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.cardinality.CardinalityAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsAggregationBuilder;
+import org.elasticsearch.search.aggregations.pipeline.PipelineAggregatorBuilders;
+import org.elasticsearch.search.aggregations.pipeline.bucketsort.BucketSortPipelineAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
 /**
  * Class to create the facet-search-query. Groups together steps to create the Elasticsearch Query
@@ -25,10 +31,11 @@ public class ElasticQueryHelper {
 
     /** Name of the aggregation containing the search hits */
     public static final String HITS_AGG = "group-by-pid";
+    public static final String COUNTER_AGG = "counter";
 
     /** Fields which are fetched from source */
     private static final String[] SOURCE_FIELDS = new String[] {"pid", "publish_infos", "title",
-            "doctype", "IsGt", "creator_infos"};
+            "doctype", "IsGt", "creator_infos", "structrun"};
 
     /** Mapping from filter-name to corresponding column
      *
@@ -91,14 +98,16 @@ public class ElasticQueryHelper {
         // TODO: according to API do not use filters if 'extended' is specified. could be added here
         this.addFilters(query);
         // part 3: aggregations for the search hits
-        TermsAggregationBuilder aggMerge = this.createMergeAggregation();
+        List<AggregationBuilder> aggsMerge = this.createMergeAggregation();
         // part 4: aggregations for collecting the facets
         List<TermsAggregationBuilder> aggFacets = this.createFacetAggregations();
 
         // putting things together
         source.query(query);
         source.size(0);
-        source.aggregation(aggMerge);
+        for (AggregationBuilder agg: aggsMerge) {
+            source.aggregation(agg);
+        }
         for (TermsAggregationBuilder agg : aggFacets) {
             source.aggregation(agg);
         }
@@ -163,20 +172,31 @@ public class ElasticQueryHelper {
         return res;
     }
 
-    private TermsAggregationBuilder createMergeAggregation() {
-        TermsAggregationBuilder res = AggregationBuilders.terms(HITS_AGG)
+    private List<AggregationBuilder> createMergeAggregation() {
+        List<AggregationBuilder> res = new ArrayList<>();
+        TermsAggregationBuilder byPid = AggregationBuilders.terms(HITS_AGG)
                 .field("pid.keyword")
-                .size(99999); // currently we need to get everything for now to get the hit count
-        TermsAggregationBuilder sub1 = AggregationBuilders.terms("group-by-log")
+                .size(99999);
+        BucketSortPipelineAggregationBuilder pager = PipelineAggregatorBuilders.bucketSort("pager",
+                List.of(new FieldSortBuilder("_key").order(SortOrder.ASC)))
+                .from(offset)
+                .size(limit);
+        TermsAggregationBuilder byLog= AggregationBuilders.terms("group-by-log")
                 .field("log.keyword")
                 .missing("zzz")
                 .size(1)
                 .order(BucketOrder.key(true));
-        TopHitsAggregationBuilder sub2 = AggregationBuilders.topHits("by_top_hits")
+        TopHitsAggregationBuilder byTopHits = AggregationBuilders.topHits("by_top_hits")
                 .size(1)
                 .fetchSource(SOURCE_FIELDS,  null);
-        sub1.subAggregation(sub2);
-        res.subAggregation(sub1);
+        CardinalityAggregationBuilder counter = AggregationBuilders.cardinality(COUNTER_AGG)
+                .field("pid.keyword");
+
+        byPid.subAggregation(pager);
+        byPid.subAggregation(byLog);
+        byLog.subAggregation(byTopHits);
+        res.add(byPid);
+        res.add(counter);
         return res;
     }
 }
