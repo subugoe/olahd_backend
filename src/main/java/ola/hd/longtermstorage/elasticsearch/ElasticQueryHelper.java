@@ -156,7 +156,7 @@ public class ElasticQueryHelper {
             res = QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("metadata", searchterm));
         }
         if (Boolean.TRUE.equals(this.isGt)) {
-            res.must(QueryBuilders.matchQuery("IsGT", true));
+            res.must(QueryBuilders.matchQuery("IsGt", true));
         }
         return res;
     }
