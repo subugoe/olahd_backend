@@ -12,6 +12,7 @@ on:
 
 jobs:
   test:
+    if: ${{ false }}  # disable for now
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -29,7 +30,7 @@ jobs:
 
   # builds docker image to test if dockerfiles are working
   build:
-    needs: test
+    #needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -41,7 +42,8 @@ jobs:
     environment:
       name: Develop
     if: github.event.ref == 'refs/heads/develop'
-    needs: [test, build]
+    #needs: [test, build]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: copy key
@@ -62,7 +64,8 @@ jobs:
     environment:
       name: Staging
     if: github.event.ref == 'refs/heads/main'
-    needs: [test, build]
+    #needs: [test, build]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: copy key
@@ -83,7 +86,8 @@ jobs:
     environment:
       name: Production
     if: startsWith(github.event.ref, 'refs/tags/v')
-    needs: [test, build]
+    #needs: [test, build]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: copy key
