@@ -86,7 +86,8 @@ jobs:
     name: Deploy to production
     environment:
       name: Production
-    if: startsWith(github.event.ref, 'refs/tags/v')
+    #if: startsWith(github.event.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/')
     #needs: [test, build]
     needs: build
     runs-on: ubuntu-latest
