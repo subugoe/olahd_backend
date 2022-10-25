@@ -3,7 +3,6 @@ package ola.hd.longtermstorage.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Date;
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
@@ -13,7 +12,7 @@ public class SearchHitDetail {
     private String name;
     private String id;
     private String type;
-    private int size;
+    private long size;
     private Date created;
     private Date modified;
     private Object meta;
@@ -49,11 +48,11 @@ public class SearchHitDetail {
         this.type = type;
     }
 
-    public int getSize() {
+    public long getSize() {
         return size;
     }
 
-    public void setSize(int size) {
+    public void setSize(long size) {
         this.size = size;
     }
 

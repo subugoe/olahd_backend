@@ -110,7 +110,7 @@ curl -X POST \
      http://your.domain.com/bag \
      -u <user:password> \
      -H 'content-type: multipart/form-data' \
-     -F file=@<path-to-file>
+     -F file=@<path-to-file> \
      -F prev=<PID-previous-version>
 ```
 
