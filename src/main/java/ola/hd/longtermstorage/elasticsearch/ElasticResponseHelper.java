@@ -202,7 +202,7 @@ public class ElasticResponseHelper {
                 Map<String, ?> infos = (Map)firstElement.get("publish_infos");
                 List<String> publisher = (List<String>)infos.get("publisher");
                 if (!publisher.isEmpty()) {
-                    return publisher.stream().map(String::trim).collect(Collectors.joining(", "));
+                    return publisher.stream().collect(Collectors.joining(", "));
                 }
             }
         } catch (Exception e) {
@@ -213,7 +213,7 @@ public class ElasticResponseHelper {
             Map<String, Object> infos = (Map)hit.get("publish_infos");
             List<String> publisher = (List<String>)infos.get("publisher");
             if (!publisher.isEmpty()) {
-                return publisher.stream().map(String::trim).collect(Collectors.joining(","));
+                return publisher.stream().collect(Collectors.joining(", "));
             }
         } catch (Exception e) {
             //pass: just skip if value is not available
