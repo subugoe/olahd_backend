@@ -11,6 +11,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -81,11 +82,11 @@ public class ElasticsearchService {
         SearchRequest request = new SearchRequest().indices(LOGICAL_INDEX_NAME);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         request.source(sourceBuilder);
-        sourceBuilder.query(QueryBuilders.boolQuery()
+
+        BoolQueryBuilder query = QueryBuilders.boolQuery()
                 .must(QueryBuilders.matchQuery("pid.keyword", pid))
-                .must(QueryBuilders.matchQuery("IsFirst", true)))
-                .size(1)
-                .fetchSource(new String[]{"bytitle", "bycreator", "publish_infos"}, null);
+                .must(QueryBuilders.matchQuery("IsFirst", true));
+        sourceBuilder.query(query).size(1);
 
         Map<String, Object> hit = null;
         try {
