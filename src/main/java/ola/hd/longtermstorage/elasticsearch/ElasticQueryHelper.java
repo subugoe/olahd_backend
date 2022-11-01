@@ -166,7 +166,7 @@ public class ElasticQueryHelper {
         // Facets
         res.add(AggregationBuilders.terms("Titles").field("title.title.keyword"));
         res.add(AggregationBuilders.terms("Creators").field("creator_infos.name.keyword"));
-        res.add(AggregationBuilders.terms("Publisher").field("publish_infos.publisher.keyword"));
+        //res.add(AggregationBuilders.terms("Publisher").field("publish_infos.publisher.keyword"));
         res.add(AggregationBuilders.terms("Place").field("publish_infos.place_publish.keyword"));
         res.add(AggregationBuilders.terms("Publish Year").field("publish_infos.year_publish"));
         return res;
