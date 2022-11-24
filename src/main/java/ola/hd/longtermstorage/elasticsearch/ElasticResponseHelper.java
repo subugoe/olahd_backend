@@ -114,6 +114,7 @@ public class ElasticResponseHelper {
             hitResult.setPublisher(readPublisherFromSearchHit(hitmap));
             hitResult.setCreator(readCreatorFromSearchHit(hitmap));
             hitResult.setGt(readIsGtFromSearchHit(hitmap));
+            hitResult.setNoData();
         }
 
         res.setHits((int)counter.getValue());
