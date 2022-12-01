@@ -1,6 +1,7 @@
 package ola.hd.longtermstorage.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 
 public class HitList {
 
@@ -17,6 +18,7 @@ public class HitList {
     @JsonProperty("isGT")
     private Boolean gt;
     private FulltextSnippets fulltextSnippets;
+    private Boolean noData;
 
     public HitList(String pid, String id, String title, String subtitle, String placeOfPublish, int yearOfPublish,
             String publisher, String creator, FulltextSnippets fulltextSnippets, Boolean gt) {
@@ -124,4 +126,17 @@ public class HitList {
         this.gt = gt;
     }
 
+    public Boolean getNoData() {
+        return noData;
+    }
+
+    public void setNoData() {
+        if (StringUtils.isBlank(this.title) && StringUtils.isBlank(this.subtitle)
+                && StringUtils.isBlank(this.placeOfPublish) && yearOfPublish < 0
+                && StringUtils.isBlank(this.publisher) && StringUtils.isBlank(this.creator)) {
+            this.noData = true;
+        } else {
+            this.noData = false;
+        }
+    }
 }
