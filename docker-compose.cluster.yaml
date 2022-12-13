@@ -31,6 +31,12 @@ services:
       - "traefik.http.routers.olahds_backend.middlewares=stripprefix_api"
       - "traefik.http.middlewares.stripprefix_api.stripprefix.prefixes=/api"
 
+      - "traefik.http.routers.redirect-export-router.rule=PathPrefix(`/export/`)"
+      - "traefik.http.routers.redirect-export-router.middlewares=redirect_export_to_api"
+      - "traefik.http.middlewares.redirect_export_to_api.redirectregex.regex=^http[s]{0,1}://([^\\/]+)/(export\\/.*)"
+      - "traefik.http.middlewares.redirect_export_to_api.redirectregex.replacement=/api/$${2}"
+      - "traefik.http.middlewares.redirect_export_to_api.redirectregex.permanent=true"
+
   olahds_indexer:
     volumes:
       - ./cfg/cluster/app.env:/etc/env/app.env
