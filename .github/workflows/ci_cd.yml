@@ -121,9 +121,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - dockerfile: ./src/Agent/Dockerfile
+          - dockerfile: ./Dockerfile
             #image: ghcr.io/username/image1
-          - dockerfile: ./src/Dockerfile-dril4net-distribution
+          - dockerfile: ./docker/search/Dockerfile
             #image: ghcr.io/username/image2
     permissions:
       contents: read
