@@ -122,9 +122,9 @@ jobs:
       matrix:
         include:
           - dockerfile: ./Dockerfile
-            image: image1
+            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}_develop
           - dockerfile: ./docker/search/Dockerfile
-            image: image2
+            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}_search_develop
     permissions:
       contents: read
       packages: write
