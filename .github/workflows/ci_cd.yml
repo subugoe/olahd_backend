@@ -122,9 +122,9 @@ jobs:
       matrix:
         include:
           - dockerfile: ./Dockerfile
-            image: ${{ REGISTRY }}/${{ IMAGE_NAME }}
+            image: ghcr.io/${{ env.IMAGE_NAME }}
           - dockerfile: ./docker/search/Dockerfile
-            image: ${{ REGISTRY }}/${{ IMAGE_NAME }}-search
+            image: ghcr.io/search
     permissions:
       contents: read
       packages: write
