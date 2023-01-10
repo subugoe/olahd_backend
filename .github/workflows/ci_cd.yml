@@ -51,7 +51,7 @@ jobs:
       name: Develop
     if: github.event.ref == 'refs/heads/develop'
     #needs: [test, build]
-    needs: [build, build-and-push-dev-image]
+    needs: [build, build-and-push-dev-backend-image, build-and-push-dev-search-image]
     runs-on: ubuntu-latest
     steps:
       - name: copy key
@@ -112,7 +112,7 @@ jobs:
           SSH_USER: ${{ secrets.OLAHD_SSH_USER }}
           SSH_HOST: ${{ secrets.OLAHD_SSH_HOST_PROD }}
 
-  build-and-push-backend-dev-image:
+  build-and-push-dev-backend-image:
     name: Push dev backend images to registry
     environment:
       name: Develop
@@ -150,7 +150,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
   
-  build-and-push-search-dev-image:
+  build-and-push-dev-search-image:
     name: Push dev search images to registry
     environment:
       name: Develop
