@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: test token
-        run: echo $TOKEN_GITHUB | docker -u githubuser login ghcr.io 
+        run: echo $TOKEN_GITHUB | docker login ghcr.io -u githubuser --password-stdin
         env: 
           TOKEN_GITHUB: ${{ github.token }}
       - name: copy key
