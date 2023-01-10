@@ -13,9 +13,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME1: ${{ github.repository }}-backend
-  IMAGE_NAME2: ${{ github.repository }}-search
-
+  IMAGE_NAME: ${{ github.repository }}
+  
 jobs:
   test:
     if: ${{ false }}  # disable for now
@@ -123,9 +122,9 @@ jobs:
       matrix:
         include:
           - dockerfile: ./Dockerfile
-            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME1 }}
+            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           - dockerfile: ./docker/search/Dockerfile
-            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME2 }}
+            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
     permissions:
       contents: read
       packages: write
