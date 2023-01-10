@@ -40,8 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Build the Docker image with version
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Build the Backend Docker image with version
+      run: docker build . --file Dockerfile --tag backend:$(date +%s)
+    - name: Build the Search Docker image with version
+      run: docker build ./docker/search --file Dockerfile --tag search:$(date +%s)
 
   deploy-develop:
     name: Deploy to develop
