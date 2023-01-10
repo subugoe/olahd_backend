@@ -122,12 +122,13 @@ jobs:
       matrix:
         include:
           - dockerfile: ./Dockerfile
-            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            image: ${{ REGISTRY }}/${{ IMAGE_NAME }}
           - dockerfile: ./docker/search/Dockerfile
-            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            image: ${{ REGISTRY }}/${{ IMAGE_NAME }}-search
     permissions:
       contents: read
       packages: write
+
 
     steps:
       - name: Checkout repository
