@@ -43,7 +43,7 @@ jobs:
     - name: Build the Backend Docker image with version
       run: docker build . --file Dockerfile --tag backend:$(date +%s)
     - name: Build the Search Docker image with version
-      run: docker build ./docker/search --file Dockerfile --tag search:$(date +%s)
+      run: docker build ./docker/search --file ./docker/search/Dockerfile --tag search:$(date +%s)
 
   deploy-develop:
     name: Deploy to develop
