@@ -122,9 +122,9 @@ jobs:
       matrix:
         include:
           - dockerfile: ./Dockerfile
-            #image: ghcr.io/username/image1
+            image: image1
           - dockerfile: ./docker/search/Dockerfile
-            #image: ghcr.io/username/image2
+            image: image2
     permissions:
       contents: read
       packages: write
