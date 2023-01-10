@@ -123,8 +123,8 @@ jobs:
         include:
           - dockerfile: ./Dockerfile
             image: ghcr.io/subugoe/olahd_backend
-          - dockerfile: ./docker/subugoe/search/Dockerfile
-            image: ghcr.io/search
+          - dockerfile: ./docker/search/Dockerfile
+            image: ghcr.io/subugoe/search
     permissions:
       contents: read
       packages: write
