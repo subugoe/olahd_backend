@@ -49,7 +49,7 @@ jobs:
       name: Develop
     if: github.event.ref == 'refs/heads/develop'
     #needs: [test, build]
-    needs: build
+    needs: [build, build-and-push-dev-image]
     runs-on: ubuntu-latest
     steps:
       - name: copy key
