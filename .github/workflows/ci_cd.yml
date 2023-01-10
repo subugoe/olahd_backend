@@ -73,8 +73,7 @@ jobs:
       - name: test token
         run: echo $TOKEN_GITHUB | docker login ghcr.io 
         env: 
-          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
-
+          TOKEN_GITHUB: ${{ GITHUB_TOKEN }}
       - name: copy key
         run: |
           mkdir -p ~/.ssh/
