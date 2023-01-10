@@ -48,6 +48,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: test token
+        run: echo $TOKEN_GITHUB | docker login ghcr.io 
+        env: 
+          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
       - name: copy key
         run: |
           mkdir -p ~/.ssh/
