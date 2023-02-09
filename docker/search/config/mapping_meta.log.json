@@ -53,7 +53,6 @@
       }
     },
     "mappings": {
-      "log_type": {
         "properties": {
           "metadata": {
             "type": "text",
@@ -1644,6 +1643,5 @@
             ]
           }
         }
-      }
     }
   }
