@@ -1,5 +1,4 @@
-FROM docker.elastic.co/elasticsearch/elasticsearch:6.8.23
-#FROM docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+FROM docker.elastic.co/elasticsearch/elasticsearch:7.17.9
 
 LABEL maintainer="panzer@sub.uni-goettingen.de"
 
