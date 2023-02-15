@@ -53,6 +53,32 @@
       }
     },
     "mappings": {
+      "runtime": {
+        "title2": {
+          "type": "keyword",
+          "script": {
+            "source": "if (!doc['title.title.keyword'].empty) { emit(doc['title.title.keyword'].value) } else if (!doc['structrun.title.title.keyword'].empty){ emit(doc['structrun.title.title.keyword'].get(0)); }"
+          }
+        },
+        "creator2": {
+          "type": "keyword",
+          "script": {
+            "source": "if (!doc['creator_infos.name.keyword'].empty) { emit(doc['creator_infos.name.keyword'].value) } else if (!doc['structrun.creator_infos.name.keyword'].empty){ emit(doc['structrun.creator_infos.name.keyword'].get(0)); }"
+          }
+        },
+        "place2": {
+          "type": "keyword",
+          "script": {
+            "source": "if (!doc['publish_infos.place_publish.keyword'].empty) { emit(doc['publish_infos.place_publish.keyword'].value) } else if (!doc['structrun.publish_infos.place_publish.keyword'].empty){ emit(doc['structrun.publish_infos.place_publish.keyword'].get(0)); }"
+          }
+        },
+        "year2": {
+          "type": "long",
+          "script": {
+            "source": "if (doc['publish_infos.year_publish'].size() != 0) { emit(doc['publish_infos.year_publish'].value); } else if (doc['structrun.publish_infos.year_publish'].size() != 0) { emit(doc['structrun.publish_infos.year_publish'].get(0)); }"
+          }
+        }
+      },
       "properties": {
         "bycreator": {
           "type": "text",
@@ -69,6 +95,85 @@
             "keyword": {
               "type": "keyword",
               "ignore_above": 256
+            }
+          }
+        },
+        "creator_infos": {
+          "properties": {
+            "gndNumber": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": [
+                "metadata",
+                "metadata_not_analysed"
+              ]
+            },
+            "gndURI": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": [
+                "metadata",
+                "metadata_not_analysed"
+              ]
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": [
+                "metadata",
+                "metadata_not_analysed"
+              ]
+            },
+            "roleterm": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "roleterm_authority": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "roleterm_type": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "type": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
             }
           }
         },
