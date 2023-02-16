@@ -31,6 +31,8 @@ public class ElasticQueryHelper {
 
     /** Name of the aggregation containing the search hits */
     public static final String HITS_AGG = "group-by-pid";
+    /** Name of the sub-aggregation containing the pids per facet */
+    public static final String SUB_AGG_PIDS = "pids-per-facet";
     public static final String COUNTER_AGG = "counter";
 
     /** Fields which are fetched from source */
@@ -164,12 +166,16 @@ public class ElasticQueryHelper {
     private List<TermsAggregationBuilder> createFacetAggregations() {
         List<TermsAggregationBuilder> res = new ArrayList<>();
         // Facets
-        res.add(AggregationBuilders.terms("Titles").field("title2"));
-        res.add(AggregationBuilders.terms("Creators").field("creator2"));
-        //res.add(AggregationBuilders.terms("Publisher").field("publish_infos.publisher.keyword"));
-        res.add(AggregationBuilders.terms("Place").field("place2"));
-        res.add(AggregationBuilders.terms("Publish Year").field("year2"));
+        res.add(createSingleFacetAggregation("Titles", "title2"));
+        res.add(createSingleFacetAggregation("Creators", "creator2"));
+        res.add(createSingleFacetAggregation("Place", "place2"));
+        res.add(createSingleFacetAggregation("Publish Year", "year2"));
         return res;
+    }
+
+    private TermsAggregationBuilder createSingleFacetAggregation(String term, String field) {
+        TermsAggregationBuilder res = AggregationBuilders.terms(term).field(field);
+        return res.subAggregation(AggregationBuilders.terms(SUB_AGG_PIDS).field("pid.keyword"));
     }
 
     private List<AggregationBuilder> createMergeAggregation() {
