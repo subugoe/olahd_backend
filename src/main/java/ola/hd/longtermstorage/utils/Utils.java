@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -71,5 +72,23 @@ public class Utils {
             return false;
         }
         return null;
+    }
+
+    /**
+     * Reads host and protocol from request and returns it.
+     *
+     * @param request
+     * @return Examples: <code>http://localhost:8080</code>, <code>http://ola-hd.ocr-d.de</code>
+     */
+    public static String readHost(HttpServletRequest request) {
+        if (request == null) {
+            return "";
+        }
+        int port = request.getServerPort();
+        String res = String.format("%s://%s", request.getScheme(), request.getServerName());
+        if (port != 80 && port != 443) {
+            res += ":" + String.valueOf(port);
+        }
+        return res;
     }
 }
