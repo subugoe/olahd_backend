@@ -46,8 +46,8 @@ public class ElasticQueryHelper {
             "Creators", "creator_infos.name.keyword",
             "Titles", "title.title.keyword",
             "Publisher", "publish_infos.publisher.keyword",
-            "Place", "publish_infos.place_publish.keyword",
-            "Publish Year", "publish_infos.year_publish");
+            "Place of Publication", "publish_infos.place_publish.keyword",
+            "Year of Publication", "publish_infos.year_publish");
 
     private String searchterm;
     private int limit;
