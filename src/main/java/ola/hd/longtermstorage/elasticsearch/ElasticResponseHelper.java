@@ -147,8 +147,12 @@ public class ElasticResponseHelper {
             Terms terms = (Terms)entry.getValue();
             List<? extends Bucket> buckets = terms.getBuckets();
             for (Bucket x : buckets) {
-                Values val = new Values(x.getKeyAsString(), (int)x.getDocCount());
-                values.add(val);
+                if (x.getAggregations() != null) {
+                    Map<String, Aggregation> subAggMap = x.getAggregations().getAsMap();
+                    Aggregation agg = subAggMap.get(ElasticQueryHelper.SUB_AGG_PIDS);
+                    Values val = new Values(x.getKeyAsString(), ((Terms)agg).getBuckets().size());
+                    values.add(val);
+                }
             }
             facets.add(new Facets(terms.getName(), values));
         }

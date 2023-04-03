@@ -31,6 +31,8 @@ public class ElasticQueryHelper {
 
     /** Name of the aggregation containing the search hits */
     public static final String HITS_AGG = "group-by-pid";
+    /** Name of the sub-aggregation containing the pids per facet */
+    public static final String SUB_AGG_PIDS = "pids-per-facet";
     public static final String COUNTER_AGG = "counter";
 
     /** Fields which are fetched from source */
@@ -45,9 +47,8 @@ public class ElasticQueryHelper {
     public static final Map<String, String> FILTER_MAP = Map.of(
             "Creators", "creator_infos.name.keyword",
             "Titles", "title.title.keyword",
-            "Publisher", "publish_infos.publisher.keyword",
-            "Place of Publication", "publish_infos.place_publish.keyword",
-            "Year of Publication", "publish_infos.year_publish");
+            "Place", "publish_infos.place_publish.keyword",
+            "Publish Year", "publish_infos.year_publish");
 
     private String searchterm;
     private int limit;
@@ -164,12 +165,16 @@ public class ElasticQueryHelper {
     private List<TermsAggregationBuilder> createFacetAggregations() {
         List<TermsAggregationBuilder> res = new ArrayList<>();
         // Facets
-        res.add(AggregationBuilders.terms("Titles").field("title.title.keyword"));
-        res.add(AggregationBuilders.terms("Creators").field("creator_infos.name.keyword"));
-        //res.add(AggregationBuilders.terms("Publisher").field("publish_infos.publisher.keyword"));
-        res.add(AggregationBuilders.terms("Place").field("publish_infos.place_publish.keyword"));
-        res.add(AggregationBuilders.terms("Publish Year").field("publish_infos.year_publish"));
+        res.add(createSingleFacetAggregation("Titles", "title.title.keyword"));
+        res.add(createSingleFacetAggregation("Creators", "creator_infos.name.keyword"));
+        res.add(createSingleFacetAggregation("Place", "publish_infos.place_publish.keyword"));
+        res.add(createSingleFacetAggregation("Publish Year", "publish_infos.year_publish"));
         return res;
+    }
+
+    private TermsAggregationBuilder createSingleFacetAggregation(String term, String field) {
+        TermsAggregationBuilder res = AggregationBuilders.terms(term).field(field);
+        return res.subAggregation(AggregationBuilders.terms(SUB_AGG_PIDS).field("pid.keyword"));
     }
 
     private List<AggregationBuilder> createMergeAggregation() {

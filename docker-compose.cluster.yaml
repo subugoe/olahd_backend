@@ -91,10 +91,12 @@ services:
       - "9200:9200"
       - "9300:9300"
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9200/_cat/health"]
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:9200/_cat/health"]
       interval: 30s
       timeout: 60s
       retries: 300
+    environment:
+      - discovery.type=single-node
     networks:
       olahd:
         aliases:
