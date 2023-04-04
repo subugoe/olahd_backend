@@ -116,20 +116,14 @@ curl -X POST \
 
 ### Full-text search
 To perform a search, send a `GET` request to the `/search` endpoint.
-The query is provided via the `q` parameter, e.g. `/search?q=test`
 ```
-curl -X GET http://your.domain.com/api/search?q=test
+curl -X GET http://your.domain.com/api/search?searchterm=test&fulltextsearch=true&metadatasearch=false
 ```
 
 ### Search by meta-data
 Besides full-text search, users can also search by meta-data.
-Currently, OLA-HD supports meta-data from [Dublin Core](https://www.dublincore.org/specifications/dublin-core/dces/).
-To use it, prepend the meta-data with `dc`, e.g. `/search?q=dcCreator:John`
-
-**IMPORTANT**: a PID always contains a forward slash, which is a special character.
-For that reason, search by identifier (PID) can only be perform as a phrase search and the double quote must be encoded as `%22`.
 ```
-curl -X GET http://your.domain.com/api/search?q=dcIdentifier:%22your-identifier%22
+curl -X GET http://your.domain.com/api/search?searchterm=test&fulltextsearch=false&metadatasearch=true
 ```
 
 ### Quick export

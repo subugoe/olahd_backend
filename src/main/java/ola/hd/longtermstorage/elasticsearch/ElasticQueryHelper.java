@@ -45,11 +45,10 @@ public class ElasticQueryHelper {
      * corresponding column from the Elasticsearch-entry. For example for Filter Creator, the column
      * to filter must be creator_infos.name.keyword */
     public static final Map<String, String> FILTER_MAP = Map.of(
-            "Creators", "creator2",
-            "Titles", "title2",
-            "Publisher", "publish_infos.publisher.keyword",
-            "Place", "place2",
-            "Publish Year", "year2");
+            "Creators", "creator_infos.name.keyword",
+            "Titles", "title.title.keyword",
+            "Place", "publish_infos.place_publish.keyword",
+            "Publish Year", "publish_infos.year_publish");
 
     private String searchterm;
     private int limit;
@@ -166,10 +165,10 @@ public class ElasticQueryHelper {
     private List<TermsAggregationBuilder> createFacetAggregations() {
         List<TermsAggregationBuilder> res = new ArrayList<>();
         // Facets
-        res.add(createSingleFacetAggregation("Titles", "title2"));
-        res.add(createSingleFacetAggregation("Creators", "creator2"));
-        res.add(createSingleFacetAggregation("Place", "place2"));
-        res.add(createSingleFacetAggregation("Publish Year", "year2"));
+        res.add(createSingleFacetAggregation("Titles", "title.title.keyword"));
+        res.add(createSingleFacetAggregation("Creators", "creator_infos.name.keyword"));
+        res.add(createSingleFacetAggregation("Place", "publish_infos.place_publish.keyword"));
+        res.add(createSingleFacetAggregation("Publish Year", "publish_infos.year_publish"));
         return res;
     }
 

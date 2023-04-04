@@ -36,3 +36,5 @@ src/main/resources/application-development.properties
 src/main/resources/application-staging.properties
 src/main/resources/application-production.properties
 upload-temp/
+
+docker-compose.https.yaml

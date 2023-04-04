@@ -7,7 +7,7 @@ services:
     command:
       - "--api.insecure=true" # TODO: remove
       - "--providers.docker=true"
-      - "--entrypoints.http.address=:80"
+      - "--entrypoints.web.address=:80"
       - "--providers.docker.exposedByDefault=false"
     ports:
       - "80:80"
@@ -26,16 +26,10 @@ services:
         - .env
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.olahds_backend.entrypoints=http"
+      - "traefik.http.routers.olahds_backend.entrypoints=web"
       - "traefik.http.routers.olahds_backend.rule=PathPrefix(`/api`)"
       - "traefik.http.routers.olahds_backend.middlewares=stripprefix_api"
       - "traefik.http.middlewares.stripprefix_api.stripprefix.prefixes=/api"
-
-      - "traefik.http.routers.redirect-export-router.rule=PathPrefix(`/export`)"
-      - "traefik.http.routers.redirect-export-router.middlewares=redirect_export_to_api"
-      - "traefik.http.middlewares.redirect_export_to_api.redirectregex.regex=^http[s]{0,1}://([^\\/]+)/(export\\/.*)"
-      - "traefik.http.middlewares.redirect_export_to_api.redirectregex.replacement=/api/$${2}"
-      - "traefik.http.middlewares.redirect_export_to_api.redirectregex.permanent=true"
 
   olahds_indexer:
     volumes:
@@ -71,7 +65,7 @@ services:
       olahd:
         aliases:
           - mongo
-    
+
   olahds_redis:
     image: redis:6-alpine
     command: redis-server --appendonly yes

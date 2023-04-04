@@ -1,0 +1,34 @@
+version: '3.5'
+# This is an example of how the traefik-related config can be overwritten with docker-compose to
+# enable https
+# To use this the service could be started like this:
+# docker-compose -f docker-compose.base.yaml -f docker-compose.cluster.yaml -f docker-compose.kibana.yaml docker-compose.https.example.yaml up -d
+# For usage email and URL in Host-Rule have to be adapted
+
+services:
+  reverse-proxy:
+    image: traefik:v2.8
+    ports:
+      - "443:443"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=your-email-here@example.de"
+      - "--certificatesresolvers.myresolver.acme.storage=/etc/certstore/acme.json"
+    volumes:
+      - "./certstore:/etc/certstore"
+    ports:
+      - "443:443"
+
+  olahds_backend:
+    labels:
+      - "traefik.http.routers.olahds_backend.entrypoints=websecure"
+      - "traefik.http.routers.olahds_backend.rule=Host(`your-domain-here.de`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.olahds_backend.tls.certresolver=myresolver"
