@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 Changed:
   * Update Traefik configuration for https usage
+  * Add enpoint to generate DFG-Viewer compatible METS for a PID
 
 
 ## [0.5.8] - 2023-03-28
