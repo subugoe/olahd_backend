@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import okhttp3.Headers;
 import okhttp3.Response;
 import ola.hd.longtermstorage.domain.ArchiveStatus;
@@ -21,6 +22,8 @@ import ola.hd.longtermstorage.domain.ResponseMessage;
 import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.repository.mongo.ExportRequestRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
+import ola.hd.longtermstorage.utils.MetsWebConverter;
+import ola.hd.longtermstorage.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
@@ -250,6 +253,86 @@ public class ExportController {
             .body(new InputStreamResource(res.body().byteStream()));
     }
 
+    /**
+     * Export METS-file via PID and rewrite the Files (FLocat) so that alle files are accessible
+     * through the web
+     *
+     * The links of the FLocat-Elements are converted to URLS where the corresponding files are
+     * available for download
+     *
+     * @param id  PID
+     * @return archive's METS-file
+     * @throws IOException
+     */
+    @ApiOperation(value = "Export a METS-file via PID with all files referenced web-accessible")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "METS-File for specified identifier was found.", response = byte[].class),
+        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class)
+    })
+    @GetMapping(value = "/export/mets-web", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    public ResponseEntity<StreamingResponseBody> exportMetsfileUrlpaths(
+            HttpServletRequest request,
+            @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id) throws IOException {
+        if (id.isBlank()) {
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                ErrMsg.PARAM_ID_IS_EMPTY
+            );
+        }
+
+        final String metsPath;
+        Map<String, String> bagInfoMap;
+        try {
+            bagInfoMap = archiveManagerService.getBagInfoTxt(id);
+        } catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                throw new HttpClientErrorException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    ErrMsg.ID_NOT_FOUND
+                );
+            }
+            throw e;
+        }
+        if (bagInfoMap.containsKey("Ocrd-Mets")) {
+            metsPath = bagInfoMap.get("Ocrd-Mets");
+        } else {
+            metsPath = "data/mets.xml";
+        }
+
+        Response res;
+        try {
+            res = archiveManagerService.exportFile(id, metsPath);
+        } catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                throw new HttpClientErrorException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    ErrMsg.METS_NOT_FOUND
+                );
+            }
+            throw e;
+        }
+
+        String host = Utils.readHost(request);
+
+        InputStream metsInStream = res.body().byteStream();
+
+        StreamingResponseBody stream = outputStream -> {
+            try {
+                MetsWebConverter.convertMets(id, host, metsInStream, outputStream);
+            } catch (Exception e) {
+                throw new HttpClientErrorException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    ErrMsg.METS_CONVERT_ERROR
+                );
+            }
+        };
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=mets.xml")
+                .body(stream);
+    }
     /**
      * Export File from OCRD-ZIP data directory via PID
      *
