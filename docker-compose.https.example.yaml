@@ -22,6 +22,9 @@ services:
       - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.myresolver.acme.email=your-email-here@example.de"
       - "--certificatesresolvers.myresolver.acme.storage=/etc/certstore/acme.json"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
     volumes:
       - "./certstore:/etc/certstore"
     ports:
