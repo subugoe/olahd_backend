@@ -3,11 +3,17 @@ Change Log
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](http://keepachangelog.com/)
+
+Versioned according to [Semantic Versioning](http://semver.org/).
+
 
 ## Unreleased
 
 Changed:
   * Update Traefik configuration for https usage
+
+Added:
   * Add enpoint to generate DFG-Viewer compatible METS for a PID
 
 
@@ -19,23 +25,23 @@ No actual changes
 ## [0.5.7] - 2023-03-28
 
 Changed:
-  * Change ci/cd pipeline
   * Change facet labeling
-  * Update readme regarding search-api
+
+Fixed:
+  * Improve readme
 
 
 ## [0.5.6] - 2023-12-01
 
-Changed:
-  * Add no data flag to show empty search results
-  * Change indexer configuration
+Fixed:
+  * Display no data flag to show empty search results
+  * Improve indexer configuration
 
 
 ## [0.5.5] - 2023-11-01
 
-Changed:
-  * Update tests and readme
-  * Remove publisher from facet search
+Removed:
+  * Remove publisher facet
 
 
 ## [0.5.4] - 2023-10-28
@@ -52,14 +58,11 @@ Fixed:
 
 ## [0.5.2] - 2022-10-25
 
-Changed:
-  * Add placeholder in config-file template
+Fixed:
+  * Improve config-file-template
 
 
 ## [0.5.1] - 2022-10-25
-
-Changed:
-  * Update ci/cd-pipeline
 
 Fixed:
   * Fix GT search-query
