@@ -35,3 +35,6 @@ services:
       - "traefik.http.routers.olahds_backend.entrypoints=websecure"
       - "traefik.http.routers.olahds_backend.rule=Host(`your-domain-here.de`) && PathPrefix(`/api`)"
       - "traefik.http.routers.olahds_backend.tls.certresolver=myresolver"
+      - "traefik.http.routers.olahds_backend_export.entrypoints=websecure"
+      - "traefik.http.routers.olahds_backend_export.rule=Host(`your-domain-here.de`) && PathPrefix(`/export`)"
+      - "traefik.http.routers.olahds_backend.tls.certresolver=myresolver"

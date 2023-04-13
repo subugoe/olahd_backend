@@ -31,6 +31,9 @@ services:
       - "traefik.http.routers.olahds_backend.middlewares=stripprefix_api"
       - "traefik.http.middlewares.stripprefix_api.stripprefix.prefixes=/api"
 
+      - "traefik.http.routers.olahds_backend_export.entrypoints=web"
+      - "traefik.http.routers.olahds_backend_export.rule=PathPrefix(`/export`)"
+
   olahds_indexer:
     volumes:
       - ./cfg/cluster/app.env:/etc/env/app.env
