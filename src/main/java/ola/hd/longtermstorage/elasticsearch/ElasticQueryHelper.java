@@ -138,7 +138,7 @@ public class ElasticQueryHelper {
 
     private BoolQueryBuilder createQuery() {
         BoolQueryBuilder res = null;
-        if (searchterm == null || searchterm.isEmpty()) {
+        if (searchterm == null || searchterm.isEmpty() || searchterm.trim().equals("*")) {
             if (Boolean.TRUE.equals(this.isGt)) {
                 return QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("IsGt", true));
             } else {
