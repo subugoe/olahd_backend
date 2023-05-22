@@ -82,7 +82,7 @@ public class SearchController {
             @RequestParam @ApiParam(value = "PID or internal ID of the archive.", required = true)
             String id,
             @RequestParam(defaultValue = "false") @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
-            boolean internalId) {
+            boolean internalId) throws IOException {
 
         // Get the data
         Archive archive = null;
@@ -90,6 +90,10 @@ public class SearchController {
             archive = archiveRepository.findByOnlineIdOrOfflineId(id, id);
         } else {
             archive = archiveRepository.findByPid(id);
+        }
+
+        if (archive == null) {
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
 
         // Build the response
