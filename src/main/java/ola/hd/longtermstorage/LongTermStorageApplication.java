@@ -4,7 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
-import org.springframework.data.ldap.repository.config.EnableLdapRepositories;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
@@ -14,7 +13,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @SpringBootApplication
 @EnableScheduling
 @EnableMongoRepositories(basePackages = "ola.hd.longtermstorage.repository.mongo")
-@EnableLdapRepositories(basePackages = "ola.hd.longtermstorage.repository.ldap")
 @EnableElasticsearchRepositories(basePackages = "ola.hd.longtermstorage.elasticsearch")
 public class LongTermStorageApplication {
 
