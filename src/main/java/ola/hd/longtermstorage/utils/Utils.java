@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * static functions for simple tasks
@@ -16,6 +18,7 @@ public class Utils {
     private Utils() {
     }
 
+    private static final Logger LOG = LoggerFactory.getLogger(Utils.class);
     private static final String BAGINFO_REGEX_LINEBREAK = "\\r?\\n|\\r";
     private static final String BAGINFO_REGEX_KEY_VALUE_SEPARATOR= ":\\s{0,1}";
     private static final String BAGINFO_REGEX_INDENT_LINE = "^\\s+.*";
@@ -90,5 +93,13 @@ public class Utils {
             res += ":" + String.valueOf(port);
         }
         return res;
+    }
+
+    public static void logInfo(String msg) {
+        LOG.info(msg);
+    }
+
+    public static void logWarn(String msg) {
+        LOG.warn(msg);
     }
 }
