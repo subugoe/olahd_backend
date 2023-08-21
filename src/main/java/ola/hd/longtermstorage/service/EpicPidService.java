@@ -33,6 +33,9 @@ public class EpicPidService implements PidService {
     @Value("${epic.url}")
     private String url;
 
+    @Value("${epic.pidKey:epic-pid}")
+    private String pidKey;
+
     private final MutexFactory<String> mutexFactory;
 
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json");
@@ -66,7 +69,7 @@ public class EpicPidService implements PidService {
                     // Parse the returned JSON
                     ObjectMapper mapper = new ObjectMapper();
                     JsonNode root = mapper.readTree(bodyString);
-                    return root.get("epic-pid").asText();
+                    return root.get(pidKey).asText();
                 }
             }
 
