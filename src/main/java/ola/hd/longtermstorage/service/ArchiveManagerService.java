@@ -45,7 +45,7 @@ public interface ArchiveManagerService {
      *
      * @param identifier The identifier of the archive
      * @param type       Full export or quick export
-     * @param   nal To indicate if the identifier is an internal ID or not (PID, PPN,...)
+     * @param isInternal To indicate if the identifier is an internal ID or not (PID, PPN,...)
      * @return The {@link Response} object to get the stream and close it properly.
      * @throws IOException Thrown if something's wrong when connecting to the archive system
      */
@@ -146,4 +146,16 @@ public interface ArchiveManagerService {
      * @throws IOException Thrown if something's wrong when connecting to the archive services
      */
     void deleteArchive(String archiveId, String txId) throws IOException;
+
+    /**
+     * Check if an archive has an online version available
+     *
+     * An archive can be available in 3 States: {@linkplain CdstarService.onlineProfile},
+     * {@linkplain CdstarService.offlineProfile} and {@linkplain CdstarService.mirrorProfile}. This
+     * function checks if the pid has an onlineProfile available.
+     *
+     * @param identifier The public identifier of the archive (PID, PPN,...)
+     * @throws IOException Thrown if something's wrong when connecting to the archive services
+     */
+    boolean isArchiveOnline(String identifier) throws IOException;
 }

@@ -637,9 +637,6 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         }
     }
 
-    /* TODO: todo: this is not reliable, because we have archives(don't know why) without pid in
-     * cdstar-metadata. Must be changed: ask mongodb for archive-id from pid, at least as backup
-     * if pid in cdstar not found*/
     private String getArchiveIdFromIdentifier(String identifier, String profile) throws IOException {
         String fullUrl = url + vault;
 
@@ -935,5 +932,11 @@ public class CdstarService implements ArchiveManagerService, SearchService {
                     "Cannot export file from archive " + archiveId);
         }
 
+    }
+
+    @Override
+    public boolean isArchiveOnline(String identifier) throws IOException {
+        String archiveId = getArchiveIdFromIdentifier(identifier, onlineProfile);
+        return !archiveId.equals(NOT_FOUND);
     }
 }

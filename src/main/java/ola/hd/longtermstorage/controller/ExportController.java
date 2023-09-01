@@ -382,4 +382,30 @@ public class ExportController {
                 .body(new InputStreamResource(res.body().byteStream()));
     }
 
+    /**
+     * Test if archive for PID is available for download.
+     *
+     * There are 3 profiles: online, offline and mirror. Archives with profile online and mirror can
+     * be downloaded. Archives with profile offline has to be converted to mirror first to be able
+     * to be downloaded. This endpoint checks for online Profile only to tell if the archive can be
+     * downloaded right away.
+     *
+     * @param id  PID or PPA
+     * @return true/false, if archive is online or not
+     * @throws IOException
+     */
+    @ApiOperation(value = "Test if archive for PID is available for quick export (online)")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "METS-File for specified identifier was found.", response = byte[].class),
+        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class)
+    })
+    @GetMapping(value = "/export/is-online", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    public ResponseEntity<Boolean> isArchiveAvailableOnline(
+            @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id) throws IOException {
+        if (id.isBlank()) {
+            throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY);
+        }
+        Boolean res = archiveManagerService.isArchiveOnline(id);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(res);
+    }
 }
