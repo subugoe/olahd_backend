@@ -53,954 +53,930 @@
       }
     },
     "mappings": {
-      "runtime": {
-        "title2": {
-          "type": "keyword",
-          "script": {
-            "source": "if (!doc['title.title.keyword'].empty) { emit(doc['title.title.keyword'].value) } else if (!doc['structrun.title.title.keyword'].empty){ emit(doc['structrun.title.title.keyword'].get(0)); }"
-          }
-        },
-        "creator2": {
-          "type": "keyword",
-          "script": {
-            "source": "if (!doc['creator_infos.name.keyword'].empty) { emit(doc['creator_infos.name.keyword'].value) } else if (!doc['structrun.creator_infos.name.keyword'].empty){ emit(doc['structrun.creator_infos.name.keyword'].get(0)); }"
-          }
-        },
-        "place2": {
-          "type": "keyword",
-          "script": {
-            "source": "if (!doc['publish_infos.place_publish.keyword'].empty) { emit(doc['publish_infos.place_publish.keyword'].value) } else if (!doc['structrun.publish_infos.place_publish.keyword'].empty){ emit(doc['structrun.publish_infos.place_publish.keyword'].get(0)); }"
-          }
-        },
-        "year2": {
-          "type": "long",
-          "script": {
-            "source": "if (doc['publish_infos.year_publish'].size() != 0) { emit(doc['publish_infos.year_publish'].value); } else if (doc['structrun.publish_infos.year_publish'].size() != 0) { emit(doc['structrun.publish_infos.year_publish'].get(0)); }"
-          }
-        }
-      },
-      "properties": {
-        "bycreator": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "currentno": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "creator_infos": {
-          "properties": {
-            "gndNumber": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              },
-              "copy_to": [
-                "metadata",
-                "metadata_not_analysed"
-              ]
-            },
-            "gndURI": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              },
-              "copy_to": [
-                "metadata",
-                "metadata_not_analysed"
-              ]
-            },
-            "name": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              },
-              "copy_to": [
-                "metadata",
-                "metadata_not_analysed"
-              ]
-            },
-            "roleterm": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
+      "phys_type": {
+        "properties": {
+          "bycreator": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
               }
-            },
-            "roleterm_authority": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "roleterm_type": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "type": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            }
-          }
-        },
-        "currentnosort": {
-          "type": "long"
-        },
-        "date_indexed": {
-          "type": "date"
-        },
-        "date_modified": {
-          "type": "date"
-        },
-        "dc": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "end_page_index": {
-          "type": "long"
-        },
-        "filename": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "format": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "fulltext": {
-          "type": "text",
-          "term_vector": "with_positions_offsets",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
             }
           },
-          "analyzer": "rebuilt_german"
-        },
-        "fulltext_not_analysed": {
-          "type": "text",
-          "term_vector": "with_positions_offsets",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "id": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "index": {
-          "type": "long"
-        },
-        "iscontribution": {
-          "type": "boolean"
-        },
-        "label": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "log": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "log_id": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "mimetype": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "order": {
-          "type": "long"
-        },
-        "orderlabel": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "page": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "page_key": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "parent": {
-          "properties": {
-            "catalogue": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "dc": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "issn": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "log": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "parent_id": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "purl": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "record_id": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "rights_access_condition_infos": {
-              "properties": {
-                "access_condition": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                }
-              }
-            },
-            "title": {
-              "properties": {
-                "authority_URI": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "partname": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "partnumber": {
-                  "type": "long"
-                },
-                "sorttitle": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    },
-                    "sort": {
-                      "type": "icu_collation_keyword",
-                      "index": false,
-                      "language": "de",
-                      "country": "DE",
-                      "variant": "@collation=phonebook"
-                    }
-                  },
-                  "analyzer": "rebuilt_german"
-                },
-                "subtitle": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  },
-                  "analyzer": "rebuilt_german"
-                },
-                "title": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  },
-                  "analyzer": "rebuilt_german"
-                },
-                "type": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "value_URI": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                }
-              }
-            },
-            "type": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "zdb": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            }
-          }
-        },
-        "phys": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "publish_infos": {
-          "properties": {
-            "place_info": {
-              "properties": {
-                "place_term": {
-                  "properties": {
-                    "type": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword",
-                          "ignore_above": 256
-                        }
-                      }
-                    },
-                    "authority": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword",
-                          "ignore_above": 256
-                        }
-                      }
-                    },
-                    "authorityURI": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword",
-                          "ignore_above": 256
-                        }
-                      }
-                    },
-                    "valueURI": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword",
-                          "ignore_above": 256
-                        }
-                      }
-                    },
-                    "value": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword",
-                          "ignore_above": 256
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "place_publish": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "publisher": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "publisher_normalized": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "publisher_info": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "year_publish": {
-              "type": "long"
-            },
-            "year_publish_end": {
-              "type": "long"
-            },
-            "year_publish_start": {
-              "type": "long"
-            },
-            "year_publish_string": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            }
-          }
-        },
-        "rights_access_condition_infos": {
-          "properties": {
-            "access_condition": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            }
-          }
-        },
-        "start_page_index": {
-          "type": "long"
-        },
-        "structrun": {
-          "properties": {
-            "catalogue": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "currentno": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "currentnosort": {
-              "type": "long"
-            },
-            "dc": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "issn": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "parent_id": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "publish_infos": {
-              "properties": {
-                "place_info": {
-                  "properties": {
-                    "place_term": {
-                      "properties": {
-                        "type": {
-                          "type": "text",
-                          "fields": {
-                            "keyword": {
-                              "type": "keyword",
-                              "ignore_above": 256
-                            }
-                          }
-                        },
-                        "authority": {
-                          "type": "text",
-                          "fields": {
-                            "keyword": {
-                              "type": "keyword",
-                              "ignore_above": 256
-                            }
-                          }
-                        },
-                        "authorityURI": {
-                          "type": "text",
-                          "fields": {
-                            "keyword": {
-                              "type": "keyword",
-                              "ignore_above": 256
-                            }
-                          }
-                        },
-                        "valueURI": {
-                          "type": "text",
-                          "fields": {
-                            "keyword": {
-                              "type": "keyword",
-                              "ignore_above": 256
-                            }
-                          }
-                        },
-                        "value": {
-                          "type": "text",
-                          "fields": {
-                            "keyword": {
-                              "type": "keyword",
-                              "ignore_above": 256
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "place_publish": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "publisher": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "publisher_info": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "year_publish": {
-                  "type": "long"
-                },
-                "year_publish_end": {
-                  "type": "long"
-                },
-                "year_publish_start": {
-                  "type": "long"
-                },
-                "year_publish_string": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                }
-              }
-            },
-            "purl": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "rights_access_condition_infos": {
-              "properties": {
-                "access_condition": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                }
-              }
-            },
-            "title": {
-              "properties": {
-                "authority_URI": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "partname": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "partnumber": {
-                  "type": "long"
-                },
-                "sorttitle": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    },
-                    "sort": {
-                      "type": "icu_collation_keyword",
-                      "index": false,
-                      "language": "de",
-                      "country": "DE",
-                      "variant": "@collation=phonebook"
-                    }
-                  },
-                  "analyzer": "rebuilt_german"
-                },
-                "subtitle": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  },
-                  "analyzer": "rebuilt_german"
-                },
-                "title": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  },
-                  "analyzer": "rebuilt_german"
-                },
-                "type": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                },
-                "value_URI": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                }
-              }
-            },
-            "type": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "zdb": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            }
-          }
-        },
-        "title": {
-          "properties": {
-            "authority_URI": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "partname": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "partnumber": {
-              "type": "long"
-            },
-            "sorttitle": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                },
-                "sort": {
-                  "type": "icu_collation_keyword",
-                  "index": false,
-                  "language": "de",
-                  "country": "DE",
-                  "variant": "@collation=phonebook"
-                }
-              },
-              "analyzer": "rebuilt_german"
-            },
-            "subtitle": {
-              "type": "text",
+          "creator_infos": {
+            "properties": {
+              "gndNumber": {
+                "type": "text",
               "fields": {
                 "keyword": {
                   "type": "keyword",
                   "ignore_above": 256
                 }
               },
-              "analyzer": "rebuilt_german"
-            },
-            "title": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
+              "copy_to": [
+                "metadata"  ,
+                  "metadata_not_analysed"
+                ]
+              },
+              "gndURI": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                },
+                "copy_to": [
+                  "metadata",
+                  "metadata_not_analysed"
+                ]
+              },
+              "name": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                },
+                "copy_to": [
+                  "metadata",
+                  "metadata_not_analysed"
+                ]
+              },
+              "roleterm": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
                 }
               },
-              "analyzer": "rebuilt_german"
-            },
-            "type": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
+              "roleterm_authority": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
                 }
-              }
-            },
-            "value_URI": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
+              },
+              "roleterm_type": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "type": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
                 }
               }
             }
-          }
-        },
-        "type": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
+          },
+          "currentno": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
             }
-          }
-        },
-        "work": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
+          },
+          "currentnosort": {
+            "type": "long"
+          },
+          "date_indexed": {
+            "type": "date"
+          },
+          "date_modified": {
+            "type": "date"
+          },
+          "dc": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "end_page_index": {
+            "type": "long"
+          },
+          "filename": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "format": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "fulltext": {
+            "type": "text",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            },
+            "analyzer": "rebuilt_german"
+          },
+          "fulltext_not_analysed": {
+            "type": "text",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "id": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "index": {
+            "type": "long"
+          },
+          "iscontribution": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "log": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "log_id": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "mimetype": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "order": {
+            "type": "long"
+          },
+          "orderlabel": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "page": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "page_key": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "parent": {
+            "properties": {
+              "catalogue": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "dc": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "issn": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "log": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "parent_id": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "purl": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "record_id": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "rights_access_condition_infos": {
+                "properties": {
+                  "access_condition": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  }
+                }
+              },
+              "title": {
+                "properties": {
+                  "authority_URI": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "partname": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "partnumber": {
+                    "type": "long"
+                  },
+                  "sorttitle": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      },
+                      "sort": {
+                        "type": "icu_collation_keyword",
+                        "index": false,
+                        "language": "de",
+                        "country": "DE",
+                        "variant": "@collation=phonebook"
+                      }
+                    },
+                    "analyzer": "rebuilt_german"
+                  },
+                  "subtitle": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    },
+                    "analyzer": "rebuilt_german"
+                  },
+                  "title": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    },
+                    "analyzer": "rebuilt_german"
+                  },
+                  "type": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "value_URI": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  }
+                }
+              },
+              "type": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "zdb": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              }
+            }
+          },
+          "phys": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "publish_infos": {
+            "properties": {
+              "place_info": {
+                "properties": {
+                  "place_term": {
+                    "properties": {
+                      "type": {
+                        "type": "text",
+                        "fields": {
+                          "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 256
+                          }
+                        }
+                      },
+                      "authority": {
+                        "type": "text",
+                        "fields": {
+                          "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 256
+                          }
+                        }
+                      },
+                      "authorityURI": {
+                        "type": "text",
+                        "fields": {
+                          "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 256
+                          }
+                        }
+                      },
+                      "valueURI": {
+                        "type": "text",
+                        "fields": {
+                          "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 256
+                          }
+                        }
+                      },
+                      "value": {
+                        "type": "text",
+                        "fields": {
+                          "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 256
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "place_publish": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "publisher": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "publisher_normalized": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "publisher_info": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "year_publish": {
+                "type": "long"
+              },
+              "year_publish_end": {
+                "type": "long"
+              },
+              "year_publish_start": {
+                "type": "long"
+              },
+              "year_publish_string": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              }
+            }
+          },
+          "rights_access_condition_infos": {
+            "properties": {
+              "access_condition": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              }
+            }
+          },
+          "start_page_index": {
+            "type": "long"
+          },
+          "structrun": {
+            "properties": {
+              "catalogue": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "currentno": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "currentnosort": {
+                "type": "long"
+              },
+              "dc": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "issn": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "parent_id": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "publish_infos": {
+                "properties": {
+                  "place_info": {
+                    "properties": {
+                      "place_term": {
+                        "properties": {
+                          "type": {
+                            "type": "text",
+                            "fields": {
+                              "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                              }
+                            }
+                          },
+                          "authority": {
+                            "type": "text",
+                            "fields": {
+                              "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                              }
+                            }
+                          },
+                          "authorityURI": {
+                            "type": "text",
+                            "fields": {
+                              "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                              }
+                            }
+                          },
+                          "valueURI": {
+                            "type": "text",
+                            "fields": {
+                              "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                              }
+                            }
+                          },
+                          "value": {
+                            "type": "text",
+                            "fields": {
+                              "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "place_publish": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "publisher": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "publisher_info": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "year_publish": {
+                    "type": "long"
+                  },
+                  "year_publish_end": {
+                    "type": "long"
+                  },
+                  "year_publish_start": {
+                    "type": "long"
+                  },
+                  "year_publish_string": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  }
+                }
+              },
+              "purl": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "rights_access_condition_infos": {
+                "properties": {
+                  "access_condition": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  }
+                }
+              },
+              "title": {
+                "properties": {
+                  "authority_URI": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "partname": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "partnumber": {
+                    "type": "long"
+                  },
+                  "sorttitle": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      },
+                      "sort": {
+                        "type": "icu_collation_keyword",
+                        "index": false,
+                        "language": "de",
+                        "country": "DE",
+                        "variant": "@collation=phonebook"
+                      }
+                    },
+                    "analyzer": "rebuilt_german"
+                  },
+                  "subtitle": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    },
+                    "analyzer": "rebuilt_german"
+                  },
+                  "title": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    },
+                    "analyzer": "rebuilt_german"
+                  },
+                  "type": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "value_URI": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  }
+                }
+              },
+              "type": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "zdb": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              }
+            }
+          },
+          "title": {
+            "properties": {
+              "authority_URI": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "partname": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "partnumber": {
+                "type": "long"
+              },
+              "sorttitle": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  },
+                  "sort": {
+                    "type": "icu_collation_keyword",
+                    "index": false,
+                    "language": "de",
+                    "country": "DE",
+                    "variant": "@collation=phonebook"
+                  }
+                },
+                "analyzer": "rebuilt_german"
+              },
+              "subtitle": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                },
+                "analyzer": "rebuilt_german"
+              },
+              "title": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                },
+                "analyzer": "rebuilt_german"
+              },
+              "type": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "value_URI": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              }
+            }
+          },
+          "type": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "work": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
             }
           }
         }
