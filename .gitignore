@@ -38,3 +38,4 @@ src/main/resources/application-production.properties
 upload-temp/
 
 docker-compose.https.yaml
+cfg/cluster/
