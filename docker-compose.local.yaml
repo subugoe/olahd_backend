@@ -100,8 +100,25 @@ services:
           - es
           - search
 
+  olahds_s3:
+    container_name: olahds_s3
+    image: quay.io/minio/minio
+    entrypoint: sh
+    command: -c 'mkdir -p /data/olahds && minio server /data --console-address ":9001"'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - s3_data:/data
+    networks:
+      olahd:
+        aliases:
+          - olahds_s3
+          - s3
+
 
 volumes:
   redisdata:
   # TODO has to be chanched to container external storage
   es_data:
+  s3_data:

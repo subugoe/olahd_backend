@@ -49,9 +49,8 @@ OLA_HD_MAX_MEMORY=6G
 ```
 - ensure `vm.max_map_count` is at least 262144, required for Elasticsearch. Can be tested with `sudo sysctl vm.max_map_count`. Can be set (until next boot) with `sudo sysctl -w vm.max_map_count=262144` or with /etc/sysctl.d
 - create config:
-    - `cp -n src/main/resources/application.properties.template src/main/resources/application.properties`
-    - `cp -n src/main/resources/application-development.properties.template src/main/resources/application-development.properties`
-- Start service: `sudo docker-compose -f docker-compose.base.yaml -f docker-compose.local.yaml up -d`
+    - `cp src/main/resources/application.properties.local src/main/resources/application.properties`
+- Start service: `docker-compose -f docker-compose.base.yaml -f docker-compose.local.yaml -f docker-compose.kibana.yaml up -d`
 
 ## System overview
 
