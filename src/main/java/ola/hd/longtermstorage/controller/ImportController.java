@@ -317,6 +317,7 @@ public class ImportController {
                 IndexingConfig conf = readSearchindexFilegrps(destination, bagInfos, requestParams);
                 sendToElastic(pid, conf);
             } catch (Exception ex) {
+                logger.error("Archive Import failed", ex);
                 handleFailedImport(ex, pid, importResult, info);
             } finally {
                 // Clean up the temp: Files are saved in CDStar and not needed any more
@@ -324,25 +325,41 @@ public class ImportController {
             }
         }
 
-        private void handleFailedImport(Exception ex, String pid, ImportResult importResult,
-                TrackingInfo info) {
+        private void handleFailedImport(
+            Exception ex, String pid, ImportResult importResult,TrackingInfo info
+        ) {
+            // Delete the PID
             try {
-                // Delete the PID
                 pidService.deletePid(pid);
-
-                // Delete the archive
-                if (importResult != null) {
-                    archiveManagerService.deleteArchive(importResult.getOnlineId(), null);
-                    archiveManagerService.deleteArchive(importResult.getOfflineId(), null);
-                }
-
-            } catch (IOException e) {
-                // if cleaning fails, nothing can be done than manually clean up
-                logger.error("error cleaning up. pid: '{}', online-id: '{}', offline-id: '{}'", pid,
-                        importResult.getOnlineId(), importResult.getOfflineId(), e);
+            } catch (Exception e) {
+                logger.error(
+                    "error cleaning up. pid: '{}', online-id: '{}', offline-id: '{}' - {}", pid,
+                    importResult.getOnlineId(), importResult.getOfflineId(), e,
+                    "Deleting PID failed"
+                );
             }
 
-            logger.error(ex.getMessage(), ex);
+            // Delete the archives
+            if (importResult != null) {
+                try {
+                    archiveManagerService.deleteArchive(importResult.getOnlineId(), null);
+                } catch(Exception e) {
+                    logger.error(
+                        "error cleaning up. pid: '{}', online-id: '{}', offline-id: '{}' - {}",
+                        pid, importResult.getOnlineId(), importResult.getOfflineId(), e,
+                        "Deleting online archive failed"
+                    );
+                }
+                try {
+                    archiveManagerService.deleteArchive(importResult.getOfflineId(), null);
+                } catch (Exception e) {
+                    logger.error(
+                        "error cleaning up. pid: '{}', online-id: '{}', offline-id: '{}' - {}",
+                        pid, importResult.getOnlineId(), importResult.getOfflineId(), e,
+                        "Deleting offline archive failed"
+                    );
+                }
+            }
 
             // Save the failure data to the tracking database
             info.setStatus(TrackingStatus.FAILED);
