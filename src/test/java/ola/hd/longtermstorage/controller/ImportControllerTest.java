@@ -38,7 +38,7 @@ public class ImportControllerTest {
         File testzip = OlahdTesttools.createTestOcrdzip();
         HttpServletRequest request = OlahdTesttools.createZipUploadRequest(testzip);
         Principal user = SecurityContextHolder.getContext().getAuthentication();
-        ResponseEntity<?> importData = importController.importData(request, user);
+        ResponseEntity<?> importData = importController.importArchive(request, user);
 
         String pid = ((ResponseMessage)importData.getBody()).getPid();
         Assert.notNull(pid, "Pid of import-response must not be null");

@@ -65,7 +65,7 @@ public class ExportControllerTest {
         File testzip = OlahdTesttools.createTestOcrdzip();
         HttpServletRequest request = OlahdTesttools.createZipUploadRequest(testzip);
         Principal user = SecurityContextHolder.getContext().getAuthentication();
-        ResponseEntity<?> importData = importController.importData(request, user);
+        ResponseEntity<?> importData = importController.importArchive(request, user);
         testPid = ((ResponseMessage)importData.getBody()).getPid();
         assertTrue("Setup failed, testPid not received", StringUtils.isNotBlank(testPid));
 
