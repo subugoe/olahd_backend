@@ -1,42 +1,27 @@
 package ola.hd.longtermstorage.controller.importarchive;
 
 import gov.loc.repository.bagit.domain.Bag;
-import gov.loc.repository.bagit.domain.Metadata;
 import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
-import gov.loc.repository.bagit.exceptions.FileNotInPayloadDirectoryException;
-import gov.loc.repository.bagit.exceptions.InvalidBagitFileFormatException;
-import gov.loc.repository.bagit.exceptions.InvalidPayloadOxumException;
-import gov.loc.repository.bagit.exceptions.MaliciousPathException;
-import gov.loc.repository.bagit.exceptions.MissingBagitFileException;
-import gov.loc.repository.bagit.exceptions.MissingPayloadDirectoryException;
-import gov.loc.repository.bagit.exceptions.MissingPayloadManifestException;
-import gov.loc.repository.bagit.exceptions.UnparsableVersionException;
-import gov.loc.repository.bagit.exceptions.UnsupportedAlgorithmException;
-import gov.loc.repository.bagit.exceptions.VerificationException;
 import gov.loc.repository.bagit.reader.BagReader;
 import gov.loc.repository.bagit.verify.BagVerifier;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import net.jodah.failsafe.RetryPolicy;
 import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
 import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.domain.IndexingConfig;
 import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
+import ola.hd.longtermstorage.exceptions.MetsInvalidException;
 import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.utils.Utils;
@@ -58,9 +43,8 @@ import org.springframework.web.client.HttpServerErrorException;
 
 public class ImportUtils {
 
-    /** Retry policies when a call to another service is failed*/
+    /** Retry policies when a call to another service is failed */
     public static RetryPolicy<Object> RETRY_POLICY = new RetryPolicy<>().withDelay(Duration.ofSeconds(10)).withMaxRetries(3);
-
 
     private ImportUtils() {};
 
@@ -127,126 +111,6 @@ public class ImportUtils {
     }
 
     /**
-     * Validates a bag against ocrd-zip specification: https://ocr-d.de/en/spec/ocrd_zip. This
-     * function assumes path is existing and path is a valid extracted bagit. Because of that these
-     * checks (validate the bagit) have to be done already.
-     *
-     * Many, even from ocr-d provided testdata, does not fully follow the specification. So some
-     * checks are disabled for now.
-     *
-     * @param bag
-     * @param bagInfos
-     * @throws OcrdzipInvalidException - if bag is invalid
-     */
-    public static void validateOcrdzip(Bag bag, String bagdir, FormParams params) throws OcrdzipInvalidException {
-        List<String> res = new ArrayList<>();
-        Metadata metadata = bag.getMetadata();
-//        if (!metadata.contains("BagIt-Profile-Identifier")) {
-//            res.add("bag-info.txt must contain key: 'BagIt-Profile-Identifier'");
-//            // this identifier has no impact of the anything regarding this bagit and it's only
-//            // purpose is to reference the spec. So verification does not help ensure functionality
-//        }
-//        if (!metadata.contains("Ocrd-Base-Version-Checksum")) {
-//            res.add("bag-info.txt must contain key: 'Ocrd-Base-Version-Checksum'");
-//        } else {
-//            // I don't understand the intention and function of Ocrd-Base-Version-Checksum yet, so
-//            // this is unfinished here:
-//            String value = metadata.get("Ocrd-Base-Version-Checksum").get(0);
-//        }
-        if (!metadata.contains("Ocrd-Identifier")) {
-            res.add("bag-info.txt must contain key: 'Ocrd-Identifier'");
-            // spec says "A globally unique identifier" but I have no idea how to verify that so
-            // only presence of key is verified
-            // TODO: it can at least be checked if the provided ocrd-identifier is used somewhere
-            // else in the mongo-database
-        }
-
-        if (!metadata.contains("Ocrd-Mets")) {
-            if (!Files.exists(bag.getRootDir().resolve("data").resolve("mets.xml"))) {
-                res.add("mets.xml not found and 'Ocrd-Mets' not provided in bag-info.txt");
-            }
-        } else {
-            String value = metadata.get("Ocrd-Mets").get(0);
-            if (!Files.exists(bag.getRootDir().resolve("data").resolve(value))) {
-                res.add("Ocrd-Mets is set, but specified file not existing");
-            }
-        }
-
-        // validate provided filegrps are actually existing in ocrdzip
-        boolean imageFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_IMAGE_FILEGRP);
-        boolean fullFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_FULLTEXT_FILEGRP);
-        boolean imageFgrpParam = StringUtils.isNotBlank(params.getImageFilegrp());
-        boolean fullFgrpParam = StringUtils.isNotBlank(params.getFulltextFilegrp());
-        if (imageFgrpPresent || fullFgrpPresent || imageFgrpParam || fullFgrpParam) {
-            List<String> fileGrps = new ArrayList<>(0);
-            try {
-                fileGrps = Files.list(Paths.get(bagdir).resolve("data"))
-                        .filter(Files::isDirectory)
-                        .map(p -> p.getFileName().toString())
-                        .collect(Collectors.toList());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            if (imageFgrpPresent) {
-                String imageFileGrp = metadata.get(Constants.BAGINFO_KEY_IMAGE_FILEGRP).get(0);
-                if (!fileGrps.contains(imageFileGrp)) {
-                    res.add(String.format("'%s' is provided, but specified File-Grp (%s) is not"
-                            + " existing", Constants.BAGINFO_KEY_IMAGE_FILEGRP, imageFileGrp));
-                }
-            }
-            if (fullFgrpPresent) {
-                String fullFileGrp = metadata.get(Constants.BAGINFO_KEY_FULLTEXT_FILEGRP).get(0);
-                if (!fileGrps.contains(fullFileGrp)) {
-                    res.add(String.format("'%s' is provided, but specified File-Grp (%s) is not"
-                            + " existing", Constants.BAGINFO_KEY_FULLTEXT_FILEGRP, fullFileGrp));
-                }
-            }
-            if (imageFgrpParam) {
-                String imageFileGrp = params.getImageFilegrp();
-                if (!fileGrps.contains(imageFileGrp)) {
-                    res.add(String.format("Parameter '%s' is provided, but specified File-Grp (%s) "
-                            + "is not existing", "Image-Filegrp", imageFileGrp));
-                }
-            }
-            if (fullFgrpParam) {
-                String fullFileGrp = params.getFulltextFilegrp();
-                if (!fileGrps.contains(fullFileGrp)) {
-                    res.add(String.format("Parameter '%s' is provided, but specified File-Grp (%s) "
-                            + "is not existing", "Fulltext-Filegrp", fullFileGrp));
-                }
-            }
-        }
-
-        if (metadata.contains(Constants.BAGINFO_KEY_FTYPE)) {
-            String ftype = metadata.get(Constants.BAGINFO_KEY_FTYPE).get(0);
-            if (!Constants.POSSIBLE_FULLTEXT_FTYPES.contains(ftype)) {
-                res.add(String.format("'%s' is provided, but value (%s) is invalid. Valid are "
-                        + "following values: '%s'", Constants.BAGINFO_KEY_FTYPE, ftype, String.join(
-                        ", ", Constants.POSSIBLE_FULLTEXT_FTYPES)));
-            }
-        }
-
-        if (StringUtils.isNotBlank(params.getFulltextFtype())) {
-            String ftype = params.getFulltextFtype();
-            if (!Constants.POSSIBLE_FULLTEXT_FTYPES.contains(ftype)) {
-                res.add(String.format("Parameter '%s' is provided, but the value (%s) is invalid. "
-                        + "Valid are the following values: '%s'", "fulltext-ftype", ftype, String.
-                        join(", ", Constants.POSSIBLE_FULLTEXT_FTYPES)));
-            }
-        }
-
-        if (metadata.contains(Constants.BAGINFO_KEY_IS_GT)) {
-            res.add(String.format("'%s' is provided, but specified value may only be 'true' or"
-                    + " 'false'", Constants.BAGINFO_KEY_IS_GT));
-        }
-
-        // This has to be the last command in this method
-        if (!res.isEmpty()) {
-            throw new OcrdzipInvalidException(res);
-        }
-    }
-
-    /**
      * Extract bagit, read metadata and verify that the ZIP-file is a valid bagit.
      *
      * Additionally validate that bag is valid according to ocrd-zip: https://ocr-d.de/en/spec/ocrd_zip.
@@ -267,8 +131,6 @@ public class ImportUtils {
         try (BagVerifier verifier = new BagVerifier(); ZipFile zipFile = new ZipFile(targetFile)) {
             // Extract the zip file
             zipFile.extractAll(destination);
-
-            // Validate the bag
             Path rootDir = Paths.get(destination);
             BagReader reader = new BagReader();
 
@@ -282,35 +144,29 @@ public class ImportUtils {
             // Check for the validity and completeness of a bag
             verifier.isValid(bag, true);
 
-            ImportUtils.validateOcrdzip(bag, destination, params);
-        } catch (NoSuchFileException | MissingPayloadManifestException
-                | UnsupportedAlgorithmException | CorruptChecksumException | MaliciousPathException
-                | InvalidPayloadOxumException | FileNotInPayloadDirectoryException
-                | MissingPayloadDirectoryException | InvalidBagitFileFormatException
-                | InterruptedException | ZipException | UnparsableVersionException
-                | MissingBagitFileException | VerificationException | OcrdzipInvalidException ex) {
-
+            Validation.validateOcrdzip(bag, destination, params);
+            Validation.validateMetsfileSchema(bag);
+        } catch (Exception ex) {
             // Clean up the temp
             FileSystemUtils.deleteRecursively(new File(tempDir));
 
-            String message = "Invalid file input. The uploaded file must be a ZIP file with BagIt "
-                    + "structure.";
-
-            // Try to give more detailed error description
-            if (ex instanceof CorruptChecksumException && ex.getMessage() != null) {
-                message += " Details: " + ex.getMessage()
-                        + " There may be further bagit-validation-errors";
+            String message;
+            if (ex instanceof OcrdzipInvalidException) {
+                message = "Not a valid Ocrd-Zip: " + StringUtils.join(((OcrdzipInvalidException)ex).getErrors(), ", ");
+            } else if (ex instanceof MetsInvalidException) {
+                message = "Invalid METS: " + ((MetsInvalidException)ex).getMetsErrorMessage();
+            } else if (ex instanceof CorruptChecksumException && ex.getMessage() != null) {
+                // Try to give more detailed error description
+                message = "Invalid file input. The uploaded file must be a ZIP file with BagIt structure.";
+                message += " Details: " + ex.getMessage() + " There may be further bagit-validation-errors";
+            } else {
+                message = "Invalid file input. The uploaded file must be a ZIP file with BagIt structure.";
             }
-
             // Save to the tracking database
             info.setStatus(TrackingStatus.FAILED);
             info.setMessage(message);
             trackingRepository.save(info);
 
-            if (ex.getClass().equals(OcrdzipInvalidException.class)) {
-                message = "Not a valid Ocrd-Zip: "
-                        + StringUtils.join(((OcrdzipInvalidException)ex).getErrors(), ", ");
-            }
             // Throw a friendly message to the client
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, message);
         }
