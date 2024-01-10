@@ -1,11 +1,11 @@
-package ola.hd.longtermstorage.domain;
+package ola.hd.longtermstorage.controller.importarchive;
 
 import java.io.File;
 
 /**
- * Class for form parameters to query import endpoint
+ * This class contains the form-parameters provided with the POST request of the import
  */
-public class BagImportParams {
+public class FormParams {
 
     private File file = null;
     private String prev = null;
