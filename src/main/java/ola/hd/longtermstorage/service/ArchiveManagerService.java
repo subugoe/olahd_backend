@@ -45,7 +45,7 @@ public interface ArchiveManagerService {
      *
      * @param identifier The identifier of the archive
      * @param type       Full export or quick export
-     * @param   nal To indicate if the identifier is an internal ID or not (PID, PPN,...)
+     * @param isInternal To indicate if the identifier is an internal ID or not (PID, PPN,...)
      * @return The {@link Response} object to get the stream and close it properly.
      * @throws IOException Thrown if something's wrong when connecting to the archive system
      */
