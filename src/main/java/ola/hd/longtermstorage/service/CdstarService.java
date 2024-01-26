@@ -526,13 +526,15 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     public void downloadFiles(String archiveId, String[] paths, OutputStream outputStream, boolean isInternal) throws IOException {
 
         if (!isInternal) {
-            archiveId = this.getArchiveIdFromIdentifier(archiveId, onlineProfile);
+            archiveId = this.mapPidToArchiveId(archiveId, mirrorProfile, onlineProfile);
+            if (archiveId == null || archiveId.equals(NOT_FOUND)) {
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
+            }
         }
+
 
         // Set the base URL up to the archive level
         String baseUrl = url + vault + "/" + archiveId;
-
-        // TODO: check the archive state. Throw an exception if the archive is in "archived" state
 
         OkHttpClient client = new OkHttpClient();
 

@@ -90,14 +90,13 @@ public class ExportController {
                 .body(new ResponseMessage(HttpStatus.ACCEPTED, "Your request is being processed."));
     }
 
-    @ApiOperation(value = "Export the cold archive which was already moved to the hard drive.",
-            authorizations = { @Authorization(value = "basicAuth"), @Authorization(value = "bearer")})
+    @ApiOperation(value = "Export the cold archive which was already moved to the hard drive.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "An archive with the specified identifier was found.", response = byte[].class),
             @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class),
             @ApiResponse(code = 409, message = "The archive is still on tape. A full export request must be made first.", response = ResponseMessage.class)
     })
-    @GetMapping(value = "/full-export", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    @GetMapping(value = "/export-full", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<StreamingResponseBody> fullExport(
             @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam String id,
             @ApiParam(value = "Is this an internal ID or not (PID, PPN).", required = true) @RequestParam(defaultValue = "false") boolean isInternal) {

@@ -46,6 +46,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
             .authorizeRequests()
                 .antMatchers("/export/**",
+                        "/export-full/**",
                         "/download",
                         "/download-file/**",
                         "/login",
