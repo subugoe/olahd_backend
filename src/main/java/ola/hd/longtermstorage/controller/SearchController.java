@@ -208,10 +208,23 @@ public class SearchController {
         if (StringUtils.isNotBlank(id)) {
             Detail detail = elasticsearchService.getDetailsForPid(id);
             if (detail == null) {
-                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.RECORD_NOT_FOUND);
-            } else {
-                return ResponseEntity.ok(detail);
+                Archive archive = ArchiveRepository.getLatestVersion(archiveRepository, id);
+                //Archive archive = null;
+                if (archive != null && archive.getPid() != null) {
+                    detail = elasticsearchService.getDetailsForPid(archive.getPid());
+                    if (detail == null) {
+                        throw new HttpClientErrorException(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "No search entry for a PID found which is registered in the mongdb and does not have a "
+                             + "next version"
+                        );
+                    }
+                    detail.setInfoForPreviousPid(id);
+                } else {
+                    throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.RECORD_NOT_FOUND);
+                }
             }
+            return ResponseEntity.ok(detail);
         } else {
             ResultSet resultSet = elasticsearchService.facetSearch(searchterm, limit, offset,
                     extended, isGT, metadatasearch, fulltextsearch, sort, field, value);
