@@ -526,13 +526,15 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     public void downloadFiles(String archiveId, String[] paths, OutputStream outputStream, boolean isInternal) throws IOException {
 
         if (!isInternal) {
-            archiveId = this.getArchiveIdFromIdentifier(archiveId, onlineProfile);
+            archiveId = this.mapPidToArchiveId(archiveId, mirrorProfile, onlineProfile);
+            if (archiveId == null || archiveId.equals(NOT_FOUND)) {
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
+            }
         }
+
 
         // Set the base URL up to the archive level
         String baseUrl = url + vault + "/" + archiveId;
-
-        // TODO: check the archive state. Throw an exception if the archive is in "archived" state
 
         OkHttpClient client = new OkHttpClient();
 
@@ -637,9 +639,6 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         }
     }
 
-    /* TODO: todo: this is not reliable, because we have archives(don't know why) without pid in
-     * cdstar-metadata. Must be changed: ask mongodb for archive-id from pid, at least as backup
-     * if pid in cdstar not found*/
     private String getArchiveIdFromIdentifier(String identifier, String profile) throws IOException {
         String fullUrl = url + vault;
 
@@ -796,7 +795,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     public String getArchiveInfo(String id, boolean withFile, int limit, int offset, boolean internalId) throws IOException {
 
         if (!internalId) {
-            id = this.getArchiveIdFromIdentifier(id, onlineProfile);
+            id = this.mapPidToArchiveId(id, mirrorProfile, onlineProfile, offlineProfile);
         }
 
         String fullUrl = url + vault + "/" + id + "?with=meta";
@@ -835,7 +834,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     public HttpFile getFile(String id, String path, boolean infoOnly, boolean internalId) throws IOException {
 
         if (!internalId) {
-            id = this.getArchiveIdFromIdentifier(id, onlineProfile);
+            id = this.mapPidToArchiveId(id, mirrorProfile, onlineProfile);
         }
 
         String fullUrl = url + vault + "/" + id + "/" + path;
@@ -935,5 +934,37 @@ public class CdstarService implements ArchiveManagerService, SearchService {
                     "Cannot export file from archive " + archiveId);
         }
 
+    }
+
+    /**
+     * Get the archive-id (Id in Cdstar) for a PID
+     *
+     * When querying cdstart with a pid it must be mapped to an internalId: Every ocrd-zip is saved
+     * in an online and an offline archive (in Cdstar) when created. Offline archives can be moved
+     * to mirror archives (move from tape to disc). Uploading Ocrd-zips with previous versions
+     * deletes the online archive of that. So every pid **can** point to 3 different types of
+     * archives.
+     *
+     * This function searches for the archives of a pid with the provided profiles in order and
+     * returns the first archiveId found.
+     *
+     * example: `mapArchiveIdToPid("xyz", "default", "cold")`. This call would at first try to find
+     * an archive with the "xyz" as identifier and with the profile "default". If found the
+     * cdstar-id is returned. If not found it searches for an archive with the "xyz" identifier and
+     * the profile "cold"
+     *
+     * @param pid
+     * @param profiles - profiles to search in order
+     * @return
+     * @throws IOException
+     */
+    private String mapPidToArchiveId(String pid, String...profiles) throws IOException {
+        for (String profile: profiles ) {
+            String cdstarId = this.getArchiveIdFromIdentifier(pid, profile);
+            if (cdstarId != null && cdstarId != NOT_FOUND) {
+                return cdstarId;
+            }
+        }
+        return NOT_FOUND;
     }
 }

@@ -46,8 +46,20 @@ public class Detail {
 	private boolean isGT;
 	@Field(type = FieldType.Text)
 	private FileTree fileTree;
+	/**
+	 * If an ocrd-zip is updated with a newer version, currently the indexer replaces the search entry when the
+	 * identifier in the metsfile didn't change. In this case the info for the latest version of this OCRD-ZIP should be
+	 * returned and the PID for which the information was originally queried should be inserted here
+	 */
+	@Field(type = FieldType.Text)
+	private String infoForPreviousPid;
 
-	public Detail(String PID, String ID, String title, String subtitle, String placeOfPublish, int yearOfPublish, String publisher, String creator, String genre, String label, String classification, String copyright, String license, String licenseURL, String owner, String ownerURL, boolean isGT, FileTree fileTree) {
+	public Detail(
+        String PID, String ID, String title, String subtitle, String placeOfPublish, int yearOfPublish,
+	    String publisher, String creator, String genre, String label, String classification, String copyright,
+	    String license, String licenseURL, String owner, String ownerURL, boolean isGT, FileTree fileTree,
+	    String infoForPreviousPid
+	) {
 		this.PID = PID;
 		this.ID = ID;
 		this.title = title;
@@ -214,5 +226,13 @@ public class Detail {
 	public void setFileTree(FileTree fileTree) {
 		this.fileTree = fileTree;
 	}
+
+    public String getInfoForPreviousPid() {
+        return infoForPreviousPid;
+    }
+
+    public void setInfoForPreviousPid(String infoForPreviousPid) {
+        this.infoForPreviousPid = infoForPreviousPid;
+    }
 
 }
