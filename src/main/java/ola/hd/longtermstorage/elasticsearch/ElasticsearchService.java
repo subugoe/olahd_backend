@@ -129,13 +129,13 @@ public class ElasticsearchService {
      * @return
      */
     public ResultSet facetSearch(
-        SearchTerms searchterm, int limit, int offset, boolean extended,
+        SearchTerms searchterms, int limit, int offset, boolean extended,
         Boolean isGt, boolean metadatasearch, boolean fulltextsearch, String sort,
         String[] field, String[] value
     ) {
 
         ElasticQueryHelper util = new ElasticQueryHelper(
-            searchterm, limit, offset, extended,
+            searchterms, limit, offset, extended,
             isGt, metadatasearch, fulltextsearch, sort, field, value
         );
         SearchRequest request = util.createSearchRequest();
@@ -144,7 +144,7 @@ public class ElasticsearchService {
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
             ElasticResponseHelper util2 = new ElasticResponseHelper();
             return util2.responseToResultSet(
-                response, searchterm, metadatasearch, fulltextsearch, offset, limit
+                response, searchterms, metadatasearch, fulltextsearch, offset, limit
             );
         } catch (IOException e) {
             throw new ElasticServiceException("Error executing search request", e);

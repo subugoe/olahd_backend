@@ -1,5 +1,7 @@
 package ola.hd.longtermstorage.domain;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class SearchTerms {
     private String searchterm;
     private String author;
@@ -37,5 +39,9 @@ public class SearchTerms {
 
     public String getYear() {
         return year;
+    }
+
+    public boolean hasFilter() {
+        return !StringUtils.isAllBlank(this.author, this.title, this.place, this.year);
     }
 }

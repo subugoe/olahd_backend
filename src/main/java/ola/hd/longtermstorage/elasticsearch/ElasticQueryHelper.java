@@ -143,28 +143,49 @@ public class ElasticQueryHelper {
     }
 
     private BoolQueryBuilder createQuery() {
-        BoolQueryBuilder res = null;
+        BoolQueryBuilder res = QueryBuilders.boolQuery();
         String searchterm = searchterms.getSearchterm();
         if (StringUtils.isBlank(searchterm)) {
             if (Boolean.TRUE.equals(this.isGt)) {
-                return QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("IsGt", true));
+                res = res.must(QueryBuilders.matchQuery("IsGt", true));
             } else {
-                return QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery());
+                res = res.must(QueryBuilders.matchAllQuery());
+            }
+        } else {
+            if (metadatasearch && fulltextsearch) {
+                BoolQueryBuilder boolMust = QueryBuilders.boolQuery();
+                BoolQueryBuilder boolShould = QueryBuilders.boolQuery();
+                boolShould.should(QueryBuilders.matchQuery("metadata", searchterm));
+                boolShould.should(QueryBuilders.matchQuery("fulltext", searchterm));
+                res = res.must(boolMust.must(boolShould));
+            } else if (fulltextsearch) {
+                res = res.must(QueryBuilders.matchQuery("fulltext", searchterm));
+            } else {
+                res = res.must(QueryBuilders.matchQuery("metadata", searchterm));
+            }
+            if (Boolean.TRUE.equals(this.isGt)) {
+                res = res.must(QueryBuilders.matchQuery("IsGt", true));
             }
         }
-        if (metadatasearch && fulltextsearch) {
-            BoolQueryBuilder boolMust = QueryBuilders.boolQuery();
-            BoolQueryBuilder boolShould = QueryBuilders.boolQuery();
-            boolShould.should(QueryBuilders.matchQuery("metadata", searchterm));
-            boolShould.should(QueryBuilders.matchQuery("fulltext", searchterm));
-            res = QueryBuilders.boolQuery().must(boolMust.must(boolShould));
-        } else if (fulltextsearch) {
-            res = QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("fulltext", searchterm));
-        } else {
-            res = QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("metadata", searchterm));
-        }
-        if (Boolean.TRUE.equals(this.isGt)) {
-            res.must(QueryBuilders.matchQuery("IsGt", true));
+        if (searchterms.hasFilter()) {
+            if (StringUtils.isNotBlank(searchterms.getAuthor())) {
+                res = res.filter(
+                    QueryBuilders.matchQuery("creator_infos.name", searchterms.getAuthor())
+                );
+            }
+            if (StringUtils.isNotBlank(searchterms.getTitle())) {
+                res = res.filter(QueryBuilders.matchQuery("title.title", searchterms.getTitle()));
+            }
+            if (StringUtils.isNotBlank(searchterms.getPlace())) {
+                res = res.filter(
+                    QueryBuilders.matchQuery("publish_infos.place_publish", searchterms.getPlace())
+                );
+            }
+            if (StringUtils.isNotBlank(searchterms.getYear())) {
+                res = res.filter(
+                    QueryBuilders.matchQuery("publish_infos.year_publish", searchterms.getYear())
+                );
+            }
         }
         return res;
     }

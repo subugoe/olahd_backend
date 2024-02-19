@@ -242,7 +242,7 @@ public class SearchController {
             }
             return ResponseEntity.ok(detail);
         } else {
-            SearchTerms searchterms = new SearchTerms(searchterm, title, author, place, year);
+            SearchTerms searchterms = new SearchTerms(searchterm, author, title, place, year);
             ResultSet resultSet = elasticsearchService.facetSearch(
                 searchterms, limit, offset, extended, isGT, metadatasearch, fulltextsearch, sort,
                 field, value
