@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import ola.hd.longtermstorage.domain.Archive;
 import ola.hd.longtermstorage.domain.ArchiveResponse;
+import ola.hd.longtermstorage.domain.SearchTerms;
 import ola.hd.longtermstorage.elasticsearch.ElasticQueryHelper;
 import ola.hd.longtermstorage.elasticsearch.ElasticsearchService;
 import ola.hd.longtermstorage.model.Detail;
@@ -42,30 +43,32 @@ public class SearchController {
     private static final Logger logger = LoggerFactory.getLogger(SearchController.class);
 
     @Autowired
-    public SearchController(ArchiveManagerService archiveManagerService,
-            ArchiveRepository archiveRepository, ElasticsearchService elasticsearchService) {
+    public SearchController(
+        ArchiveManagerService archiveManagerService, ArchiveRepository archiveRepository,
+        ElasticsearchService elasticsearchService
+    ) {
         this.archiveManagerService = archiveManagerService;
         this.archiveRepository = archiveRepository;
         this.elasticsearchService = elasticsearchService;
     }
 
     @ApiOperation(value = "Search for an archive based on its internal (CDStar-) ID or PID.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Search success", response = String.class),
-            @ApiResponse(code = 404, message = "Archive not found", response = String.class)
+    @ApiResponses({ @ApiResponse(code = 200, message = "Search success", response = String.class),
+        @ApiResponse(code = 404, message = "Archive not found", response = String.class)
     })
     @GetMapping(value = "/search-archive", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> searchArchive(
-            @RequestParam @ApiParam(value = "PID or internal ID of the archive.", required = true)
-            String id,
-            @RequestParam(defaultValue = "false") @ApiParam(value = "An option to include all files in return.")
-            boolean withFile,
-            @RequestParam(defaultValue = "1000") @ApiParam(value = "How many files should be returned?", example = "1000")
-            int limit,
-            @RequestParam(defaultValue = "0") @ApiParam(value = "How many files should be skipped from the beginning?", example = "0")
-            int offset,
-            @RequestParam(defaultValue = "false") @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
-            boolean internalId) throws IOException {
+        @RequestParam @ApiParam(value = "PID or internal ID of the archive.", required = true)
+        String id,
+        @RequestParam(defaultValue = "false") @ApiParam(value = "An option to include all files in return.")
+        boolean withFile,
+        @RequestParam(defaultValue = "1000") @ApiParam(value = "How many files should be returned?", example = "1000")
+        int limit,
+        @RequestParam(defaultValue = "0") @ApiParam(value = "How many files should be skipped from the beginning?", example = "0")
+        int offset,
+        @RequestParam(defaultValue = "false") @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
+        boolean internalId
+    ) throws IOException {
 
         String info = archiveManagerService.getArchiveInfo(id, withFile, limit, offset, internalId);
 
@@ -74,15 +77,16 @@ public class SearchController {
 
     @ApiOperation(value = "Get the information of an archive from the system database.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Information found", response = String.class),
-            @ApiResponse(code = 404, message = "Information not found", response = String.class)
+        @ApiResponse(code = 200, message = "Information found", response = String.class),
+        @ApiResponse(code = 404, message = "Information not found", response = String.class)
     })
     @GetMapping(value = "/search-archive-info", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ArchiveResponse> searchArchiveInfo(
-            @RequestParam @ApiParam(value = "PID or internal ID of the archive.", required = true)
-            String id,
-            @RequestParam(defaultValue = "false") @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
-            boolean internalId) throws IOException {
+        @RequestParam @ApiParam(value = "PID or internal ID of the archive.", required = true)
+        String id,
+        @RequestParam(defaultValue = "false") @ApiParam(value = "Is this an internal (CDStar-ID) or not (PID, PPN).", required = true)
+        boolean internalId
+    ) throws IOException {
 
         // Get the data
         Archive archive = null;
@@ -155,7 +159,7 @@ public class SearchController {
      * @param searchterm
      * @param limit
      * @param offset
-     * @param extended - false: don't apply filters
+     * @param extended       - false: don't apply filters
      * @param isGT
      * @param metadatasearch
      * @param fulltextsearch
@@ -166,41 +170,51 @@ public class SearchController {
      * @throws IOException
      */
     @ApiOperation(value = "Facet Search")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Ok")
-    })
+    @ApiResponses({ @ApiResponse(code = 200, message = "Ok") })
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> search(
-            @RequestParam(required=false) @ApiParam(value = "The PID or the PPN of the work.", required = false)
-            String id,
-            @RequestParam(required=false) @ApiParam(value = "Search Term", required = false)
-            String searchterm,
-            @RequestParam(defaultValue="25") @ApiParam(value="Number of results in the hitlist from search results")
-            int limit,
-            @RequestParam(defaultValue="0") @ApiParam(value="Starting point of the next resultset from search results to support pagination")
-            int offset,
-            @RequestParam(defaultValue="false") @ApiParam(value="If false, an initial search is started and no facets or filters are applied")
-            boolean extended,
-            @RequestParam(required=false) @ApiParam(value="If true, search only for GT data")
-            Boolean isGT,
-            @RequestParam(defaultValue="true") @ApiParam(value="If true, search over the metadata")
-            boolean metadatasearch,
-            @RequestParam(defaultValue="false") @ApiParam(value="If true, search over the fulltexts")
-            boolean fulltextsearch,
-            @RequestParam(defaultValue="title|asc") @ApiParam(value="Defines sorting fields and direction as a comma separated list according to the following pattern field|{asc|desc}")
-            String sort,
-            @RequestParam(required=false) @ApiParam(value="Contains the facete names")
-            String[] field,
-            @RequestParam(required=false) @ApiParam(value="Contains the facete values")
-            String[] value
-            ) throws IOException {
+        @RequestParam(required = false) @ApiParam(value = "The PID or the PPN of the work.", required = false)
+        String id,
+        @RequestParam(required = false) @ApiParam(value = "Search Term", required = false)
+        String searchterm,
+        @RequestParam(defaultValue = "25") @ApiParam(value = "Number of results in the hitlist from search results")
+        int limit,
+        @RequestParam(defaultValue = "0") @ApiParam(value = "Starting point of the next resultset from search results to support pagination")
+        int offset,
+        @RequestParam(defaultValue = "false") @ApiParam(value = "If false, an initial search is started and no facets or filters are applied")
+        boolean extended,
+        @RequestParam(required = false) @ApiParam(value = "If true, search only for GT data")
+        Boolean isGT,
+        @RequestParam(defaultValue = "true") @ApiParam(value = "If true, search over the metadata")
+        boolean metadatasearch,
+        @RequestParam(defaultValue = "false") @ApiParam(value = "If true, search over the fulltexts")
+        boolean fulltextsearch,
+        @RequestParam(defaultValue = "title|asc") @ApiParam(value = "Defines sorting fields and direction as a comma separated list according to the following pattern field|{asc|desc}")
+        String sort,
+        @RequestParam(required = false) @ApiParam(value = "Contains the facete names")
+        String[] field,
+        @RequestParam(required = false) @ApiParam(value = "Contains the facete values")
+        String[] value,
+        @RequestParam(required = false) @ApiParam(value = "Title", required = false)
+        String title,
+        @RequestParam(required = false) @ApiParam(value = "Author", required = false)
+        String author,
+        @RequestParam(required = false) @ApiParam(value = "Place", required = false)
+        String place,
+        @RequestParam(required = false) @ApiParam(value = "Year", required = false)
+        String year
+    ) throws IOException {
         if (field != null) {
-            if (value ==null || field.length != value.length) {
-                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.FIELD_NOT_EQUALS_VALUE);
+            if (value == null || field.length != value.length) {
+                throw new HttpClientErrorException(
+                    HttpStatus.BAD_REQUEST, ErrMsg.FIELD_NOT_EQUALS_VALUE
+                );
             }
             for (String x : field) {
                 if (!ElasticQueryHelper.FILTER_MAP.containsKey(x)) {
-                    throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, ErrMsg.UNKNOWN_FILTER);
+                    throw new HttpClientErrorException(
+                        HttpStatus.BAD_REQUEST, ErrMsg.UNKNOWN_FILTER
+                    );
                 }
             }
         }
@@ -209,25 +223,30 @@ public class SearchController {
             Detail detail = elasticsearchService.getDetailsForPid(id);
             if (detail == null) {
                 Archive archive = ArchiveRepository.getLatestVersion(archiveRepository, id);
-                //Archive archive = null;
+                // Archive archive = null;
                 if (archive != null && archive.getPid() != null) {
                     detail = elasticsearchService.getDetailsForPid(archive.getPid());
                     if (detail == null) {
                         throw new HttpClientErrorException(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "No search entry for a PID found which is registered in the mongdb and does not have a "
-                             + "next version"
+                                + "next version"
                         );
                     }
                     detail.setInfoForPreviousPid(id);
                 } else {
-                    throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.RECORD_NOT_FOUND);
+                    throw new HttpClientErrorException(
+                        HttpStatus.NOT_FOUND, ErrMsg.RECORD_NOT_FOUND
+                    );
                 }
             }
             return ResponseEntity.ok(detail);
         } else {
-            ResultSet resultSet = elasticsearchService.facetSearch(searchterm, limit, offset,
-                    extended, isGT, metadatasearch, fulltextsearch, sort, field, value);
+            SearchTerms searchterms = new SearchTerms(searchterm, title, author, place, year);
+            ResultSet resultSet = elasticsearchService.facetSearch(
+                searchterms, limit, offset, extended, isGT, metadatasearch, fulltextsearch, sort,
+                field, value
+            );
             return ResponseEntity.ok(resultSet);
         }
     }

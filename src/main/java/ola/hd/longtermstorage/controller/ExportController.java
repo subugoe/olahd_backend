@@ -50,86 +50,114 @@ public class ExportController {
     private final ExportRequestRepository exportRequestRepository;
 
     @Autowired
-    public ExportController(ArchiveManagerService archiveManagerService, ExportRequestRepository exportRequestRepository) {
+    public ExportController(
+        ArchiveManagerService archiveManagerService,
+        ExportRequestRepository exportRequestRepository
+    ) {
         this.archiveManagerService = archiveManagerService;
         this.exportRequestRepository = exportRequestRepository;
     }
 
     @ApiOperation(value = "Quickly export a ZIP file via PID. This ZIP file only contains files stored on hard disks.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "An archive with the specified identifier was found.", response = byte[].class),
-            @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class)
-    })
-    @GetMapping(value = "/export", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
+        @ApiResponse(code = 200, message = "An archive with the specified identifier was found.", response = byte[].class),
+        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class) })
+    @GetMapping(value = "/export", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE,
+        MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<StreamingResponseBody> export(
-            @ApiParam(value = "The ID of the work.", required = true) @RequestParam String id,
-            @ApiParam(value = "Is this an internal ID or not (PID, PPN).", required = true) @RequestParam(defaultValue = "false") boolean internalId) {
+        @ApiParam(value = "The ID of the work.", required = true) @RequestParam
+        String id,
+        @ApiParam(value = "Is this an internal ID or not (PID, PPN).", required = true) @RequestParam(defaultValue = "false")
+        boolean internalId
+    ) {
         return exportData(id, "quick", internalId);
     }
 
-    @ApiOperation(value = "Send a request to export data on tapes.",
-            authorizations = {@Authorization(value = "basicAuth"),@Authorization(value = "bearer")})
+    /**
+     * Move data from tape to disk to make it fully available
+     *
+     * Move data from tape to disk is an expensive operation when real tape storage is used. So this
+     * operation has to always be authenticated. Maybe it is necessary to limit the access to only
+     * special users
+     *
+     * @param id:        PID of the archive to move
+     * @param principal: information of user who calld this function
+     * @return
+     */
+    @ApiOperation(value = "Send a request to export data on tapes.", authorizations = {
+        @Authorization(value = "basicAuth"), @Authorization(value = "bearer") })
     @ApiResponses({
-            @ApiResponse(code = 200, message = "The archive is already on the hard drive.", response = byte[].class),
-            @ApiResponse(code = 202, message = "Request accepted. Data is being transfer from tape to hard drive.", response = byte[].class),
-            @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class)
-    })
+        @ApiResponse(code = 200, message = "The archive is already on the hard drive.", response = byte[].class),
+        @ApiResponse(code = 202, message = "Request accepted. Data is being transfer from tape to hard drive.", response = byte[].class),
+        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class) })
     @GetMapping(value = "/export-request", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> fullExportRequest(
-            @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam String id,
-            @ApiIgnore Principal principal) throws IOException {
+        @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam
+        String id,
+        @ApiIgnore
+        Principal principal
+    ) throws IOException {
 
         archiveManagerService.moveFromTapeToDisk(id);
 
         // Save the request info to the database
-        ExportRequest exportRequest = new ExportRequest(principal.getName(), id,
-                ArchiveStatus.PENDING);
+        ExportRequest exportRequest = new ExportRequest(
+            principal.getName(), id, ArchiveStatus.PENDING
+        );
         exportRequestRepository.save(exportRequest);
 
         return ResponseEntity.accepted()
-                .body(new ResponseMessage(HttpStatus.ACCEPTED, "Your request is being processed."));
+            .body(new ResponseMessage(HttpStatus.ACCEPTED, "Your request is being processed."));
     }
 
     @ApiOperation(value = "Export the cold archive which was already moved to the hard drive.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "An archive with the specified identifier was found.", response = byte[].class),
-            @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class),
-            @ApiResponse(code = 409, message = "The archive is still on tape. A full export request must be made first.", response = ResponseMessage.class)
-    })
-    @GetMapping(value = "/export-full", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
+        @ApiResponse(code = 200, message = "An archive with the specified identifier was found.", response = byte[].class),
+        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class),
+        @ApiResponse(code = 409, message = "The archive is still on tape. A full export request must be made first.", response = ResponseMessage.class) })
+    @GetMapping(value = "/export-full", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE,
+        MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<StreamingResponseBody> fullExport(
-            @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam String id,
-            @ApiParam(value = "Is this an internal ID or not (PID, PPN).", required = true) @RequestParam(defaultValue = "false") boolean isInternal) {
+        @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam
+        String id,
+        @ApiParam(value = "Is this an internal ID or not (PID, PPN).", required = true) @RequestParam(defaultValue = "false")
+        boolean isInternal
+    ) {
         return exportData(id, "full", isInternal);
     }
 
-    @PostMapping(value = "/download", consumes = MediaType.APPLICATION_JSON_VALUE, produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
-    public ResponseEntity<StreamingResponseBody> downloadFiles(@RequestBody DownloadRequest payload) {
+    @PostMapping(value = "/download", consumes = MediaType.APPLICATION_JSON_VALUE, produces = {
+        MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    public ResponseEntity<StreamingResponseBody> downloadFiles(
+        @RequestBody
+        DownloadRequest payload
+    ) {
 
         // Set proper header
         String contentDisposition = "attachment;filename=download.zip";
 
         // Build the response stream
         StreamingResponseBody stream = outputStream -> {
-            archiveManagerService.downloadFiles(payload.getArchiveId(),
-                    payload.getFiles(), outputStream, payload.isInternalId());
+            archiveManagerService.downloadFiles(
+                payload.getArchiveId(), payload.getFiles(), outputStream, payload.isInternalId()
+            );
         };
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/zip"))
-                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .body(stream);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/zip"))
+            .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+            .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition).body(stream);
     }
 
-    @GetMapping(value = "/download-file", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    @GetMapping(value = "/download-file", produces = { MediaType.APPLICATION_XML_VALUE,
+        MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<Resource> downloadFile(
-            @ApiParam(value = "PID or internal ID of the archive.", required = true)
-            @RequestParam String id,
-            @ApiParam(value = "Is this an internal ID (CDStar-ID) or not (PID, PPN).", required = true)
-            @RequestParam(defaultValue = "false") boolean internalId,
-            @ApiParam(value = "Path to the requested file", required = true)
-            @RequestParam String path) throws IOException {
+        @ApiParam(value = "PID or internal ID of the archive.", required = true) @RequestParam
+        String id,
+        @ApiParam(value = "Is this an internal ID (CDStar-ID) or not (PID, PPN).", required = true) @RequestParam(defaultValue = "false")
+        boolean internalId,
+        @ApiParam(value = "Path to the requested file", required = true) @RequestParam
+        String path
+    ) throws IOException {
 
         HttpFile httpFile = archiveManagerService.getFile(id, path, false, internalId);
         ByteArrayResource resource = new ByteArrayResource(httpFile.getContent());
@@ -142,29 +170,29 @@ public class ExportController {
         // Get proper content-type, or use application/octet-stream by default.
         // Without a proper content-type, the browser cannot display the file correctly.
         String contentType = headers.getContentType() != null ? headers.getContentType().toString()
-                : "application/octet-stream";
+            : "application/octet-stream";
 
         // Set charset
         contentType += ";charset=utf-8";
 
         long contentLength = headers.getContentLength();
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .header(HttpHeaders.CONTENT_TYPE, contentType)
-                .header(HttpHeaders.CONTENT_LENGTH, contentLength + "")
-                .body(resource);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+            .header(HttpHeaders.CONTENT_TYPE, contentType)
+            .header(HttpHeaders.CONTENT_LENGTH, contentLength + "").body(resource);
     }
 
     /**
      * Export data using {@linkplain ArchiveManagerService}
      *
-     * @param id PID or PPN
-     * @param type "quick" or "full"
+     * @param id         PID or PPN
+     * @param type       "quick" or "full"
      * @param isInternal true: mongoDB-id. false: PID or PPN
      * @return
      */
-    private ResponseEntity<StreamingResponseBody> exportData(String id, String type, boolean isInternal) {
+    private ResponseEntity<StreamingResponseBody> exportData(
+        String id, String type, boolean isInternal
+    ) {
         // Set proper file name
         String contentDisposition = "attachment;filename=";
         String fileName = "quick-export.zip";
@@ -191,11 +219,9 @@ public class ExportController {
             }
         };
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/zip"))
-                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .body(stream);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/zip"))
+            .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+            .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition).body(stream);
     }
 
     /**
@@ -203,7 +229,7 @@ public class ExportController {
      *
      * Expects the METS-file to be always stored in online-profile (Hot Storage)
      *
-     * @param id  PID or PPA
+     * @param id PID or PPA
      * @return archive's METS-file
      * @throws IOException
      */
@@ -214,9 +240,13 @@ public class ExportController {
     })
     @GetMapping(value = "/export/mets", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<InputStreamResource> exportMetsfile(
-            @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id) throws IOException {
+        @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam
+        String id
+    ) throws IOException {
         if (id.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY);
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY
+            );
         }
 
         final String metsPath;
@@ -225,7 +255,9 @@ public class ExportController {
             bagInfoMap = archiveManagerService.getBagInfoTxt(id);
         } catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
-                throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.ID_NOT_FOUND);
+                throw new HttpClientErrorException(
+                    HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.ID_NOT_FOUND
+                );
             }
             throw e;
         }
@@ -240,7 +272,9 @@ public class ExportController {
             res = archiveManagerService.exportFile(id, metsPath);
         } catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
-                throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, ErrMsg.METS_NOT_FOUND);
+                throw new HttpClientErrorException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, ErrMsg.METS_NOT_FOUND
+                );
             }
             throw e;
         }
@@ -259,7 +293,7 @@ public class ExportController {
      * The links of the FLocat-Elements are converted to URLS where the corresponding files are
      * available for download
      *
-     * @param id  PID
+     * @param id PID
      * @return archive's METS-file
      * @throws IOException
      */
@@ -270,12 +304,13 @@ public class ExportController {
     })
     @GetMapping(value = "/export/mets-web", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<StreamingResponseBody> exportMetsfileUrlpaths(
-            HttpServletRequest request,
-            @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id) throws IOException {
+        HttpServletRequest request,
+        @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam
+        String id
+    ) throws IOException {
         if (id.isBlank()) {
             throw new HttpClientErrorException(
-                HttpStatus.UNPROCESSABLE_ENTITY,
-                ErrMsg.PARAM_ID_IS_EMPTY
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY
             );
         }
 
@@ -286,8 +321,7 @@ public class ExportController {
         } catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
                 throw new HttpClientErrorException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
-                    ErrMsg.ID_NOT_FOUND
+                    HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.ID_NOT_FOUND
                 );
             }
             throw e;
@@ -304,8 +338,7 @@ public class ExportController {
         } catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
                 throw new HttpClientErrorException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    ErrMsg.METS_NOT_FOUND
+                    HttpStatus.INTERNAL_SERVER_ERROR, ErrMsg.METS_NOT_FOUND
                 );
             }
             throw e;
@@ -320,18 +353,16 @@ public class ExportController {
                 MetsWebConverter.convertMets(id, host, metsInStream, outputStream);
             } catch (Exception e) {
                 throw new HttpClientErrorException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    ErrMsg.METS_CONVERT_ERROR
+                    HttpStatus.INTERNAL_SERVER_ERROR, ErrMsg.METS_CONVERT_ERROR
                 );
             }
         };
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/zip"))
-                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=mets.xml")
-                .body(stream);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/zip"))
+            .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=mets.xml").body(stream);
     }
+
     /**
      * Export File from OCRD-ZIP data directory via PID
      *
@@ -346,19 +377,24 @@ public class ExportController {
      * @throws IOException
      */
     @ApiOperation(value = "Export a file via PID and path")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "File was found.", response = byte[].class),
+    @ApiResponses({ @ApiResponse(code = 200, message = "File was found.", response = byte[].class),
         @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class),
-        @ApiResponse(code = 422, message = "A file the specified path is not available.", response = ResponseMessage.class)
-    })
+        @ApiResponse(code = 422, message = "A file the specified path is not available.", response = ResponseMessage.class) })
     @GetMapping(value = "/export/file", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<InputStreamResource> exportFile(
-            @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id,
-            @ApiParam(value = "Path to file.", required = true) @RequestParam String path) throws IOException {
+        @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam
+        String id,
+        @ApiParam(value = "Path to file.", required = true) @RequestParam
+        String path
+    ) throws IOException {
         if (id.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY);
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY
+            );
         } else if (path.isBlank()) {
-            throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_PATH_IS_EMPTY);
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_PATH_IS_EMPTY
+            );
         }
 
         Response res;
@@ -366,8 +402,8 @@ public class ExportController {
             res = archiveManagerService.exportFile(id, Paths.get("data", path).toString());
         } catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
-                String msg = e.getMessage().contains(ErrMsg.ARCHIVE_NOT_FOUND) ?
-                        ErrMsg.ID_NOT_FOUND : ErrMsg.FILE_NOT_FOUND + ": " + path;
+                String msg = e.getMessage().contains(ErrMsg.ARCHIVE_NOT_FOUND) ? ErrMsg.ID_NOT_FOUND
+                    : ErrMsg.FILE_NOT_FOUND + ": " + path;
                 throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, msg);
             }
             throw e;
@@ -376,9 +412,9 @@ public class ExportController {
         Headers headers = res.headers();
 
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(headers.get(HttpHeaders.CONTENT_TYPE)))
-                .header(HttpHeaders.CONTENT_LENGTH, headers.get(HttpHeaders.CONTENT_LENGTH))
-                .body(new InputStreamResource(res.body().byteStream()));
+            .contentType(MediaType.parseMediaType(headers.get(HttpHeaders.CONTENT_TYPE)))
+            .header(HttpHeaders.CONTENT_LENGTH, headers.get(HttpHeaders.CONTENT_LENGTH))
+            .body(new InputStreamResource(res.body().byteStream()));
     }
 
 }

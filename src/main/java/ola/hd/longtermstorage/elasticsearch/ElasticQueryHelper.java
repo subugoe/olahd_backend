@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import ola.hd.longtermstorage.domain.SearchTerms;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -36,21 +38,24 @@ public class ElasticQueryHelper {
     public static final String COUNTER_AGG = "counter";
 
     /** Fields which are fetched from source */
-    private static final String[] SOURCE_FIELDS = new String[] {"pid", "publish_infos", "title",
-            "doctype", "IsGt", "creator_infos", "structrun"};
+    private static final String[] SOURCE_FIELDS = new String[] { "pid", "publish_infos", "title",
+        "doctype", "IsGt", "creator_infos", "structrun" };
 
-    /** Mapping from filter-name to corresponding column
+    /**
+     * Mapping from filter-name to corresponding column
      *
      * Filters are named "Creators", "Titles" or "Publishers" etc. This function returns the
      * corresponding column from the Elasticsearch-entry. For example for Filter Creator, the column
-     * to filter must be creator_infos.name.keyword */
+     * to filter must be creator_infos.name.keyword
+     */
     public static final Map<String, String> FILTER_MAP = Map.of(
-            "Creators", "creator_infos.name.keyword",
-            "Titles", "title.title.keyword",
-            "Place", "publish_infos.place_publish.keyword",
-            "Publish Year", "publish_infos.year_publish");
+        "Creators", "creator_infos.name.keyword",
+        "Titles", "title.title.keyword",
+        "Place", "publish_infos.place_publish.keyword",
+        "Publish Year", "publish_infos.year_publish"
+    );
 
-    private String searchterm;
+    private SearchTerms searchterms;
     private int limit;
     private int offset;
     private boolean extended;
@@ -61,11 +66,12 @@ public class ElasticQueryHelper {
     private String[] field;
     private String[] value;
 
-
-    public ElasticQueryHelper(String searchterm, int limit, int offset, boolean extended, Boolean isGt,
-            boolean metadatasearch, boolean fulltextsearch, String sort, String[] field, String[] value) {
+    public ElasticQueryHelper(
+        SearchTerms searchterm, int limit, int offset, boolean extended, Boolean isGt,
+        boolean metadatasearch, boolean fulltextsearch, String sort, String[] field, String[] value
+    ) {
         super();
-        this.searchterm = searchterm;
+        this.searchterms = searchterm;
         this.limit = limit;
         this.offset = offset;
         this.extended = extended;
@@ -80,11 +86,11 @@ public class ElasticQueryHelper {
     /**
      * Create the "searchSource". This is the search-Document elasticsearch executes
      *
-     * The search consists of four parts:
-     * - the part of the query responsible for matching the documents (query.bool.must)
-     * - the part of the query for filtering the results (query.bool.filter)
-     * - the aggregation used to group the search hits (aggregations.group-by-pid)
-     * - the aggregations for collecting the facets (aggregations.Titles, aggregations.Creators ...)
+     * The search consists of four parts: - the part of the query responsible for matching the
+     * documents (query.bool.must) - the part of the query for filtering the results
+     * (query.bool.filter) - the aggregation used to group the search hits
+     * (aggregations.group-by-pid) - the aggregations for collecting the facets
+     * (aggregations.Titles, aggregations.Creators ...)
      *
      * @return
      */
@@ -106,7 +112,7 @@ public class ElasticQueryHelper {
         // putting things together
         source.query(query);
         source.size(0);
-        for (AggregationBuilder agg: aggsMerge) {
+        for (AggregationBuilder agg : aggsMerge) {
             source.aggregation(agg);
         }
         for (TermsAggregationBuilder agg : aggFacets) {
@@ -138,7 +144,8 @@ public class ElasticQueryHelper {
 
     private BoolQueryBuilder createQuery() {
         BoolQueryBuilder res = null;
-        if (searchterm == null || searchterm.isEmpty() || searchterm.trim().equals("*")) {
+        String searchterm = searchterms.getSearchterm();
+        if (StringUtils.isBlank(searchterm)) {
             if (Boolean.TRUE.equals(this.isGt)) {
                 return QueryBuilders.boolQuery().must(QueryBuilders.matchQuery("IsGt", true));
             } else {
@@ -180,22 +187,22 @@ public class ElasticQueryHelper {
     private List<AggregationBuilder> createMergeAggregation() {
         List<AggregationBuilder> res = new ArrayList<>();
         TermsAggregationBuilder byPid = AggregationBuilders.terms(HITS_AGG)
-                .field("pid.keyword")
-                .size(99999);
-        BucketSortPipelineAggregationBuilder pager = PipelineAggregatorBuilders.bucketSort("pager",
-                List.of(new FieldSortBuilder("_key").order(SortOrder.ASC)))
-                .from(offset)
-                .size(limit);
-        TermsAggregationBuilder byLog= AggregationBuilders.terms("group-by-log")
-                .field("log.keyword")
-                .missing("zzz")
-                .size(1)
-                .order(BucketOrder.key(true));
+            .field("pid.keyword")
+            .size(99999);
+        BucketSortPipelineAggregationBuilder pager = PipelineAggregatorBuilders
+            .bucketSort("pager", List.of(new FieldSortBuilder("_key").order(SortOrder.ASC)))
+            .from(offset)
+            .size(limit);
+        TermsAggregationBuilder byLog = AggregationBuilders.terms("group-by-log")
+            .field("log.keyword")
+            .missing("zzz")
+            .size(1)
+            .order(BucketOrder.key(true));
         TopHitsAggregationBuilder byTopHits = AggregationBuilders.topHits("by_top_hits")
-                .size(1)
-                .fetchSource(SOURCE_FIELDS,  null);
+            .size(1)
+            .fetchSource(SOURCE_FIELDS, null);
         CardinalityAggregationBuilder counter = AggregationBuilders.cardinality(COUNTER_AGG)
-                .field("pid.keyword");
+            .field("pid.keyword");
 
         byPid.subAggregation(pager);
         byPid.subAggregation(byLog);
