@@ -92,18 +92,13 @@ public class ElasticResponseHelper {
         ResultSet res = new ResultSet();
         List<HitList> hitlist = new ArrayList<>();
         res.setHitlist(hitlist);
-        //TODO: setHits aus dem Counter-Bucket nehmen
 
         for (Bucket hit: hits.getBuckets()) {
             HitList hitResult = new HitList();
             hitlist.add(hitResult);
             Terms sub1agg = hit.getAggregations().get("group-by-log");
-            // TODO: delete next two lines
-            assert sub1agg.getBuckets().size() == 1;
             Bucket sub1 = sub1agg.getBuckets().get(0);
             TopHits sub2agg = (TopHits)sub1.getAggregations().get("by_top_hits");
-            // TODO: delete next line
-            assert sub2agg.getHits().getTotalHits() == 1;
             Map<String, Object> hitmap = sub2agg.getHits().getAt(0).getSourceAsMap();
 
             hitResult.setPid(hit.getKeyAsString());
