@@ -181,16 +181,16 @@ public class SearchController {
         int limit,
         @RequestParam(defaultValue = "0") @ApiParam(value = "Starting point of the next resultset from search results to support pagination")
         int offset,
-        @RequestParam(defaultValue = "false") @ApiParam(value = "If false, an initial search is started and no facets or filters are applied")
-        boolean extended,
+//        @RequestParam(defaultValue = "false") @ApiParam(value = "If false, an initial search is started and no facets or filters are applied")
+//        boolean extended,
         @RequestParam(required = false) @ApiParam(value = "If true, search only for GT data")
         Boolean isGT,
         @RequestParam(defaultValue = "true") @ApiParam(value = "If true, search over the metadata")
         boolean metadatasearch,
         @RequestParam(defaultValue = "false") @ApiParam(value = "If true, search over the fulltexts")
         boolean fulltextsearch,
-        @RequestParam(defaultValue = "title|asc") @ApiParam(value = "Defines sorting fields and direction as a comma separated list according to the following pattern field|{asc|desc}")
-        String sort,
+//        @RequestParam(defaultValue = "title|asc") @ApiParam(value = "Defines sorting fields and direction as a comma separated list according to the following pattern field|{asc|desc}")
+//        String sort,
         @RequestParam(required = false) @ApiParam(value = "Contains the facete names")
         String[] field,
         @RequestParam(required = false) @ApiParam(value = "Contains the facete values")
@@ -244,7 +244,7 @@ public class SearchController {
         } else {
             SearchTerms searchterms = new SearchTerms(searchterm, author, title, place, year);
             ResultSet resultSet = elasticsearchService.facetSearch(
-                searchterms, limit, offset, extended, isGT, metadatasearch, fulltextsearch, sort,
+                searchterms, limit, offset, false, isGT, metadatasearch, fulltextsearch, null,
                 field, value
             );
             return ResponseEntity.ok(resultSet);
