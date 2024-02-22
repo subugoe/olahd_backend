@@ -74,7 +74,8 @@ public class BagImport implements Runnable {
 
         // URL where the stored file will be available after completed import
         WebMvcLinkBuilder linkBuilder = WebMvcLinkBuilder.linkTo(
-                WebMvcLinkBuilder.methodOn(ExportController.class).export(params.pid, false));
+            WebMvcLinkBuilder.methodOn(ExportController.class).export(params.pid, false)
+        );
         res.exportUrl = linkBuilder.toString();
         return res;
     }
@@ -103,14 +104,17 @@ public class BagImport implements Runnable {
                 );
             }
 
-            List<AbstractMap.SimpleImmutableEntry<String, String>> metaData = importResult.getMetaData();
+            List<AbstractMap.SimpleImmutableEntry<String, String>> metaData = importResult
+                .getMetaData();
 
             if (prevPid != null) {
                 metaData.add(new AbstractMap.SimpleImmutableEntry<>("PREVIOUS-VERSION", prevPid));
             }
 
-            /* Send metadata and URL to PID-Service. (Use update instead of append to save 1
-             * HTTP call to the PID Service) */
+            /*
+             * Send metadata and URL to PID-Service. (Use update instead of append to save 1 HTTP
+             * call to the PID Service)
+             */
             metaData.addAll(params.bagInfos);
             metaData.add(new AbstractMap.SimpleImmutableEntry<>("URL", exportUrl));
             pidService.updatePid(params.pid, metaData);
@@ -118,7 +122,8 @@ public class BagImport implements Runnable {
             if (prevPid != null) {
                 // Update the old PID to link to the new version
                 List<AbstractMap.SimpleImmutableEntry<String, String>> pidAppendedData = new ArrayList<>();
-                pidAppendedData.add(new AbstractMap.SimpleImmutableEntry<>("NEXT-VERSION", params.pid));
+                pidAppendedData
+                    .add(new AbstractMap.SimpleImmutableEntry<>("NEXT-VERSION", params.pid));
                 pidService.appendData(prevPid, pidAppendedData);
             }
 
@@ -127,13 +132,16 @@ public class BagImport implements Runnable {
             trackingRepository.save(params.info);
 
             // New archive in mongoDB for this import
-            Archive archive = new Archive(params.pid, importResult.getOnlineId(), importResult.getOfflineId());
+            Archive archive = new Archive(
+                params.pid, importResult.getOnlineId(), importResult.getOfflineId()
+            );
             if (prevPid != null) {
-                /* - this block finds the prevVersion-Archive in mongoDB, links between it and
-                 *   the current uploaded archive and removes its onlineId so that ... I don't
-                 *   know why that yet
-                 * - synchronized because it could happen that two imports occur at the same
-                 *   time and both change the same prevVersion-Archive */
+                /*
+                 * - this block finds the prevVersion-Archive in mongoDB, links between it and the
+                 * current uploaded archive and removes its onlineId so that ... I don't know why
+                 * that yet - synchronized because it could happen that two imports occur at the
+                 * same time and both change the same prevVersion-Archive
+                 */
                 synchronized (mutexFactory.getMutex(prevPid)) {
                     Archive prevVersion = archiveRepository.findByPid(prevPid);
                     archive.setPreviousVersion(prevVersion);
@@ -161,8 +169,10 @@ public class BagImport implements Runnable {
      * @param pid - PID(PPA) of ocrd-zip
      */
     private void sendToElastic() {
-        IndexingConfig conf = ImportUtils.readSearchindexFilegrps(params.bagInfos, params.formParams);
+        IndexingConfig conf = ImportUtils
+            .readSearchindexFilegrps(params.bagInfos, params.formParams);
         String pid = this.params.pid;
+
         try {
             waitTillMetsAvailable(this.params.pid);
         } catch (FailsafeException e) {
@@ -175,25 +185,38 @@ public class BagImport implements Runnable {
             gtConf = ", \"isGt\": " + conf.getGt();
         }
 
+        String prev = "";
+        if (this.params.formParams.getPrev() != null) {
+            prev = this.params.formParams.getPrev();
+        }
+
         try {
             final String json = String.format(
-                    "{"
+                "{"
                     + "\"document\":\"%s\", \"context\":\"ocrd\", \"product\":\"olahds\","
-                    + "\"imageFileGrp\":\"%s\", \"fulltextFileGrp\":\"%s\", \"ftype\":\"%s\"%s}",
-                    pid, conf.getImageFileGrp(), conf.getFulltextFileGrp(),
-                    conf.getFulltextFtype(), gtConf);
+                    + "\"imageFileGrp\":\"%s\", \"fulltextFileGrp\":\"%s\", \"ftype\":\"%s\"%s, "
+                    + "\"prev\":\"%s\""
+                    + "}",
+                pid, conf.getImageFileGrp(), conf.getFulltextFileGrp(),
+                conf.getFulltextFtype(), gtConf, prev
+            );
 
-            RequestBody body = RequestBody.create(okhttp3.MediaType.parse(
-                    "application/json; charset=utf-8"), json);
+            RequestBody body = RequestBody.create(
+                okhttp3.MediaType.parse(
+                    "application/json; charset=utf-8"
+                ), json
+            );
 
             Request request = new Request.Builder().url(this.params.webnotifierUrl)
-                    .addHeader("Accept", "*/*").addHeader("Content-Type", "application/json")
-                    .addHeader("Cache-Control", "no-cache").post(body).build();
+                .addHeader("Accept", "*/*").addHeader("Content-Type", "application/json")
+                .addHeader("Cache-Control", "no-cache").post(body).build();
 
             try (Response response = new OkHttpClient().newCall(request).execute()) {
                 if (!response.isSuccessful()) {
-                    logger.error("Request to web-notifier failed. Message: '{}'. Code: '{}'",
-                            response.message(), response.code());
+                    logger.error(
+                        "Request to web-notifier failed. Message: '{}'. Code: '{}'",
+                        response.message(), response.code()
+                    );
                 } else {
                     logger.info("Successfully sent request to web-notifier for PID: '" + pid + "'");
                 }
@@ -212,9 +235,9 @@ public class BagImport implements Runnable {
      */
     private void waitTillMetsAvailable(String pid) {
         RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
-                .withBackoff(5, 120, ChronoUnit.SECONDS)
-                .withMaxRetries(-1)
-                .withMaxDuration(Duration.ofMinutes(10));
+            .withBackoff(5, 120, ChronoUnit.SECONDS)
+            .withMaxRetries(-1)
+            .withMaxDuration(Duration.ofMinutes(10));
 
         Failsafe.with(retryPolicy).run(() -> {
             final String metsPath;
@@ -237,9 +260,9 @@ public class BagImport implements Runnable {
     /**
      * Clean up a failed import as good as possible
      *
-     * When an import fails, an exception is raised. After caching this function is called. It tries to delete the pid
-     * (it was created before importing), delete stuff possibly saved to Cdstar and set the information about the
-     * failure to the tracking database
+     * When an import fails, an exception is raised. After caching this function is called. It tries
+     * to delete the pid (it was created before importing), delete stuff possibly saved to Cdstar
+     * and set the information about the failure to the tracking database
      *
      * @param ex
      * @param pid
@@ -247,7 +270,7 @@ public class BagImport implements Runnable {
      * @param info
      */
     private void handleFailedImport(
-        Exception ex, String pid, ImportResult importResult,TrackingInfo info
+        Exception ex, String pid, ImportResult importResult, TrackingInfo info
     ) {
         // Delete the PID
         try {
@@ -264,7 +287,7 @@ public class BagImport implements Runnable {
         if (importResult != null) {
             try {
                 archiveManagerService.deleteArchive(importResult.getOnlineId(), null);
-            } catch(Exception e) {
+            } catch (Exception e) {
                 logger.error(
                     "error cleaning up. pid: '{}', online-id: '{}', offline-id: '{}' - {}",
                     pid, importResult.getOnlineId(), importResult.getOfflineId(), e,
