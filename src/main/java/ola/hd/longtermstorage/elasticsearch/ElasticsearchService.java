@@ -8,6 +8,7 @@ import ola.hd.longtermstorage.domain.SearchTerms;
 import ola.hd.longtermstorage.exceptions.ElasticServiceException;
 import ola.hd.longtermstorage.model.Detail;
 import ola.hd.longtermstorage.model.ResultSet;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -146,7 +147,7 @@ public class ElasticsearchService {
             return util2.responseToResultSet(
                 response, searchterms, metadatasearch, fulltextsearch, offset, limit
             );
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchStatusException e) {
             throw new ElasticServiceException("Error executing search request", e);
         }
     }

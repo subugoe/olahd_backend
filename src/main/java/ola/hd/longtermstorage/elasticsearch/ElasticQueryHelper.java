@@ -8,10 +8,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import ola.hd.longtermstorage.domain.EsNumberQuery;
 import ola.hd.longtermstorage.domain.SearchTerms;
+import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -182,12 +185,41 @@ public class ElasticQueryHelper {
                 );
             }
             if (StringUtils.isNotBlank(searchterms.getYear())) {
-                res = res.filter(
-                    QueryBuilders.matchQuery("publish_infos.year_publish", searchterms.getYear())
-                );
+                QueryBuilder numberQuery = createYearQuery(searchterms.getYear());
+                if (numberQuery != null) {
+                    res = res.filter(numberQuery);
+                } else {
+                    Utils.logInfo("Search for year cannot be used: '" + searchterms.getYear() + "'");
+                }
             }
         }
         return res;
+    }
+
+    private QueryBuilder createYearQuery(String numberStr) {
+        EsNumberQuery x = EsNumberQuery.fromQueryString(numberStr);
+        if (x == null) {
+            return null;
+        } else if (x.cmp == EsNumberQuery.Cmp.EQ) {
+            return QueryBuilders.matchQuery("publish_infos.year_publish", numberStr);
+        }
+
+        var rangeQuery = QueryBuilders.rangeQuery("publish_infos.year_publish");
+        switch (x.cmp) {
+        case GT:
+            return rangeQuery.gt(x.value1);
+        case LT:
+            return rangeQuery.lt(x.value1);
+        case GTE:
+            return rangeQuery.gte(x.value1);
+        case LTE:
+            return rangeQuery.lte(x.value1);
+        case RANGE:
+            return rangeQuery.gte(x.value1).lte(x.value2);
+        default:
+            // This cannot happen, except the enum was extended
+            throw new AssertionError("Unexpected switch default: createYearQuery");
+        }
     }
 
     private List<TermsAggregationBuilder> createFacetAggregations() {
