@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import ola.hd.longtermstorage.domain.SearchTerms;
 import ola.hd.longtermstorage.model.Detail;
 import ola.hd.longtermstorage.model.Facets;
 import ola.hd.longtermstorage.model.HitList;
@@ -41,16 +42,18 @@ public class ElasticResponseHelper {
      *
      * @return
      */
-    public ResultSet responseToResultSet(SearchResponse response, String searchterm, boolean metadatasearch,
-            boolean fulltextsearch, int offset, int limit) {
+    public ResultSet responseToResultSet(
+        SearchResponse response, SearchTerms searchterms, boolean metadatasearch,
+        boolean fulltextsearch, int offset, int limit
+    ) {
         Aggregations aggs = response.getAggregations();
-        Terms hits = (Terms)aggs.get(ElasticQueryHelper.HITS_AGG);
-        Cardinality counter = (Cardinality)aggs.get(ElasticQueryHelper.COUNTER_AGG);
+        Terms hits = (Terms) aggs.get(ElasticQueryHelper.HITS_AGG);
+        Cardinality counter = (Cardinality) aggs.get(ElasticQueryHelper.COUNTER_AGG);
 
         ResultSet res = putHitAggsIntoResponseModel(hits, counter);
         List<Facets> facets = this.createFacetsFromAggs(aggs);
         res.setFacets(facets);
-        res.setSearchTerm(searchterm);
+        res.setSearchTerms(searchterms);
         res.setMetadataSearch(metadatasearch);
         res.setFulltextSearch(fulltextsearch);
         res.setOffset(offset);
@@ -92,18 +95,13 @@ public class ElasticResponseHelper {
         ResultSet res = new ResultSet();
         List<HitList> hitlist = new ArrayList<>();
         res.setHitlist(hitlist);
-        //TODO: setHits aus dem Counter-Bucket nehmen
 
-        for (Bucket hit: hits.getBuckets()) {
+        for (Bucket hit : hits.getBuckets()) {
             HitList hitResult = new HitList();
             hitlist.add(hitResult);
             Terms sub1agg = hit.getAggregations().get("group-by-log");
-            // TODO: delete next two lines
-            assert sub1agg.getBuckets().size() == 1;
             Bucket sub1 = sub1agg.getBuckets().get(0);
-            TopHits sub2agg = (TopHits)sub1.getAggregations().get("by_top_hits");
-            // TODO: delete next line
-            assert sub2agg.getHits().getTotalHits() == 1;
+            TopHits sub2agg = (TopHits) sub1.getAggregations().get("by_top_hits");
             Map<String, Object> hitmap = sub2agg.getHits().getAt(0).getSourceAsMap();
 
             hitResult.setPid(hit.getKeyAsString());
@@ -117,7 +115,7 @@ public class ElasticResponseHelper {
             hitResult.setNoData();
         }
 
-        res.setHits((int)counter.getValue());
+        res.setHits((int) counter.getValue());
 
         return res;
     }
@@ -139,18 +137,20 @@ public class ElasticResponseHelper {
         }
 
         for (Map.Entry<String, Aggregation> entry : map.entrySet()) {
-            if (entry.getKey().equals(ElasticQueryHelper.HITS_AGG)
-                    || entry.getKey().equals(ElasticQueryHelper.COUNTER_AGG)) {
+            if (
+                entry.getKey().equals(ElasticQueryHelper.HITS_AGG)
+                    || entry.getKey().equals(ElasticQueryHelper.COUNTER_AGG)
+            ) {
                 continue;
             }
             List<Values> values = new ArrayList<>();
-            Terms terms = (Terms)entry.getValue();
+            Terms terms = (Terms) entry.getValue();
             List<? extends Bucket> buckets = terms.getBuckets();
             for (Bucket x : buckets) {
                 if (x.getAggregations() != null) {
                     Map<String, Aggregation> subAggMap = x.getAggregations().getAsMap();
                     Aggregation agg = subAggMap.get(ElasticQueryHelper.SUB_AGG_PIDS);
-                    Values val = new Values(x.getKeyAsString(), ((Terms)agg).getBuckets().size());
+                    Values val = new Values(x.getKeyAsString(), ((Terms) agg).getBuckets().size());
                     values.add(val);
                 }
             }
@@ -168,26 +168,26 @@ public class ElasticResponseHelper {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static int readYearFromSearchHit(Map<String, Object> hit) {
         try {
-            List<?> structrun = (List<?>)hit.get("structrun");
+            List<?> structrun = (List<?>) hit.get("structrun");
             if (structrun != null) {
-                Map<String, Object> firstElement = (Map)structrun.get(0);
-                Map<String, ?> infos = (Map)firstElement.get("publish_infos");
-                Integer i = (Integer)infos.get("year_publish");
+                Map<String, Object> firstElement = (Map) structrun.get(0);
+                Map<String, ?> infos = (Map) firstElement.get("publish_infos");
+                Integer i = (Integer) infos.get("year_publish");
                 if (i != null) {
                     return i;
                 }
             }
         } catch (Exception e) {
-            //pass: just skip if value not found in structurn and try following
+            // pass: just skip if value not found in structurn and try following
         }
         try {
-            Map<String, Object> infos = (Map)hit.get("publish_infos");
-            Integer i = (Integer)infos.get("year_publish");
+            Map<String, Object> infos = (Map) hit.get("publish_infos");
+            Integer i = (Integer) infos.get("year_publish");
             if (i != null) {
                 return i;
             }
         } catch (Exception e) {
-            //pass: just skip if value is not available
+            // pass: just skip if value is not available
         }
         return -1;
     }
@@ -201,40 +201,39 @@ public class ElasticResponseHelper {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static String readPublisherFromSearchHit(Map<String, Object> hit) {
         try {
-            List<?> structrun = (List<?>)hit.get("structrun");
+            List<?> structrun = (List<?>) hit.get("structrun");
             if (structrun != null) {
-                Map<String, Object> firstElement = (Map)structrun.get(0);
-                Map<String, ?> infos = (Map)firstElement.get("publish_infos");
-                List<String> publisher = (List<String>)infos.get("publisher");
+                Map<String, Object> firstElement = (Map) structrun.get(0);
+                Map<String, ?> infos = (Map) firstElement.get("publish_infos");
+                List<String> publisher = (List<String>) infos.get("publisher");
                 if (!publisher.isEmpty()) {
                     return publisher.stream().collect(Collectors.joining(", "));
                 }
             }
         } catch (Exception e) {
-            //pass: just skip if value not found in structurn and try following
+            // pass: just skip if value not found in structurn and try following
         }
 
         try {
-            Map<String, Object> infos = (Map)hit.get("publish_infos");
-            List<String> publisher = (List<String>)infos.get("publisher");
+            Map<String, Object> infos = (Map) hit.get("publish_infos");
+            List<String> publisher = (List<String>) infos.get("publisher");
             if (!publisher.isEmpty()) {
                 return publisher.stream().collect(Collectors.joining(", "));
             }
         } catch (Exception e) {
-            //pass: just skip if value is not available
+            // pass: just skip if value is not available
         }
         return "";
     }
 
-
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static String readPlaceOfPublishFromSearchHit(Map<String, Object> hit) {
         try {
-            List<?> structrun = (List<?>)hit.get("structrun");
+            List<?> structrun = (List<?>) hit.get("structrun");
             if (structrun != null) {
-                Map<String, Object> firstElement = (Map)structrun.get(0);
-                Map<String, ?> infos = (Map)firstElement.get("publish_infos");
-                List<String> places = (List<String>)infos.get("place_publish");
+                Map<String, Object> firstElement = (Map) structrun.get(0);
+                Map<String, ?> infos = (Map) firstElement.get("publish_infos");
+                List<String> places = (List<String>) infos.get("place_publish");
                 StringBuilder res = new StringBuilder();
                 for (String s : places) {
                     if (StringUtils.isNotBlank(s)) {
@@ -249,12 +248,12 @@ public class ElasticResponseHelper {
                 }
             }
         } catch (Exception e) {
-            //pass: just skip if value not found in structurn and try following
+            // pass: just skip if value not found in structurn and try following
         }
 
         try {
-            Map<String, Object> infos = (Map)hit.get("publish_infos");
-            List<String> places = (List<String>)infos.get("place_publish");
+            Map<String, Object> infos = (Map) hit.get("publish_infos");
+            List<String> places = (List<String>) infos.get("place_publish");
             StringBuilder res = new StringBuilder();
             for (String s : places) {
                 if (StringUtils.isNotBlank(s)) {
@@ -266,7 +265,7 @@ public class ElasticResponseHelper {
             }
             return res.toString().trim();
         } catch (Exception e) {
-            //pass: just skip if value is not available
+            // pass: just skip if value is not available
         }
         return "";
     }
@@ -274,10 +273,10 @@ public class ElasticResponseHelper {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static String readSubtitleFromSearchHit(Map<String, Object> hit) {
         try {
-            List<?> structrun = (List<?>)hit.get("structrun");
+            List<?> structrun = (List<?>) hit.get("structrun");
             if (structrun != null) {
-                Map<String, Object> firstElement = (Map)structrun.get(0);
-                Map<String, ?> title = (Map)firstElement.get("title");
+                Map<String, Object> firstElement = (Map) structrun.get(0);
+                Map<String, ?> title = (Map) firstElement.get("title");
                 if (title.containsKey("subtitle")) {
                     Object object = title.get("subtitle");
                     if (object != null && object instanceof String) {
@@ -286,11 +285,11 @@ public class ElasticResponseHelper {
                 }
             }
         } catch (Exception e) {
-            //pass: just skip if value not found in structurn and try following
+            // pass: just skip if value not found in structurn and try following
         }
 
         try {
-            Map<String, Object> title = (Map)hit.get("title");
+            Map<String, Object> title = (Map) hit.get("title");
             if (title.containsKey("subtitle")) {
                 Object object = title.get("subtitle");
                 if (object != null && object instanceof String) {
@@ -298,7 +297,7 @@ public class ElasticResponseHelper {
                 }
             }
         } catch (Exception e) {
-            //pass: just skip if value is not available
+            // pass: just skip if value is not available
         }
         return "";
     }
@@ -306,10 +305,10 @@ public class ElasticResponseHelper {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static String readCreatorFromSearchHit(Map<String, Object> hit) {
         try {
-            List<?> structrun = (List<?>)hit.get("structrun");
+            List<?> structrun = (List<?>) hit.get("structrun");
             if (structrun != null) {
-                Map<String, Object> firstElement = (Map)structrun.get(0);
-                List<Map<String, Object>> infos = (List)firstElement.get("creator_infos");
+                Map<String, Object> firstElement = (Map) structrun.get(0);
+                List<Map<String, Object>> infos = (List) firstElement.get("creator_infos");
                 StringBuilder result = new StringBuilder();
                 for (Map<String, Object> creator : infos) {
                     if (creator.containsKey("name")) {
@@ -327,11 +326,11 @@ public class ElasticResponseHelper {
                 }
             }
         } catch (Exception e) {
-            //pass: just skip if value not found in structurn and try following
+            // pass: just skip if value not found in structurn and try following
         }
 
         try {
-            List<Map<String, Object>> infos = (List)hit.get("creator_infos");
+            List<Map<String, Object>> infos = (List) hit.get("creator_infos");
             StringBuilder result = new StringBuilder();
             for (Map<String, Object> creator : infos) {
                 if (creator.containsKey("name")) {
@@ -346,7 +345,7 @@ public class ElasticResponseHelper {
             }
             return result.toString();
         } catch (Exception e) {
-            //pass: just skip if value is not available
+            // pass: just skip if value is not available
         }
         return "";
     }
@@ -354,10 +353,10 @@ public class ElasticResponseHelper {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static String readTitleFromSearchHit(Map<String, Object> hit) {
         try {
-            List<?> structrun = (List<?>)hit.get("structrun");
+            List<?> structrun = (List<?>) hit.get("structrun");
             if (structrun != null) {
-                Map<String, Object> firstElement = (Map)structrun.get(0);
-                Map<String, ?> title = (Map)firstElement.get("title");
+                Map<String, Object> firstElement = (Map) structrun.get(0);
+                Map<String, ?> title = (Map) firstElement.get("title");
                 if (title.containsKey("title")) {
                     Object object = title.get("title");
                     if (object != null && object instanceof String) {
@@ -366,11 +365,11 @@ public class ElasticResponseHelper {
                 }
             }
         } catch (Exception e) {
-            //pass: just skip if value not found in structurn and try following
+            // pass: just skip if value not found in structurn and try following
         }
 
         try {
-            Map<String, Object> title = (Map)hit.get("title");
+            Map<String, Object> title = (Map) hit.get("title");
             if (title.containsKey("title")) {
                 Object object = title.get("title");
                 if (object != null && object instanceof String) {
@@ -378,7 +377,7 @@ public class ElasticResponseHelper {
                 }
             }
         } catch (Exception e) {
-            //pass: just skip if value is not available
+            // pass: just skip if value is not available
         }
         return "";
     }
@@ -388,7 +387,7 @@ public class ElasticResponseHelper {
         try {
             result = Utils.stringToBool(hit.get("IsGt").toString());
         } catch (Exception e) {
-            //pass: just skip if value is not available
+            // pass: just skip if value is not available
         }
         return result != null ? result : false;
     }

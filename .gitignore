@@ -39,3 +39,10 @@ upload-temp/
 
 docker-compose.https.yaml
 cfg/cluster/
+
+src/main/resources/application-eclipse.properties
+src/main/resources/application.properties.eclipse
+application.properties.eclipse
+mystart-eclipse.sh
+docker-compose.eclipse.yaml
+cfg/eclipse/
