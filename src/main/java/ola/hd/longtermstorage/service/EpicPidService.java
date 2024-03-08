@@ -5,20 +5,28 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import okhttp3.*;
-import ola.hd.longtermstorage.component.MutexFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpServerErrorException;
-
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import okhttp3.Credentials;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import ola.hd.longtermstorage.component.MutexFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Service
+@ConditionalOnProperty(
+    value="nopidservice",
+    havingValue = "false",
+    matchIfMissing = true)
 public class EpicPidService implements PidService {
 
     @Value("${epic.username}")
@@ -40,7 +48,6 @@ public class EpicPidService implements PidService {
 
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json");
 
-    @Autowired
     public EpicPidService(MutexFactory<String> mutexFactory) {
         this.mutexFactory = mutexFactory;
     }
