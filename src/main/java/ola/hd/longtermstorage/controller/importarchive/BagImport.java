@@ -248,11 +248,12 @@ public class BagImport implements Runnable {
                 metsPath = "data/mets.xml";
             }
 
-            Response res = archiveManagerService.exportFile(pid, metsPath);
-            if (res.isSuccessful()) {
-                return;
-            } else {
-                throw new Exception("Failed to export mets");
+            try (Response response = archiveManagerService.exportFile(pid, metsPath)) {
+                if (response.isSuccessful()) {
+                    return;
+                } else {
+                    throw new Exception("Failed to export mets");
+                }
             }
         });
     }
