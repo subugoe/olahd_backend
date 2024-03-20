@@ -268,29 +268,30 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             }
         }
 
-        // After a file is uploaded, set proper meta-data for dc:type
-        String storage = "online";
-        if (isOffline) {
-            storage = "offline";
-        }
-
-        String payload = String.format("{\"dc:type\":\"%s\"}", storage);
-
-        Request metaRequest = new Request.Builder()
-                .url(url + "?meta")
-                .addHeader("Authorization", Credentials.basic(username, password))
-                .addHeader("X-Transaction", txId)
-                .put(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), payload))
-                .build();
-
-        try (Response response = client.newCall(metaRequest).execute()) {
-            if (!response.isSuccessful()) {
-
-                // Something is wrong, throw the exception
-                throw new HttpServerErrorException(
-                        HttpStatus.valueOf(response.code()), "Cannot set meta-data for a file. URL: " + url);
-            }
-        }
+        // Skip setting type metadata: goal is to reduce calls to Cdstar. This metadata info is not used currently
+//        // After a file is uploaded, set proper meta-data for dc:type
+//        String storage = "online";
+//        if (isOffline) {
+//            storage = "offline";
+//        }
+//
+//        String payload = String.format("{\"dc:type\":\"%s\"}", storage);
+//
+//        Request metaRequest = new Request.Builder()
+//                .url(url + "?meta")
+//                .addHeader("Authorization", Credentials.basic(username, password))
+//                .addHeader("X-Transaction", txId)
+//                .put(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), payload))
+//                .build();
+//
+//        try (Response response = client.newCall(metaRequest).execute()) {
+//            if (!response.isSuccessful()) {
+//
+//                // Something is wrong, throw the exception
+//                throw new HttpServerErrorException(
+//                        HttpStatus.valueOf(response.code()), "Cannot set meta-data for a file. URL: " + url);
+//            }
+//        }
     }
 
     private void commitTransaction(String txId) throws IOException {
