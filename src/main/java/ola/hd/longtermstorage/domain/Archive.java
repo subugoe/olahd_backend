@@ -27,15 +27,21 @@ public class Archive {
     @DBRef(lazy = true)
     private List<Archive> nextVersions;
 
+    private String ocrdIdentifier;
+
+    private String payloadOxum;
+
     protected Archive() {
         // no-args constructor required by JPA spec
         // this one is protected since it shouldn't be used directly
     }
 
-    public Archive(String pid, String onlineId, String offlineId) {
+    public Archive(String pid, String onlineId, String offlineId, String ocrdIdentifier, String payloadOxum) {
         this.pid = pid;
         this.onlineId = onlineId;
         this.offlineId = offlineId;
+        this.ocrdIdentifier = ocrdIdentifier;
+        this.payloadOxum = payloadOxum;
     }
 
     public void addNextVersion(Archive nextVersion) {
@@ -91,5 +97,21 @@ public class Archive {
 
     public void setNextVersions(List<Archive> nextVersions) {
         this.nextVersions = nextVersions;
+    }
+
+    public String getOcrdIdentifier() {
+        return ocrdIdentifier;
+    }
+
+    public void setOcrdIdentifier(String ocrdIdentifier) {
+        this.ocrdIdentifier = ocrdIdentifier;
+    }
+
+    public String getPayloadOxum() {
+        return payloadOxum;
+    }
+
+    public void setPayloadOxum(String payloadOxum) {
+        this.payloadOxum = payloadOxum;
     }
 }

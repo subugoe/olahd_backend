@@ -131,9 +131,11 @@ public class BagImport implements Runnable {
             params.info.setMessage("Data has been successfully imported.");
             trackingRepository.save(params.info);
 
+            String[] ocrdOxum = ImportUtils.readOcrdIdentifierAndPayloadOxum(params.bagInfos);
+
             // New archive in mongoDB for this import
             Archive archive = new Archive(
-                params.pid, importResult.getOnlineId(), importResult.getOfflineId()
+                params.pid, importResult.getOnlineId(), importResult.getOfflineId(), ocrdOxum[0], ocrdOxum[1]
             );
             if (prevPid != null) {
                 /*

@@ -111,6 +111,32 @@ public class ImportUtils {
     }
 
     /**
+     * Read ocrd-identifier and payload oxum from bag-infos
+     *
+     * @param bagInfos
+     * @return
+     */
+    static String[] readOcrdIdentifierAndPayloadOxum(List<SimpleImmutableEntry<String, String>> bagInfos) {
+        String ocrdIdentifier = null;
+        String payloadOxum = null;
+
+        for (SimpleImmutableEntry<String, String> x : bagInfos) {
+            if (StringUtils.isBlank(x.getValue())) {
+                continue;
+            }
+            if (Constants.BAGINFO_KEY_OCRD_IDENTIFIER.equals(x.getKey())) {
+                ocrdIdentifier = x.getValue();
+            } else if (Constants.BAGINFO_KEY_PAYLOAD_OXUM.equals(x.getKey())) {
+                payloadOxum = x.getValue();
+            }
+            if (ocrdIdentifier != null && payloadOxum != null) {
+                break;
+            }
+        }
+        return new String[] { ocrdIdentifier, payloadOxum };
+    }
+
+    /**
      * Extract bagit, read metadata and verify that the ZIP-file is a valid bagit.
      *
      * Additionally validate that bag is valid according to ocrd-zip: https://ocr-d.de/en/spec/ocrd_zip.

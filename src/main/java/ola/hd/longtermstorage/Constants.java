@@ -21,6 +21,8 @@ public class Constants {
     public static final String BAGINFO_KEY_FULLTEXT_FILEGRP = "Olahd-Search-Fulltext-Filegrp";
     public static final String BAGINFO_KEY_FTYPE = "Olahd-Search-Fulltext-Ftype";
     public static final String BAGINFO_KEY_IS_GT = "Olahd-GT";
+    public static final String BAGINFO_KEY_OCRD_IDENTIFIER = "Ocrd-Identifier";
+    public static final String BAGINFO_KEY_PAYLOAD_OXUM = "Payload-Oxum";
 
     private Constants() {
         //pass
