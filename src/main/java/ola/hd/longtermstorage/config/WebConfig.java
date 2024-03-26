@@ -3,7 +3,7 @@ package ola.hd.longtermstorage.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -20,7 +20,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public AsyncTaskExecutor asyncTaskExecutor() {
-        // FIXME: this causes a warning. Fix it to use ThreadPoolTaskExecutor
-        return new SimpleAsyncTaskExecutor("async");
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(10);
+        taskExecutor.setMaxPoolSize(20);
+        return taskExecutor;
     }
 }
