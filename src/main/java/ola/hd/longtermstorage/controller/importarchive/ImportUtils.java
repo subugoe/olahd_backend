@@ -4,6 +4,7 @@ import gov.loc.repository.bagit.domain.Bag;
 import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
 import gov.loc.repository.bagit.reader.BagReader;
 import gov.loc.repository.bagit.verify.BagVerifier;
+import gov.loc.repository.bagit.verify.MandatoryVerifier;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +15,8 @@ import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.servlet.http.HttpServletRequest;
 import net.jodah.failsafe.RetryPolicy;
 import net.lingala.zip4j.ZipFile;
@@ -154,7 +157,9 @@ public class ImportUtils {
         TrackingRepository trackingRepository
     ) throws IOException {
         Bag bag;
-        try (BagVerifier verifier = new BagVerifier(); ZipFile zipFile = new ZipFile(targetFile)) {
+        // Default executor service used crashes with about more than 20.00 files.
+        ExecutorService exeService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        try (BagVerifier verifier = new BagVerifier(exeService); ZipFile zipFile = new ZipFile(targetFile)) {
             // Extract the zip file
             zipFile.extractAll(destination);
             Path rootDir = Paths.get(destination);
@@ -165,11 +170,14 @@ public class ImportUtils {
 
             if (BagVerifier.canQuickVerify(bag)) {
                 BagVerifier.quicklyVerify(bag);
+                MandatoryVerifier.checkBagitFileExists(bag.getRootDir(), bag.getVersion());
+                MandatoryVerifier.checkPayloadDirectoryExists(bag);
+                MandatoryVerifier.checkIfAtLeastOnePayloadManifestsExist(bag.getRootDir(), bag.getVersion());
+            } else {
+                // Validating 2 bagits parallel with 40.000 files each takes more than 10 Minutes
+                verifier.isValid(bag, true);
             }
-
             // Check for the validity and completeness of a bag
-            verifier.isValid(bag, true);
-
             Validation.validateOcrdzip(bag, destination, params);
             Validation.validateMetsfileSchema(bag);
         } catch (Exception ex) {
