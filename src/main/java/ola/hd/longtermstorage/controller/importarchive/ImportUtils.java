@@ -228,6 +228,7 @@ public class ImportUtils {
     public static FormParams readFormParams(
         HttpServletRequest request, TrackingInfo info, String tempDir, TrackingRepository trackingRepository
     ) throws FileUploadException, IOException {
+        Utils.logDebug("Trying to read form params. Request: " + Utils.read_request_infos(request));
         FormParams res = new FormParams();
         File targetFile = null;
 

@@ -1,11 +1,13 @@
 package ola.hd.longtermstorage.utils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,4 +104,63 @@ public class Utils {
     public static void logWarn(String msg) {
         LOG.warn(msg);
     }
+
+    public static void logDebug(String msg) {
+        LOG.debug(msg);
+    }
+
+    /**
+     * Purpose of this function is logging only
+     *
+     * @param request
+     * @return
+     */
+    public static String read_request_infos(HttpServletRequest request) {
+        if (request == null) {
+            return "null";
+        }
+        StringBuilder res = new StringBuilder();
+        res.append("Method: ").append(request.getMethod()).append("; ");
+        try {
+            res.append("Parts: ");
+            Boolean first = true;
+            for (Part p : request.getParts()) {
+                if (first) {
+                    first = false;
+                } else {
+                    res.append(",");
+                }
+                res.append(p.getName());
+            }
+            res.append("; ");
+
+        } catch(Exception e) {
+            res.append("cannot read parts: " + e);
+        }
+
+        try {
+            res.append("Headers: ");
+            Boolean first = true;
+            for (String name : Collections.list(request.getHeaderNames())) {
+                if (first) {
+                    first = false;
+                } else {
+                    res.append(", ");
+                }
+                String header = request.getHeader(name);
+                res.append("name: '").append(name).append("'").append(" value: '").append(header).append("'");
+            }
+            res.append("; ");
+        } catch (Exception e) {
+            res.append("cannot read headers: " + e);
+        }
+        res.append("Request.toString(): ").append(request.toString()).append("; ");
+        res.append("RemoteHost: ").append(request.getRemoteHost()).append("; ");
+        res.append("RemoteAddr: ").append(request.getRemoteAddr()).append("; ");
+        res.append("RemotePort: ").append(request.getRemotePort()).append("; ");
+        res.append("LocalName: ").append(request.getLocalName()).append("; ");
+        res.append("LocalAddr: ").append(request.getLocalAddr()).append("; ");
+        return res.toString();
+    }
+
 }
