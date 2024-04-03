@@ -10,6 +10,8 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Principal;
 import java.util.AbstractMap;
 import java.util.List;
@@ -40,9 +42,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
 @Api(description = "This endpoint is used to import a ZIP file into the system")
@@ -66,7 +70,7 @@ public class ImportController {
     private String webnotifierUrl;
 
     @Autowired
-    public ImportController( TrackingRepository trackingRepository, PidService pidService, ExecutorWrapper executor,
+    public ImportController(TrackingRepository trackingRepository, PidService pidService, ExecutorWrapper executor,
         AutowireCapableBeanFactory beanFactory
     ) {
         this.trackingRepository = trackingRepository;
@@ -91,12 +95,12 @@ public class ImportController {
         @ApiResponse(code = 415, message = "The request is not a multipart request.", response = ResponseMessage.class)
     })
     @ApiImplicitParams(value = {
-            @ApiImplicitParam(dataType = "__file", name = "file", value = "The file to be imported", required = true, paramType = "form"),
-            @ApiImplicitParam(dataType = "string", name = "prev", value = "The PID of the previous version", paramType = "form"),
-            @ApiImplicitParam(dataType = "string", name = "fulltextfilegrp", value = "Name of filegroup containing the fulltexts", paramType = "form"),
-            @ApiImplicitParam(dataType = "string", name = "imagefilegrp", value = "Name of filegroup containing the images", paramType = "form"),
-            @ApiImplicitParam(dataType = "string", name = "fulltextftype", value = "Type of fulltexts, e.g. PAGEXML_1", paramType = "form"),
-            @ApiImplicitParam(dataType = "boolean", name = "isgt", value = "Set to true to flag the data as Ground Truth, used for search filtering", paramType = "form"),
+        @ApiImplicitParam(dataType = "__file", name = "file", value = "The file to be imported", required = true, paramType = "form"),
+        @ApiImplicitParam(dataType = "string", name = "prev", value = "The PID of the previous version", paramType = "form"),
+        @ApiImplicitParam(dataType = "string", name = "fulltextfilegrp", value = "Name of filegroup containing the fulltexts", paramType = "form"),
+        @ApiImplicitParam(dataType = "string", name = "imagefilegrp", value = "Name of filegroup containing the images", paramType = "form"),
+        @ApiImplicitParam(dataType = "string", name = "fulltextftype", value = "Type of fulltexts, e.g. PAGEXML_1", paramType = "form"),
+        @ApiImplicitParam(dataType = "boolean", name = "isgt", value = "Set to true to flag the data as Ground Truth, used for search filtering", paramType = "form"),
     })
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping(value = "/bag", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -112,12 +116,12 @@ public class ImportController {
         }
         String tempDir = uploadDir + File.separator + UUID.randomUUID();
         FormParams formParams = ImportUtils.readFormParams(request, info, tempDir, trackingRepository);
-        File targetFile = formParams.getFile();  // The uploaded file (ZIP)
+        File targetFile = formParams.getFile(); // The uploaded file (ZIP)
         String destination = tempDir + File.separator + FilenameUtils.getBaseName(targetFile.getName()) + "_extracted";
 
         List<AbstractMap.SimpleImmutableEntry<String, String>> bagInfos = ImportUtils.extractAndVerifyOcrdzip(
                 targetFile, destination, tempDir, info, formParams, trackingRepository
-        );
+            );
 
         // Create a PID with meta-data from bag-info.txt
         String pid = Failsafe.with(ImportUtils.RETRY_POLICY).get(() -> pidService.createPid(bagInfos));
@@ -159,4 +163,78 @@ public class ImportController {
         return ResponseEntity.badRequest()
             .body(new ResponseMessage(status, message, uri));
     }
+
+    @PostMapping("/upload-test")
+    public ResponseEntity<?> uploadFile(
+        @RequestParam("file") MultipartFile uploadfile,
+        @RequestParam("prev") String prev
+    ) {
+
+        if (uploadfile.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("TODO: better error response. File is empty");
+        }
+
+        Path path;
+        try {
+            //
+            Path tempDir = Files.createTempDirectory("upload");
+            // Die Datei auf das Dateisystem schreiben
+            byte[] bytes = uploadfile.getBytes();
+            System.out.println("Additional parameter: " + prev);
+            path = Files.createFile(tempDir.resolve(uploadfile.getOriginalFilename()));
+            Files.write(path, bytes);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body("File uploaded successfully: " + path);
+    }
+
+//    @ResponseStatus(value = HttpStatus.ACCEPTED)
+//    @PostMapping(value = "/bag2", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<?> importArchive2(@ApiIgnore Principal principal, MultipartFile file, String prev, Boolean isGt, String fulltextFilegrp, String fulltextFtype, String imageFilegrp)
+//        throws IOException, FileUploadException {
+//        // **every** Import-Request creates an info in tracking-database-table
+//        TrackingInfo info = new TrackingInfo(principal.getName(), TrackingStatus.PROCESSING, "Processing...", null);
+//
+//        if (!ServletFileUpload.isMultipartContent(request)) {
+//            ImportUtils.throwClientException("The request must be multipart request.", info,
+//                HttpStatus.UNSUPPORTED_MEDIA_TYPE, trackingRepository
+//            );
+//        }
+//        String tempDir = uploadDir + File.separator + UUID.randomUUID();
+//        FormParams formParams = ImportUtils.readFormParams(request, info, tempDir, trackingRepository);
+//        File targetFile = formParams.getFile();  // The uploaded file (ZIP)
+//        String destination = tempDir + File.separator + FilenameUtils.getBaseName(targetFile.getName()) + "_extracted";
+//
+//        List<AbstractMap.SimpleImmutableEntry<String, String>> bagInfos = ImportUtils.extractAndVerifyOcrdzip(
+//                targetFile, destination, tempDir, info, formParams, trackingRepository
+//        );
+//
+//        // Create a PID with meta-data from bag-info.txt
+//        String pid = Failsafe.with(ImportUtils.RETRY_POLICY).get(() -> pidService.createPid(bagInfos));
+//        if (StringUtils.isBlank(pid)) {
+//            ImportUtils.throwClientException(
+//                "No PID received", info, HttpStatus.INTERNAL_SERVER_ERROR, trackingRepository
+//            );
+//        } else {
+//            info.setPid(pid);
+//        }
+//
+//        // **here the OCRD-ZIP is scheduled to be saved** to the external archive
+//        executor.submit(
+//            BagImport.create(
+//                beanFactory,
+//                new BagImportParams(destination, pid, formParams, bagInfos, info, tempDir, webnotifierUrl)
+//            )
+//        );
+//
+//        // Inform the user that the import is done in the background.
+//        trackingRepository.save(info);
+//        ResponseMessage responseMessage = new ResponseMessage(HttpStatus.ACCEPTED, "Your data is being processed.");
+//        responseMessage.setPid(pid);
+//
+//        return ResponseEntity.accepted().body(responseMessage);
+//    }
 }
