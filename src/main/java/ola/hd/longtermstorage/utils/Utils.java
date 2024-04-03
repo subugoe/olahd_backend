@@ -160,6 +160,7 @@ public class Utils {
         res.append("RemotePort: ").append(request.getRemotePort()).append("; ");
         res.append("LocalName: ").append(request.getLocalName()).append("; ");
         res.append("LocalAddr: ").append(request.getLocalAddr()).append("; ");
+        res.append("Protocol: ").append(request.getProtocol()).append("; ");
         return res.toString();
     }
 
