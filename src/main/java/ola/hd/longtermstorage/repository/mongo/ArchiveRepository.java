@@ -15,28 +15,28 @@ public interface ArchiveRepository extends MongoRepository<Archive, String> {
      * Tries to find one of the latest versions of an archive.
      *
      * "One of the latest": If an archive (in the chain) has more than one next version, the first one of these is
-     * returned. So this function can lead to unwanted behaviour. However the normal case, a linear chain of next
+     * returned. So this function can lead to unwanted behavior. However the normal case, a linear chain of next
      * versions, is handled correctly
      *
      * @param archiveRepository
      * @param archive
      * @return
      */
-    public static Archive getLatestVersion(ArchiveRepository archiveRepository, String pid) {
-        Archive archive = archiveRepository.findByPid(pid);
+    default public Archive getLatestVersion(String pid) {
+        Archive archive = findByPid(pid);
         if (archive == null) {
             return null;
         } else if (CollectionUtils.isEmpty(archive.getNextVersions())) {
             return archive;
         } else {
-            return getLatestVersion(archiveRepository, archive);
+            return getLatestVersion(archive);
         }
     }
 
-    private static Archive getLatestVersion(ArchiveRepository archiveRepository, Archive archive) {
+    private Archive getLatestVersion(Archive archive) {
         if (CollectionUtils.isEmpty(archive.getNextVersions())) {
             return archive;
         }
-        return ArchiveRepository.getLatestVersion(archiveRepository, archive.getNextVersions().get(0));
+        return getLatestVersion(archive.getNextVersions().get(0));
     }
 }

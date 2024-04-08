@@ -222,7 +222,7 @@ public class SearchController {
         if (StringUtils.isNotBlank(id)) {
             Detail detail = elasticsearchService.getDetailsForPid(id);
             if (detail == null) {
-                Archive archive = ArchiveRepository.getLatestVersion(archiveRepository, id);
+                Archive archive = archiveRepository.getLatestVersion(id);
                 // Archive archive = null;
                 if (archive != null && archive.getPid() != null) {
                     detail = elasticsearchService.getDetailsForPid(archive.getPid());
