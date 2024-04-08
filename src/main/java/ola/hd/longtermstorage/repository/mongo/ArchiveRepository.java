@@ -10,6 +10,7 @@ public interface ArchiveRepository extends MongoRepository<Archive, String> {
 
     Archive findByPid(String pid);
     Archive findByOnlineIdOrOfflineId(String onlineId, String offlineId);
+    Archive findTopByOcrdIdentifierOrderByCreatedAtDesc(String ocrdIdentifier);
 
     /**
      * Tries to find one of the latest versions of an archive.

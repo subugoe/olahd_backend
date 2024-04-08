@@ -140,6 +140,24 @@ public class ImportUtils {
     }
 
     /**
+     * Read ocrd-identifier from bag-infos
+     *
+     * @param bagInfos
+     * @return
+     */
+    static String readOcrdIdentifier(List<SimpleImmutableEntry<String, String>> bagInfos) {
+        for (SimpleImmutableEntry<String, String> x : bagInfos) {
+            if (StringUtils.isBlank(x.getValue())) {
+                continue;
+            }
+            if (Constants.BAGINFO_KEY_OCRD_IDENTIFIER.equals(x.getKey())) {
+                return x.getValue();
+            }
+        }
+        return "";
+    }
+
+    /**
      * Extract bagit, read metadata and verify that the ZIP-file is a valid bagit.
      *
      * Additionally validate that bag is valid according to ocrd-zip: https://ocr-d.de/en/spec/ocrd_zip.

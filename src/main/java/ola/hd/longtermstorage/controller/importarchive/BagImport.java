@@ -26,6 +26,7 @@ import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import ola.hd.longtermstorage.service.PidService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,14 +85,24 @@ public class BagImport implements Runnable {
     public void run() {
         ImportResult importResult = null;
         String prevPid = params.formParams.getPrev();
+        if (prevPid == null) {
+            String oi = ImportUtils.readOcrdIdentifier(params.bagInfos);
+            if (StringUtils.isNotBlank(oi)) {
+                Archive archive = archiveRepository.findTopByOcrdIdentifierOrderByCreatedAtDesc(oi);
+                if (archive != null) {
+                    prevPid = archive.getPid();
+                }
+            }
+        }
         try {
             if (prevPid != null) {
+                final String finalPrevPid = prevPid;
                 importResult = Failsafe.with(ImportUtils.RETRY_POLICY).get(
                     () -> archiveManagerService.importZipFile(
                         Paths.get(params.destination),
                         params.pid,
                         params.bagInfos,
-                        prevPid
+                        finalPrevPid
                     )
                 );
             } else {
