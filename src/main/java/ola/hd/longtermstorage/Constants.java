@@ -24,6 +24,8 @@ public class Constants {
     public static final String BAGINFO_KEY_OCRD_IDENTIFIER = "Ocrd-Identifier";
     public static final String BAGINFO_KEY_PAYLOAD_OXUM = "Payload-Oxum";
 
+    public static final String OCRDZIP_PAYLOAD_MANIFEST_NAME = "manifest-sha512.txt";
+
     private Constants() {
         //pass
     };

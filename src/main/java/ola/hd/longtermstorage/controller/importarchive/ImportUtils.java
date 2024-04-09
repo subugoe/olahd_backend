@@ -1,5 +1,6 @@
 package ola.hd.longtermstorage.controller.importarchive;
 
+import com.google.common.hash.Hashing;
 import gov.loc.repository.bagit.domain.Bag;
 import gov.loc.repository.bagit.exceptions.CorruptChecksumException;
 import gov.loc.repository.bagit.reader.BagReader;
@@ -10,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
@@ -145,7 +145,7 @@ public class ImportUtils {
      * @param bagInfos
      * @return
      */
-    static String readOcrdIdentifier(List<SimpleImmutableEntry<String, String>> bagInfos) {
+    public static String readOcrdIdentifier(List<SimpleImmutableEntry<String, String>> bagInfos) {
         for (SimpleImmutableEntry<String, String> x : bagInfos) {
             if (StringUtils.isBlank(x.getValue())) {
                 continue;
@@ -158,15 +158,31 @@ public class ImportUtils {
     }
 
     /**
+     * Create sha512-checksum for file "manifest-sha512.txt"
+     *
+     * @param bagDir Path to unpacked ocrdzip
+     * @return
+     */
+    public static String generatePayloadmanifestChecksum(Path bagDir) {
+        try {
+            return com.google.common.io.Files
+                .asByteSource(bagDir.resolve(Constants.OCRDZIP_PAYLOAD_MANIFEST_NAME).toFile()).hash(Hashing.sha512())
+                .toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Error generating sha512 checksum of payload manifest", e);
+        }
+    }
+
+    /**
      * Extract bagit, read metadata and verify that the ZIP-file is a valid bagit.
      *
      * Additionally validate that bag is valid according to ocrd-zip: https://ocr-d.de/en/spec/ocrd_zip.
      *
-     * @param targetFile location of the ZIP-File
-     * @param destination where to extract the file
+     * @param targetFile Location of the ZIP-File
+     * @param destination Where to extract the file
      * @param tempDir Temporary directory to store the ZIP-file in. Needed in case of Exception to
      *        clean up
-     * @param info needed to set error tracking info in case bag is not valid
+     * @param info Needed to set error tracking info in case bag is not valid
      * @return
      * @throws IOException
      */
@@ -191,6 +207,8 @@ public class ImportUtils {
                 MandatoryVerifier.checkBagitFileExists(bag.getRootDir(), bag.getVersion());
                 MandatoryVerifier.checkPayloadDirectoryExists(bag);
                 MandatoryVerifier.checkIfAtLeastOnePayloadManifestsExist(bag.getRootDir(), bag.getVersion());
+                // TODO: generate and verify payload-manifest: manifest-sha512.txt is mandatory for ocrdzip. The
+                //   sha512sum of this file is in tagmanifest-sha512.txt. Validate that this sum fits
             } else {
                 // Validating 2 bagits parallel with 40.000 files each takes more than 10 Minutes
                 verifier.isValid(bag, true);

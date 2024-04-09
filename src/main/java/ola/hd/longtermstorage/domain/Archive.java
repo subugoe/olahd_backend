@@ -31,7 +31,11 @@ public class Archive {
 
     private String ocrdIdentifier;
 
-    private String payloadOxum;
+    /**
+     * This is the sha512-checksum of manifest-sha512.txt. It is used to tell if two payloads of
+     * ocrdzips are equal
+     */
+    private String checksumPayloadmanifest;
 
     @CreatedDate
     private LocalDateTime createdAt;
@@ -41,12 +45,15 @@ public class Archive {
         // this one is protected since it shouldn't be used directly
     }
 
-    public Archive(String pid, String onlineId, String offlineId, String ocrdIdentifier, String payloadOxum) {
+    public Archive(
+        String pid, String onlineId, String offlineId, String ocrdIdentifier,
+        String checksumPayloadmanifest
+    ) {
         this.pid = pid;
         this.onlineId = onlineId;
         this.offlineId = offlineId;
         this.ocrdIdentifier = ocrdIdentifier;
-        this.payloadOxum = payloadOxum;
+        this.checksumPayloadmanifest = checksumPayloadmanifest;
     }
 
     public void addNextVersion(Archive nextVersion) {
@@ -112,12 +119,12 @@ public class Archive {
         this.ocrdIdentifier = ocrdIdentifier;
     }
 
-    public String getPayloadOxum() {
-        return payloadOxum;
+    public String getChecksumPayloadmanifest() {
+        return checksumPayloadmanifest;
     }
 
-    public void setPayloadOxum(String payloadOxum) {
-        this.payloadOxum = payloadOxum;
+    public void setChecksumPayloadmanifest(String checksumPayloadmanifest) {
+        this.checksumPayloadmanifest = checksumPayloadmanifest;
     }
 
     public LocalDateTime getCreatedAt() {

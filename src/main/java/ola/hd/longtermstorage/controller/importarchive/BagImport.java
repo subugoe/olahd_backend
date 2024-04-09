@@ -1,7 +1,5 @@
 package ola.hd.longtermstorage.controller.importarchive;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.AbstractMap;
@@ -26,7 +24,6 @@ import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import ola.hd.longtermstorage.service.PidService;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,11 +139,12 @@ public class BagImport implements Runnable {
             params.info.setMessage("Data has been successfully imported.");
             trackingRepository.save(params.info);
 
-            String[] ocrdOxum = ImportUtils.readOcrdIdentifierAndPayloadOxum(params.bagInfos);
-
+            String checksumPayloadmanifest = ImportUtils.generatePayloadmanifestChecksum(params.destination);
+            String ocrdIdentifier = ImportUtils.readOcrdIdentifier(params.bagInfos);
             // New archive in mongoDB for this import
             Archive archive = new Archive(
-                params.pid, importResult.getOnlineId(), importResult.getOfflineId(), ocrdOxum[0], ocrdOxum[1]
+                params.pid, importResult.getOnlineId(), importResult.getOfflineId(), ocrdIdentifier,
+                checksumPayloadmanifest
             );
             if (prevPid != null) {
                 /*
