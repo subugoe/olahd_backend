@@ -23,9 +23,11 @@ import ola.hd.longtermstorage.controller.importarchive.BagImport;
 import ola.hd.longtermstorage.controller.importarchive.BagImportParams;
 import ola.hd.longtermstorage.controller.importarchive.FormParams;
 import ola.hd.longtermstorage.controller.importarchive.ImportUtils;
+import ola.hd.longtermstorage.domain.Archive;
 import ola.hd.longtermstorage.domain.ResponseMessage;
 import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
+import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.service.PidService;
 import org.apache.commons.fileupload.FileUploadException;
@@ -34,7 +36,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.http.HttpStatus;
@@ -55,6 +56,8 @@ public class ImportController {
 
     private final TrackingRepository trackingRepository;
 
+    private final ArchiveRepository archiveRepository;
+
     private final PidService pidService;
 
     private final ExecutorWrapper executor;
@@ -67,11 +70,13 @@ public class ImportController {
     @Value("${webnotifier.url}")
     private String webnotifierUrl;
 
-    @Autowired
-    public ImportController( TrackingRepository trackingRepository, PidService pidService, ExecutorWrapper executor,
+    public ImportController(
+        TrackingRepository trackingRepository, ArchiveRepository archiveRepository,
+        PidService pidService, ExecutorWrapper executor,
         AutowireCapableBeanFactory beanFactory
     ) {
         this.trackingRepository = trackingRepository;
+        this.archiveRepository = archiveRepository;
         this.pidService = pidService;
         this.executor = executor;
         this.beanFactory = beanFactory;
@@ -120,6 +125,26 @@ public class ImportController {
         List<AbstractMap.SimpleImmutableEntry<String, String>> bagInfos = ImportUtils.extractAndVerifyOcrdzip(
                 targetFile.toPath(), destination, tempDir, info, formParams, trackingRepository
         );
+
+        // Set previous version if the latest Ocrdzip (with same OcrdIdentifier) has different payload
+        if (StringUtils.isBlank(formParams.getPrev())) {
+            String checksumPayloadmanifest = ImportUtils.generatePayloadmanifestChecksum(destination);
+            String ocrdIdentifier = ImportUtils.readOcrdIdentifier(bagInfos);
+            Archive prevArchive = archiveRepository.findTopByOcrdIdentifierOrderByCreatedAtDesc(ocrdIdentifier);
+            if (prevArchive != null) {
+                if (prevArchive.getChecksumPayloadmanifest().equals(checksumPayloadmanifest)) {
+                    ImportUtils.throwClientException(
+                        String.format(
+                            "Newest archive of OcrdIdentifier '%s' has the same payload(-checksum).",
+                            ocrdIdentifier
+                        ), info,
+                        HttpStatus.CONFLICT, trackingRepository
+                    );
+                } else {
+                    formParams.setPrev(prevArchive.getPid());
+                }
+            }
+        }
 
         // Create a PID with meta-data from bag-info.txt
         String pid = Failsafe.with(ImportUtils.RETRY_POLICY).get(() -> pidService.createPid(bagInfos));

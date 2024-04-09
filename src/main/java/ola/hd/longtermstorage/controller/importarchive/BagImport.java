@@ -82,24 +82,14 @@ public class BagImport implements Runnable {
     public void run() {
         ImportResult importResult = null;
         String prevPid = params.formParams.getPrev();
-        if (prevPid == null) {
-            String oi = ImportUtils.readOcrdIdentifier(params.bagInfos);
-            if (StringUtils.isNotBlank(oi)) {
-                Archive archive = archiveRepository.findTopByOcrdIdentifierOrderByCreatedAtDesc(oi);
-                if (archive != null) {
-                    prevPid = archive.getPid();
-                }
-            }
-        }
         try {
             if (prevPid != null) {
-                final String finalPrevPid = prevPid;
                 importResult = Failsafe.with(ImportUtils.RETRY_POLICY).get(
                     () -> archiveManagerService.importZipFile(
                         params.destination,
                         params.pid,
                         params.bagInfos,
-                        finalPrevPid
+                        prevPid
                     )
                 );
             } else {
