@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,12 +37,12 @@ class Validation {
      * Many, even from ocr-d provided testdata, does not fully follow the specification. So some
      * checks are disabled for now.
      *
-     * @param bag -
-     * @param bagdir - path to bags root
-     * @param params
+     * @param bag The Bag-object of this ocrdzip
+     * @param bagdir Path to (unpacked) bags root
+     * @param params Form parameters of the import-request
      * @throws OcrdzipInvalidException - if bag is invalid
      */
-    public static void validateOcrdzip(Bag bag, String bagdir, FormParams params) throws OcrdzipInvalidException {
+    public static void validateOcrdzip(Bag bag, Path bagdir, FormParams params) throws OcrdzipInvalidException {
         List<String> res = new ArrayList<>();
         Metadata metadata = bag.getMetadata();
 //        if (!metadata.contains("BagIt-Profile-Identifier")) {
@@ -58,6 +57,7 @@ class Validation {
 //            // this is unfinished here:
 //            String value = metadata.get("Ocrd-Base-Version-Checksum").get(0);
 //        }
+
         if (!metadata.contains("Ocrd-Identifier")) {
             res.add("bag-info.txt must contain key: 'Ocrd-Identifier'");
             // spec says "A globally unique identifier" but I have no idea how to verify that so
@@ -85,7 +85,7 @@ class Validation {
         if (imageFgrpPresent || fullFgrpPresent || imageFgrpParam || fullFgrpParam) {
             List<String> fileGrps = new ArrayList<>(0);
             try {
-                fileGrps = Files.list(Paths.get(bagdir).resolve("data"))
+                fileGrps = Files.list(bagdir.resolve("data"))
                         .filter(Files::isDirectory)
                         .map(p -> p.getFileName().toString())
                         .collect(Collectors.toList());

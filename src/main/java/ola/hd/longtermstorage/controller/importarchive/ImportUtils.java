@@ -187,20 +187,19 @@ public class ImportUtils {
      * @throws IOException
      */
     public static List<AbstractMap.SimpleImmutableEntry<String, String>> extractAndVerifyOcrdzip(
-        File targetFile, String destination, String tempDir, TrackingInfo info, FormParams params,
+        Path targetFile, Path destination, Path tempDir, TrackingInfo info, FormParams params,
         TrackingRepository trackingRepository
     ) throws IOException {
         Bag bag;
         // Default executor service used crashes with about more than 20.00 files.
         ExecutorService exeService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        try (BagVerifier verifier = new BagVerifier(exeService); ZipFile zipFile = new ZipFile(targetFile)) {
+        try (BagVerifier verifier = new BagVerifier(exeService); ZipFile zipFile = new ZipFile(targetFile.toFile())) {
             // Extract the zip file
-            zipFile.extractAll(destination);
-            Path rootDir = Paths.get(destination);
+            zipFile.extractAll(destination.toString());
             BagReader reader = new BagReader();
 
             // Create a bag from an existing directory
-            bag = reader.read(rootDir);
+            bag = reader.read(destination);
 
             if (BagVerifier.canQuickVerify(bag)) {
                 BagVerifier.quicklyVerify(bag);
@@ -218,7 +217,7 @@ public class ImportUtils {
             Validation.validateMetsfileSchema(bag);
         } catch (Exception ex) {
             // Clean up the temp
-            FileSystemUtils.deleteRecursively(new File(tempDir));
+            FileSystemUtils.deleteRecursively(tempDir.toFile());
 
             String message;
             if (ex instanceof OcrdzipInvalidException) {
@@ -262,7 +261,7 @@ public class ImportUtils {
      *                                  occurred while writing to temporary-directory
      */
     public static FormParams readFormParams(
-        HttpServletRequest request, TrackingInfo info, String tempDir, TrackingRepository trackingRepository
+        HttpServletRequest request, TrackingInfo info, Path tempDir, TrackingRepository trackingRepository
     ) throws FileUploadException, IOException {
         Utils.logDebug("Trying to read form params. Request: " + Utils.read_request_infos(request));
         FormParams res = new FormParams();
@@ -277,7 +276,7 @@ public class ImportUtils {
             // Is it a file?
             if (!item.isFormField()) {
                 if (fileCount > 1) {
-                    FileSystemUtils.deleteRecursively(new File(tempDir));
+                    FileSystemUtils.deleteRecursively(tempDir.toFile());
                     throwClientException("Only 1 zip file is allowed.", info,
                         HttpStatus.BAD_REQUEST, trackingRepository
                     );
@@ -285,7 +284,7 @@ public class ImportUtils {
                     fileCount += 1;
                 }
 
-                targetFile = new File(tempDir + File.separator + item.getName());
+                targetFile = tempDir.resolve(item.getName()).toFile();
                 res.setFile(targetFile);
                 try (InputStream uploadedStream = item.openStream();
                     OutputStream out = FileUtils.openOutputStream(targetFile)
@@ -333,7 +332,7 @@ public class ImportUtils {
         String mimeType = tika.detect(targetFile);
         if (!mimeType.equals("application/zip")) {
             // Clean up the temporary directory
-            FileSystemUtils.deleteRecursively(new File(tempDir));
+            FileSystemUtils.deleteRecursively(tempDir.toFile());
             throwClientException("The file must be in the ZIP format", info,
                 HttpStatus.BAD_REQUEST, trackingRepository
             );

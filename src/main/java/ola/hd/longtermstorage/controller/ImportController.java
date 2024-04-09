@@ -10,6 +10,8 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.AbstractMap;
 import java.util.List;
@@ -110,13 +112,13 @@ public class ImportController {
                 HttpStatus.UNSUPPORTED_MEDIA_TYPE, trackingRepository
             );
         }
-        String tempDir = uploadDir + File.separator + UUID.randomUUID();
+        Path tempDir = Paths.get(uploadDir, UUID.randomUUID().toString());
         FormParams formParams = ImportUtils.readFormParams(request, info, tempDir, trackingRepository);
         File targetFile = formParams.getFile();  // The uploaded file (ZIP)
-        String destination = tempDir + File.separator + FilenameUtils.getBaseName(targetFile.getName()) + "_extracted";
+        Path destination = tempDir.resolve(FilenameUtils.getBaseName(targetFile.getName()) + "_extracted");
 
         List<AbstractMap.SimpleImmutableEntry<String, String>> bagInfos = ImportUtils.extractAndVerifyOcrdzip(
-                targetFile, destination, tempDir, info, formParams, trackingRepository
+                targetFile.toPath(), destination, tempDir, info, formParams, trackingRepository
         );
 
         // Create a PID with meta-data from bag-info.txt

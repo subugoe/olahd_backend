@@ -1,5 +1,6 @@
 package ola.hd.longtermstorage.controller.importarchive;
 
+import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
@@ -11,7 +12,7 @@ import ola.hd.longtermstorage.domain.TrackingInfo;
 public class BagImportParams {
 
     /** Path to extracted OCRD-ZIP */
-    String destination;
+    Path destination;
 
     /** PID of OCRD-ZIP */
     String pid;
@@ -26,13 +27,13 @@ public class BagImportParams {
     TrackingInfo info;
 
     /** Parent of destination. For cleanup after successful import*/
-    String tempDir;
+    Path tempDir;
 
     /** URL to webnotifier for sending requests*/
     String webnotifierUrl;
 
-    public BagImportParams(String destination, String pid, FormParams formParams,
-        List<SimpleImmutableEntry<String, String>> bagInfos, TrackingInfo info, String tempDir, String webnotifierUrl
+    public BagImportParams(Path destination, String pid, FormParams formParams,
+        List<SimpleImmutableEntry<String, String>> bagInfos, TrackingInfo info, Path tempDir, String webnotifierUrl
     ) {
         super();
         this.destination = destination;

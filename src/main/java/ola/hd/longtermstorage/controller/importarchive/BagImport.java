@@ -96,7 +96,7 @@ public class BagImport implements Runnable {
                 final String finalPrevPid = prevPid;
                 importResult = Failsafe.with(ImportUtils.RETRY_POLICY).get(
                     () -> archiveManagerService.importZipFile(
-                        Paths.get(params.destination),
+                        params.destination,
                         params.pid,
                         params.bagInfos,
                         finalPrevPid
@@ -105,7 +105,7 @@ public class BagImport implements Runnable {
             } else {
                 importResult = Failsafe.with(ImportUtils.RETRY_POLICY).get(
                     () -> archiveManagerService.importZipFile(
-                        Paths.get(params.destination),
+                        params.destination,
                         params.pid,
                         params.bagInfos
                     )
@@ -170,7 +170,7 @@ public class BagImport implements Runnable {
             handleFailedImport(ex, params.pid, importResult, params.info);
         } finally {
             // Clean up the temp: Files are saved in CDStar and not needed any more
-            FileSystemUtils.deleteRecursively(new File(params.tempDir));
+            FileSystemUtils.deleteRecursively(params.tempDir.toFile());
         }
     }
 
