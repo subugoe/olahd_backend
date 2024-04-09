@@ -77,6 +77,15 @@ class Validation {
             }
         }
 
+        if (Files.notExists(bagdir.resolve(Constants.OCRDZIP_PAYLOAD_MANIFEST_NAME))) {
+            res.add(
+                String.format(
+                    "Ocrd-Zip must contain payloadmanifest '%s'",
+                    Constants.OCRDZIP_PAYLOAD_MANIFEST_NAME
+                )
+            );
+        }
+
         // validate provided filegrps are actually existing in ocrdzip
         boolean imageFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_IMAGE_FILEGRP);
         boolean fullFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_FULLTEXT_FILEGRP);
