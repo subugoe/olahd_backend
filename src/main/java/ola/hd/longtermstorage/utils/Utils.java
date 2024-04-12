@@ -164,4 +164,21 @@ public class Utils {
         return res.toString();
     }
 
+    /**
+     * Values like null and none are considered not existing.
+     *
+     * @param value
+     * @return
+     */
+    public static boolean isNullValue(String value) {
+        if (StringUtils.isAllBlank(value)) {
+            return true;
+        } else if (value.trim().equalsIgnoreCase("none")) {
+            return true;
+        } else if (value.trim().equalsIgnoreCase("null")) {
+            return true;
+        }
+        return false;
+    }
+
 }
