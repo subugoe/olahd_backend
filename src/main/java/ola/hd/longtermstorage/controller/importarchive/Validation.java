@@ -18,6 +18,7 @@ import javax.xml.validation.Validator;
 import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.exceptions.MetsInvalidException;
 import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
+import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.xml.sax.SAXException;
 
@@ -141,8 +142,11 @@ class Validation {
         }
 
         if (metadata.contains(Constants.BAGINFO_KEY_IS_GT)) {
-            res.add(String.format("'%s' is provided, but specified value may only be 'true' or"
-                    + " 'false'", Constants.BAGINFO_KEY_IS_GT));
+            String isGt = metadata.get(Constants.BAGINFO_KEY_IS_GT).get(0);
+            if (Utils.stringToBool(isGt) == null) {
+                res.add(String.format("'%s' is provided, but specified value may only be 'true' or"
+                        + " 'false'", Constants.BAGINFO_KEY_IS_GT));
+            }
         }
 
         // This has to be the last command in this method

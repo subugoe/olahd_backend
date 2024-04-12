@@ -84,7 +84,7 @@ public class ImportUtils {
             } else if (Constants.BAGINFO_KEY_FULLTEXT_FILEGRP.equals(x.getKey())) {
                 fulltextFilegrp = x.getValue();
             } else if (Constants.BAGINFO_KEY_IS_GT.equals(x.getKey())) {
-                gt = Boolean.valueOf(x.getValue());
+                gt = Utils.stringToBool(x.getValue());
             } else if (Constants.BAGINFO_KEY_FTYPE.equals(x.getKey())) {
                 ftype = x.getValue();
             }
