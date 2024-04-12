@@ -16,14 +16,15 @@ import okhttp3.Response;
 import ola.hd.longtermstorage.component.MutexFactory;
 import ola.hd.longtermstorage.controller.ExportController;
 import ola.hd.longtermstorage.domain.Archive;
+import ola.hd.longtermstorage.domain.BaginfoConfig;
 import ola.hd.longtermstorage.domain.ImportResult;
-import ola.hd.longtermstorage.domain.IndexingConfig;
 import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import ola.hd.longtermstorage.service.PidService;
+import ola.hd.longtermstorage.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +82,9 @@ public class BagImport implements Runnable {
     @Override
     public void run() {
         ImportResult importResult = null;
-        String prevPid = params.formParams.getPrev();
+        BaginfoConfig conf = BaginfoConfig.create(params.bagInfos).considerFormParams(params.formParams);
+        String prevPid = conf.getPrevPid();
+
         try {
             if (prevPid != null) {
                 importResult = Failsafe.with(ImportUtils.RETRY_POLICY).get(
@@ -154,7 +157,7 @@ public class BagImport implements Runnable {
             } else {
                 archiveRepository.save(archive);
             }
-            sendToElastic();
+            sendToElastic(conf);
         } catch (Exception ex) {
             logger.error("Archive Import failed", ex);
             handleFailedImport(ex, params.pid, importResult, params.info);
@@ -167,11 +170,13 @@ public class BagImport implements Runnable {
     /**
      * Inform web-notifier about the new ocrd-zip so that it can put it into the search-index.
      *
-     * @param pid - PID(PPA) of ocrd-zip
+     * @param conf Config read from bag-info.txt and possibly updated with form parameters. Must not be null
      */
-    private void sendToElastic() {
-        IndexingConfig conf = ImportUtils
-            .readSearchindexFilegrps(params.bagInfos, params.formParams);
+    private void sendToElastic(BaginfoConfig conf) {
+        if (conf == null) {
+            // This is supposed to never happen
+            throw new RuntimeException("conf (BaginfoConfig) must not be null");
+        }
         String pid = this.params.pid;
 
         try {
@@ -186,21 +191,34 @@ public class BagImport implements Runnable {
             gtConf = ", \"isGt\": " + conf.getGt();
         }
 
-        String prev = "";
-        if (this.params.formParams.getPrev() != null) {
-            prev = this.params.formParams.getPrev();
+        String workIdentifierConf = "";
+        if (conf.getWorkIdentifier() != null) {
+            workIdentifierConf = ", \"workIdentifier\": \"" + conf.getWorkIdentifier() + "\"";
+        }
+
+        String importerConf = "";
+        if (conf.getImporter() != null) {
+            importerConf = ", \"importer\": \"" + conf.getImporter() + "\"";
+        }
+
+        String ocrdIdentifierConf = "";
+        if (conf.getOcrdIdentifier() != null) {
+            ocrdIdentifierConf = ", \"ocrdIdentifier\": \"" + conf.getOcrdIdentifier() + "\"";
         }
 
         try {
             final String json = String.format(
                 "{"
                     + "\"document\":\"%s\", \"context\":\"ocrd\", \"product\":\"olahds\","
-                    + "\"imageFileGrp\":\"%s\", \"fulltextFileGrp\":\"%s\", \"ftype\":\"%s\"%s, "
+                    + "\"imageFileGrp\":\"%s\", \"fulltextFileGrp\":\"%s\", \"ftype\":\"%s\"%s%s%s%s, "
                     + "\"prev\":\"%s\""
                     + "}",
                 pid, conf.getImageFileGrp(), conf.getFulltextFileGrp(),
-                conf.getFulltextFtype(), gtConf, prev
+                conf.getFulltextFtype(), gtConf, workIdentifierConf, importerConf, ocrdIdentifierConf,
+                conf.getPrevPid() != null ? conf.getPrevPid() : ""
             );
+
+            Utils.logDebug("Sending json to mets-Importer: '" + json + "'");
 
             RequestBody body = RequestBody.create(
                 okhttp3.MediaType.parse(

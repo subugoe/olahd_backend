@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import net.jodah.failsafe.RetryPolicy;
 import net.lingala.zip4j.ZipFile;
 import ola.hd.longtermstorage.Constants;
-import ola.hd.longtermstorage.domain.IndexingConfig;
 import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
 import ola.hd.longtermstorage.exceptions.MetsInvalidException;
@@ -52,66 +51,6 @@ public class ImportUtils {
     private ImportUtils() {};
 
     private static final Logger logger = LoggerFactory.getLogger(ImportUtils.class);
-
-    /**
-     * Read indexing configuration from bag-info.txt.
-     *
-     * In bag-info.txt configuration for the indexing can be provided
-     * @param formParams
-     *
-     * @param archive
-     * @param bagdir: bag location on disk
-     * @param bagInfos:
-     */
-    static IndexingConfig readSearchindexFilegrps(
-        List<SimpleImmutableEntry<String, String>> bagInfos,
-        FormParams formParams
-    ) {
-        IndexingConfig res = new IndexingConfig();
-
-        String imageFilegrp = null;
-        String fulltextFilegrp = null;
-        Boolean gt = null;
-        String ftype = null;
-
-        //read data from bag-info.txt-keys
-        for (SimpleImmutableEntry<String, String> x : bagInfos) {
-            if (StringUtils.isBlank(x.getValue())) {
-                continue;
-            }
-            if (Constants.BAGINFO_KEY_IMAGE_FILEGRP.equals(x.getKey())) {
-                imageFilegrp = x.getValue();
-            } else if (Constants.BAGINFO_KEY_FULLTEXT_FILEGRP.equals(x.getKey())) {
-                fulltextFilegrp = x.getValue();
-            } else if (Constants.BAGINFO_KEY_IS_GT.equals(x.getKey())) {
-                gt = Boolean.valueOf(x.getValue());
-            } else if (Constants.BAGINFO_KEY_FTYPE.equals(x.getKey())) {
-                ftype = x.getValue();
-            }
-        }
-        if (imageFilegrp != null) {
-            res.setImageFileGrp(imageFilegrp);
-        } else {
-            res.setImageFileGrp(Constants.DEFAULT_IMAGE_FILEGRP);
-        }
-        if (fulltextFilegrp != null) {
-            res.setFulltextFileGrp(fulltextFilegrp);
-        } else {
-            res.setFulltextFileGrp(Constants.DEFAULT_FULLTEXT_FILEGRP);
-        }
-        if (ftype != null) {
-            res.setFulltextFtype(ftype);
-        } else {
-            res.setFulltextFtype(Constants.DEFAULT_FULLTEXT_FTYPE);
-        }
-
-        if (formParams.getIsGt() != null) {
-            res.setGt(formParams.getIsGt());
-        } else if (gt != null) {
-            res.setGt(gt);
-        }
-        return res;
-    }
 
     /**
      * Read ocrd-identifier and payload oxum from bag-infos
