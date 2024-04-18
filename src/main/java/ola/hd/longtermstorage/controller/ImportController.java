@@ -132,7 +132,7 @@ public class ImportController {
             String ocrdIdentifier = ImportUtils.readOcrdIdentifier(bagInfos);
             Archive prevArchive = archiveRepository.findTopByOcrdIdentifierOrderByCreatedAtDesc(ocrdIdentifier);
             if (prevArchive != null) {
-                if (prevArchive.getChecksumPayloadmanifest().equals(checksumPayloadmanifest)) {
+                if (checksumPayloadmanifest.equals(prevArchive.getChecksumPayloadmanifest())) {
                     ImportUtils.throwClientException(
                         String.format(
                             "Newest archive of OcrdIdentifier '%s' has the same payload(-checksum).",
