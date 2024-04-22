@@ -29,7 +29,7 @@ public class Constants {
     public static final String BAGINFO_KEY_IMPORTER = "Olahd-Importer";
     public static final String BAGINFO_KEY_IS_GT = "Olahd-GT";
 
-    public static final String OCRDZIP_PAYLOAD_MANIFEST_NAME = "manifest-sha512.txt";
+    public static final String PAYLOAD_MANIFEST_NAME = "manifest-sha512.txt";
 
     private Constants() {
         //pass

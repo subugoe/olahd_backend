@@ -17,6 +17,7 @@ import javax.xml.validation.Validator;
 import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.exceptions.MetsInvalidException;
 import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
+import ola.hd.longtermstorage.exceptions.PayloadSumException;
 import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.xml.sax.SAXException;
@@ -78,11 +79,11 @@ class Validation {
             }
         }
 
-        if (Files.notExists(bagdir.resolve(Constants.OCRDZIP_PAYLOAD_MANIFEST_NAME))) {
+        if (Files.notExists(bagdir.resolve(Constants.PAYLOAD_MANIFEST_NAME))) {
             res.add(
                 String.format(
                     "Ocrd-Zip must contain payloadmanifest '%s'",
-                    Constants.OCRDZIP_PAYLOAD_MANIFEST_NAME
+                    Constants.PAYLOAD_MANIFEST_NAME
                 )
             );
         }
@@ -200,4 +201,39 @@ class Validation {
         }
         return Validation.METS_VALIDATION_SCHEMA;
     }
+
+    /**
+     * Validate Ocrdzip Payload-Checksums with `sha512sum` system-command.
+     *
+     * This verification is very fast compared to the used java library, which takes several minutes for validating
+     * more than 10_000 files. Using sha512sum together with the payload-manifest-file just takes a few seconds.
+     * This function assumes `/usr/bin/sha512sum` is available which should be true for virtually every docker container
+     * and linux operating system
+     *
+     * @param destination - Path to unpacked root of bagit
+     */
+    public static void validatePayloadChecksums(Path destination) {
+        Path payloadManifest = destination.resolve(Constants.PAYLOAD_MANIFEST_NAME);
+        if (!Files.exists(payloadManifest)) {
+            throw new PayloadSumException("Payload-Manifest not found");
+        }
+
+        String[] cmd = new String[] { "/usr/bin/sha512sum", "--status", "-c", payloadManifest.toString() };
+        Process proc;
+        int exitCode = -1;
+        try {
+            proc = Runtime.getRuntime().exec(cmd, null, destination.toFile());
+            exitCode = proc.waitFor();
+        } catch (Exception e) {
+            throw new PayloadSumException("Executing external command for payload checksum verification failed", e);
+        }
+        if (exitCode == 1) {
+            throw new PayloadSumException(
+                String.format("Checksums in %s do not match", Constants.PAYLOAD_MANIFEST_NAME)
+            );
+        } else if (exitCode != 0) {
+            throw new PayloadSumException("Payload-Manifest-Validation failed");
+        }
+    }
+
 }

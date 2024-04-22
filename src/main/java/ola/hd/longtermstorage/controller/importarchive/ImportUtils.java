@@ -25,6 +25,7 @@ import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
 import ola.hd.longtermstorage.exceptions.MetsInvalidException;
 import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
+import ola.hd.longtermstorage.exceptions.PayloadSumException;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.fileupload.FileItemIterator;
@@ -105,7 +106,7 @@ public class ImportUtils {
     public static String generatePayloadmanifestChecksum(Path bagDir) {
         try {
             return com.google.common.io.Files
-                .asByteSource(bagDir.resolve(Constants.OCRDZIP_PAYLOAD_MANIFEST_NAME).toFile()).hash(Hashing.sha512())
+                .asByteSource(bagDir.resolve(Constants.PAYLOAD_MANIFEST_NAME).toFile()).hash(Hashing.sha512())
                 .toString();
         } catch (IOException e) {
             throw new RuntimeException("Error generating sha512 checksum of payload manifest", e);
@@ -147,10 +148,13 @@ public class ImportUtils {
                 MandatoryVerifier.checkIfAtLeastOnePayloadManifestsExist(bag.getRootDir(), bag.getVersion());
                 // TODO: generate and verify payload-manifest: manifest-sha512.txt is mandatory for ocrdzip. The
                 //   sha512sum of this file is in tagmanifest-sha512.txt. Validate that this sum fits
-            } else {
-                // Validating 2 bagits parallel with 40.000 files each takes more than 10 Minutes
-                verifier.isValid(bag, true);
             }
+            // This is the old way of validating the bagit
+            //verifier.isValid(bag, true);
+
+            // Validate with external command sha512sum
+            Validation.validatePayloadChecksums(destination);
+
             // Check for the validity and completeness of a bag
             Validation.validateOcrdzip(bag, destination, params);
             Validation.validateMetsfileSchema(bag);
@@ -161,6 +165,8 @@ public class ImportUtils {
             String message;
             if (ex instanceof OcrdzipInvalidException) {
                 message = "Not a valid Ocrd-Zip: " + StringUtils.join(((OcrdzipInvalidException)ex).getErrors(), ", ");
+            } else if (ex instanceof PayloadSumException) {
+                message = ex.getMessage();
             } else if (ex instanceof MetsInvalidException) {
                 message = "Invalid METS: " + ((MetsInvalidException)ex).getMetsErrorMessage();
             } else if (ex instanceof CorruptChecksumException && ex.getMessage() != null) {
