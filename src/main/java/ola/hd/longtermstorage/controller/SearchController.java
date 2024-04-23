@@ -18,9 +18,6 @@ import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringArrayPropertyEditor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,9 +37,6 @@ public class SearchController {
     private final ArchiveRepository archiveRepository;
     private final ElasticsearchService elasticsearchService;
 
-    private static final Logger logger = LoggerFactory.getLogger(SearchController.class);
-
-    @Autowired
     public SearchController(
         ArchiveManagerService archiveManagerService, ArchiveRepository archiveRepository,
         ElasticsearchService elasticsearchService
@@ -250,5 +244,22 @@ public class SearchController {
             return ResponseEntity.ok(resultSet);
         }
     }
-
+    @ApiOperation(value = "Returns the latest PID for an Ocrd-Identifier")
+    @ApiResponses({ @ApiResponse(code = 200, message = "PID for Ocrd-Identifier found", response = String.class),
+        @ApiResponse(code = 404, message = "Ocrd-Identifier not found", response = String.class)
+    })
+    @GetMapping(value = "/search-ocrdid", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> searchNewestOcrdIdentifier(
+        @RequestParam @ApiParam(value = "Ocrd-Identifier", required = true)
+        String id
+    ) throws IOException {
+        Archive archive = archiveRepository.findTopByOcrdIdentifierOrderByCreatedAtDesc(id);
+        if (archive != null && archive.getPid() != null) {
+            return ResponseEntity.ok(archive.getPid());
+        } else {
+            throw new HttpClientErrorException(
+                HttpStatus.NOT_FOUND, ErrMsg.OCRD_IDENTIFIER_NOT_FOUND
+            );
+        }
+    }
 }
