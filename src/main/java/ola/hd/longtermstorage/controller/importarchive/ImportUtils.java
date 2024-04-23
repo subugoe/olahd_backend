@@ -146,14 +146,13 @@ public class ImportUtils {
                 MandatoryVerifier.checkBagitFileExists(bag.getRootDir(), bag.getVersion());
                 MandatoryVerifier.checkPayloadDirectoryExists(bag);
                 MandatoryVerifier.checkIfAtLeastOnePayloadManifestsExist(bag.getRootDir(), bag.getVersion());
-                // TODO: generate and verify payload-manifest: manifest-sha512.txt is mandatory for ocrdzip. The
-                //   sha512sum of this file is in tagmanifest-sha512.txt. Validate that this sum fits
             }
             // This is the old way of validating the bagit
             //verifier.isValid(bag, true);
 
             // Validate with external command sha512sum
             Validation.validatePayloadChecksums(destination);
+            Validation.validateTagmanifestChecksums(destination);
 
             // Check for the validity and completeness of a bag
             Validation.validateOcrdzip(bag, destination, params);

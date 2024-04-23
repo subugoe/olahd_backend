@@ -236,4 +236,33 @@ class Validation {
         }
     }
 
+    /**
+     * Validate tagmanifest-sha512.txt if it exists
+     *
+     * @param destination - Path to unpacked root of bagit
+     */
+    public static void validateTagmanifestChecksums(Path destination) {
+        Path tagmanifest = destination.resolve(Constants.TAG_MANIFEST_NAME);
+        if (!Files.exists(tagmanifest)) {
+            return;
+        }
+
+        String[] cmd = new String[] { "/usr/bin/sha512sum", "--status", "-c", tagmanifest.toString() };
+        Process proc;
+        int exitCode = -1;
+        try {
+            proc = Runtime.getRuntime().exec(cmd, null, destination.toFile());
+            exitCode = proc.waitFor();
+        } catch (Exception e) {
+            throw new PayloadSumException("Executing external command for tagmanifest verification failed", e);
+        }
+        if (exitCode == 1) {
+            throw new PayloadSumException(
+                String.format("Checksums in %s do not match", Constants.TAG_MANIFEST_NAME)
+            );
+        } else if (exitCode != 0) {
+            throw new PayloadSumException("Tag-Manifest-Validation failed");
+        }
+    }
+
 }
