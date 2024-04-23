@@ -218,7 +218,7 @@ class Validation {
             throw new PayloadSumException("Payload-Manifest not found");
         }
 
-        String[] cmd = new String[] { "/usr/bin/sha512sum", "--status", "-c", payloadManifest.toString() };
+        String[] cmd = new String[] { "/usr/bin/sha512sum", "-s", "-c", payloadManifest.toString() };
         Process proc;
         int exitCode = -1;
         try {
