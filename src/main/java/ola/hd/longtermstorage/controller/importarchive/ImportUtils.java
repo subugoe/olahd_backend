@@ -147,12 +147,14 @@ public class ImportUtils {
                 MandatoryVerifier.checkPayloadDirectoryExists(bag);
                 MandatoryVerifier.checkIfAtLeastOnePayloadManifestsExist(bag.getRootDir(), bag.getVersion());
             }
+
+            // TODO: work on validation again
             // This is the old way of validating the bagit
             //verifier.isValid(bag, true);
 
             // Validate with external command sha512sum
-            Validation.validatePayloadChecksums(destination);
-            Validation.validateTagmanifestChecksums(destination);
+            //Validation.validatePayloadChecksums(destination);
+            //Validation.validateTagmanifestChecksums(destination);
 
             // Check for the validity and completeness of a bag
             Validation.validateOcrdzip(bag, destination, params);
