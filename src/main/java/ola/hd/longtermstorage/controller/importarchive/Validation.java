@@ -247,7 +247,7 @@ class Validation {
             return;
         }
 
-        String[] cmd = new String[] { "/usr/bin/sha512sum", "--status", "-c", tagmanifest.toString() };
+        String[] cmd = new String[] { "/usr/bin/sha512sum", "-s", "-c", tagmanifest.toString() };
         Process proc;
         int exitCode = -1;
         try {
