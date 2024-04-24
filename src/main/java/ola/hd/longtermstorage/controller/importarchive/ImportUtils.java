@@ -23,10 +23,11 @@ import net.lingala.zip4j.ZipFile;
 import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
+import ola.hd.longtermstorage.exceptions.BagitChecksumException;
 import ola.hd.longtermstorage.exceptions.MetsInvalidException;
 import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
-import ola.hd.longtermstorage.exceptions.PayloadSumException;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
+import ola.hd.longtermstorage.utils.BagitManifestValidation;
 import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
@@ -148,15 +149,9 @@ public class ImportUtils {
                 MandatoryVerifier.checkIfAtLeastOnePayloadManifestsExist(bag.getRootDir(), bag.getVersion());
             }
 
-            // TODO: work on validation again
-            // This is the old way of validating the bagit
-            //verifier.isValid(bag, true);
+            // Validate payload and tag manifest
+            new BagitManifestValidation(destination).validate(true);
 
-            // Validate with external command sha512sum
-            //Validation.validatePayloadChecksums(destination);
-            //Validation.validateTagmanifestChecksums(destination);
-
-            // Check for the validity and completeness of a bag
             Validation.validateOcrdzip(bag, destination, params);
             Validation.validateMetsfileSchema(bag);
         } catch (Exception ex) {
@@ -164,10 +159,10 @@ public class ImportUtils {
             FileSystemUtils.deleteRecursively(tempDir.toFile());
 
             String message;
-            if (ex instanceof OcrdzipInvalidException) {
+            if (ex instanceof BagitChecksumException) {
+                message = "Not a valid Bagit: " + StringUtils.join(((BagitChecksumException)ex).getErrors(), ", ");
+            } else if (ex instanceof OcrdzipInvalidException) {
                 message = "Not a valid Ocrd-Zip: " + StringUtils.join(((OcrdzipInvalidException)ex).getErrors(), ", ");
-            } else if (ex instanceof PayloadSumException) {
-                message = ex.getMessage();
             } else if (ex instanceof MetsInvalidException) {
                 message = "Invalid METS: " + ((MetsInvalidException)ex).getMetsErrorMessage();
             } else if (ex instanceof CorruptChecksumException && ex.getMessage() != null) {
@@ -202,7 +197,7 @@ public class ImportUtils {
      * @param uploadDir   Temporary directory to store the ZIP-file in
      * @return
      * @throws IOException              forwarded from apache-commons
-     * @throws FileUploadException      forwarded from apachecommons
+     * @throws FileUploadException      forwarded from apache-commons
      * @throws HttpClientErrorException if not exactly one ZIP-file is provided, or when io-error
      *                                  occurred while writing to temporary-directory
      */
