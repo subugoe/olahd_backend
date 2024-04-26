@@ -109,6 +109,10 @@ public class Utils {
         LOG.debug(msg);
     }
 
+    public static void logError(String msg, Throwable t) {
+        LOG.error(msg, t);
+    }
+
     /**
      * Purpose of this function is logging only
      *

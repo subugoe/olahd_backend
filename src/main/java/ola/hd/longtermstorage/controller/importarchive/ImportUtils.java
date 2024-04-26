@@ -25,6 +25,7 @@ import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
 import ola.hd.longtermstorage.exceptions.BagitChecksumException;
 import ola.hd.longtermstorage.exceptions.MetsInvalidException;
+import ola.hd.longtermstorage.exceptions.MetsSchemaException;
 import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.utils.BagitManifestValidation;
@@ -169,8 +170,12 @@ public class ImportUtils {
                 // Try to give more detailed error description
                 message = "Invalid file input. The uploaded file must be a ZIP file with BagIt structure.";
                 message += " Details: " + ex.getMessage() + " There may be further bagit-validation-errors";
+            } else if (ex instanceof MetsSchemaException) {
+                throw new HttpServerErrorException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Cannot validate METS because schema cannot currently be created"
+                );
             } else {
-                message = "Invalid file input. The uploaded file must be a ZIP file with BagIt structure.";
+                message = "Unexpected error validating Ocrdzip";
             }
             // Save to the tracking database
             info.setStatus(TrackingStatus.FAILED);

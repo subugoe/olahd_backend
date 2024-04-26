@@ -16,6 +16,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.exceptions.MetsInvalidException;
+import ola.hd.longtermstorage.exceptions.MetsSchemaException;
 import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
 import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
@@ -195,7 +196,10 @@ class Validation {
             try {
                 Validation.METS_VALIDATION_SCHEMA = factory.newSchema(new StreamSource(is));
             } catch (Exception e) {
-                throw new RuntimeException("Error creating XML validation schema", e);
+                // This error happened to me once when loc.gov was under maintenance. Seems when generating the scheme a
+                // request to loc.gov is made, which might fail. Seems nothing then waiting can be done about it
+                Utils.logError("Error creating XML validation schema", e);
+                throw new MetsSchemaException("Error creating XML validation schema", e);
             }
         }
         return Validation.METS_VALIDATION_SCHEMA;
