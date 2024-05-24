@@ -29,8 +29,8 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
 /**
- * Class to create the facet-search-query. Groups together steps to create the Elasticsearch Query
- * to do the facet search
+ * Class to create the facet-search-query. Groups together steps to create the Elasticsearch Query to do the facet
+ * search
  */
 public class ElasticQueryHelper {
 
@@ -47,9 +47,8 @@ public class ElasticQueryHelper {
     /**
      * Mapping from filter-name to corresponding column
      *
-     * Filters are named "Creators", "Titles" or "Publishers" etc. This function returns the
-     * corresponding column from the Elasticsearch-entry. For example for Filter Creator, the column
-     * to filter must be creator_infos.name.keyword
+     * Filters are named "Creators", "Titles" or "Publishers" etc. This function returns the corresponding column from
+     * the Elasticsearch-entry. For example for Filter Creator, the column to filter must be creator_infos.name.keyword
      */
     public static final Map<String, String> FILTER_MAP = Map.of(
         "Creators", "creator_infos.name.keyword",
@@ -89,10 +88,9 @@ public class ElasticQueryHelper {
     /**
      * Create the "searchSource". This is the search-Document elasticsearch executes
      *
-     * The search consists of four parts: - the part of the query responsible for matching the
-     * documents (query.bool.must) - the part of the query for filtering the results
-     * (query.bool.filter) - the aggregation used to group the search hits
-     * (aggregations.group-by-pid) - the aggregations for collecting the facets
+     * The search consists of four parts: - the part of the query responsible for matching the documents
+     * (query.bool.must) - the part of the query for filtering the results (query.bool.filter) - the aggregation used to
+     * group the search hits (aggregations.group-by-pid) - the aggregations for collecting the facets
      * (aggregations.Titles, aggregations.Creators ...)
      *
      * @return
@@ -106,7 +104,7 @@ public class ElasticQueryHelper {
         BoolQueryBuilder query = this.createQuery();
         // part 2: filters
         // TODO: according to API do not use filters if 'extended' is specified. could be added here
-        this.addFilters(query);
+        this.addFacetFilters(query);
         // part 3: aggregations for the search hits
         List<AggregationBuilder> aggsMerge = this.createMergeAggregation();
         // part 4: aggregations for collecting the facets
@@ -124,8 +122,12 @@ public class ElasticQueryHelper {
         return res;
     }
 
-    private void addFilters(BoolQueryBuilder query) {
-        // Filters:
+    /**
+     * Add filters corresponding to the facets selected by the user
+     *
+     * @param query
+     */
+    private void addFacetFilters(BoolQueryBuilder query) {
         if (field != null && field.length > 0) {
             Map<String, List<String>> filters = new HashMap<>();
             for (int i = 0; i < field.length; i++) {
@@ -158,13 +160,13 @@ public class ElasticQueryHelper {
             if (metadatasearch && fulltextsearch) {
                 BoolQueryBuilder boolMust = QueryBuilders.boolQuery();
                 BoolQueryBuilder boolShould = QueryBuilders.boolQuery();
-                boolShould.should(QueryBuilders.matchQuery("metadata", searchterm));
-                boolShould.should(QueryBuilders.matchQuery("fulltext", searchterm));
+                boolShould.should(addMatchOrQstr("metadata", searchterm));
+                boolShould.should(addMatchOrQstr("fulltext", searchterm));
                 res = res.must(boolMust.must(boolShould));
             } else if (fulltextsearch) {
-                res = res.must(QueryBuilders.matchQuery("fulltext", searchterm));
+                res = res.must(addMatchOrQstr("fulltext", searchterm));
             } else {
-                res = res.must(QueryBuilders.matchQuery("metadata", searchterm));
+                res = res.must(addMatchOrQstr("metadata", searchterm));
             }
             if (Boolean.TRUE.equals(this.isGt)) {
                 res = res.must(QueryBuilders.matchQuery("IsGt", true));
@@ -173,15 +175,15 @@ public class ElasticQueryHelper {
         if (searchterms.hasFilter()) {
             if (StringUtils.isNotBlank(searchterms.getAuthor())) {
                 res = res.filter(
-                    QueryBuilders.matchQuery("creator_infos.name", searchterms.getAuthor())
+                    addMatchOrQstr("creator_infos.name", searchterms.getAuthor())
                 );
             }
             if (StringUtils.isNotBlank(searchterms.getTitle())) {
-                res = res.filter(QueryBuilders.matchQuery("title.title", searchterms.getTitle()));
+                res = res.filter(addMatchOrQstr("title.title", searchterms.getTitle()));
             }
             if (StringUtils.isNotBlank(searchterms.getPlace())) {
                 res = res.filter(
-                    QueryBuilders.matchQuery("publish_infos.place_publish", searchterms.getPlace())
+                    addMatchOrQstr("publish_infos.place_publish", searchterms.getPlace())
                 );
             }
             if (StringUtils.isNotBlank(searchterms.getYear())) {
@@ -196,7 +198,36 @@ public class ElasticQueryHelper {
         return res;
     }
 
+    /**
+     * Add a match- or a query-string-query
+     *
+     * This method checks weather the searchterm contains one or more asterisks and then either creates a match query or
+     * a query_string_query.
+     *
+     * Previously we only had a match query which hits on complete word matches. Later we wanted to add a wildcard
+     * search. This creates one of it. I wanted to keep the match query for when the asterisk is not used, because
+     * I think it is faster.
+     *
+     * @param string
+     * @param searchterm
+     * @return
+     */
+    private QueryBuilder addMatchOrQstr(String fieldname, String searchterm) {
+        if (searchterm.indexOf('*') > -1) {
+            return QueryBuilders.queryStringQuery(searchterm).field(fieldname);
+        } else {
+            return QueryBuilders.matchQuery(fieldname, searchterm);
+        }
+    }
+
     private QueryBuilder createYearQuery(String numberStr) {
+        if (numberStr.indexOf('*') > -1) {
+            // asterisk and range cannot work together
+            if (numberStr.indexOf('>') > -1 || numberStr.indexOf('<') > -1) {
+                return null;
+            }
+            return QueryBuilders.queryStringQuery(numberStr).field("publish_infos.year_publish_string");
+        }
         EsNumberQuery x = EsNumberQuery.fromQueryString(numberStr);
         if (x == null) {
             return null;
