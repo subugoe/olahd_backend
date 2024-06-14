@@ -344,6 +344,9 @@ public class ExportController {
             throw e;
         }
 
+        // TODO: Consider https. Traefik does the https stuff, so the tomcat does not know it.
+        // Make it configurable: prod and stage by default https, develop http. But offer application.properties var
+        // to change it
         String host = Utils.readHost(request);
 
         InputStream metsInStream = res.body().byteStream();

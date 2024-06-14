@@ -3,9 +3,7 @@ package ola.hd.longtermstorage.utils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
-import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -39,6 +37,8 @@ public class MetsWebConverter {
     }
 
     /**
+     * Change file refs of file in mets from FILE to URL to make the files web-accessible
+     *
      *
      * @param pid - PID belonging to the Ocrd-zip of the Metsfile
      * @param ins - InputStream containing the original Metsfile
@@ -56,17 +56,20 @@ public class MetsWebConverter {
         Namespace nsXlink = Namespace.getNamespace("http://www.w3.org/1999/xlink");
         List<Element> listFileSec = rootNode.getChildren("fileSec", nsMets);
         List<Element> listFileGrp = listFileSec.get(0).getChildren("fileGrp", nsMets);
-        List<Element> listFlocat = new ArrayList<>();
         for (Element e : listFileGrp) {
             for (Element e2 : e.getChildren("file", nsMets)) {
-                listFlocat.add(e2.getChildren("FLocat", nsMets).get(0));
-            }
-        }
-        for (Element e : listFlocat) {
-            Attribute attribute = e.getAttribute("href", nsXlink);
-            String linkPrev = attribute.getValue();
-            if (!linkPrev.startsWith("http") && !linkPrev.startsWith("/")) {
-                e.setAttribute("href", String.format(PREFIX, host, pid, linkPrev), nsXlink);
+                for (Element e3 : e2.getChildren("FLocat", nsMets)) {
+                    String otherLt = e3.getAttributeValue("OTHERLOCTYPE");
+                    if (otherLt != null && otherLt.equals("FILE")) {
+                        String link = e3.getAttributeValue("href", nsXlink);
+                        if (!link.startsWith("http") && !link.startsWith("/")) {
+                            e3.setAttribute("href", String.format(PREFIX, host, pid, link), nsXlink);
+                            e3.setAttribute("LOCTYPE", "URL");
+                            e3.removeAttribute("OTHERLOCTYPE");
+                        }
+
+                    }
+                }
             }
         }
         XMLOutputter xmlOutput = new XMLOutputter();
