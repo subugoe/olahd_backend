@@ -1,5 +1,6 @@
 package ola.hd.longtermstorage.utils;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
@@ -19,8 +21,14 @@ import org.springframework.core.io.Resource;
 
 public class TestMetsWebConverter {
 
+    public static void main(String[] args) throws Exception {
+        new TestMetsWebConverter().convertMetsLinks();
+
+    }
+
+
     @Test
-    public void convertMets() throws Exception {
+    public void convertMetsLinks() throws Exception {
         // Arrange
         String host = "http://dummy-host";
         ByteArrayOutputStream metsWeb = new ByteArrayOutputStream();
@@ -34,17 +42,36 @@ public class TestMetsWebConverter {
         List<FlocatInMets> x = getMetsFilegrps(metsWebString);
         for (FlocatInMets flocat : x) {
             assertNotEquals(flocat.otherloctype, "FILE", String.format("'FILE' still present: %s", flocat));
-            if (flocat.grp != "DEFAULT") {
-                assertTrue(flocat.link.startsWith("http"), String.format("Worng link: %s", flocat.link));
+            if (flocat.grp.equals("DEFAULT")) {
+                assertTrue(flocat.link.startsWith("http"), String.format("Wrong link: %s", flocat.link));
             } else {
                 assertTrue(flocat.link.startsWith(host), String.format("Wrong link: %s", flocat.link));
             }
         }
     }
 
+    @Test
+    public void convertMetsGroup() throws Exception {
+        // Arrange
+        String host = "http://dummy-host";
+        ByteArrayOutputStream metsWeb = new ByteArrayOutputStream();
+        InputStream metsInput = getTestMetsfile2();
+
+        // Act
+        MetsWebConverter.convertMets("dummy-pid", host, metsInput, metsWeb);
+
+        // Assert
+        String metsWebString = new String(metsWeb.toByteArray(), "utf-8");
+        System.out.println(metsWebString);
+        List<FlocatInMets> x = getMetsFilegrps(metsWebString);
+
+        List<FlocatInMets> defGroup = x.stream().filter(f -> f.grp.equals("DEFAULT")).collect(Collectors.toList());
+        assertFalse(defGroup.isEmpty(), "filegrp DEFAULT should be present");
+    }
+
 
     /**
-     * Read the test metsfile from resource folder to an InputStream
+     * Read the test METS-file from resource folder to an InputStream
      *
      * @return
      * @throws IOException
@@ -52,6 +79,20 @@ public class TestMetsWebConverter {
     private static InputStream getTestMetsfile() throws IOException {
         DefaultResourceLoader resourceLoader = new DefaultResourceLoader();
         Resource resource = resourceLoader.getResource("test-mets.xml");
+        return resource.getInputStream();
+    }
+
+    /**
+     * Read the second test METS-file from resource folder to an InputStream
+     *
+     * This Mets file does not contain the DEFAULT filegrp. It contains filegrp OCR-D-IMG
+     *
+     * @return
+     * @throws IOException
+     */
+    private static InputStream getTestMetsfile2() throws IOException {
+        DefaultResourceLoader resourceLoader = new DefaultResourceLoader();
+        Resource resource = resourceLoader.getResource("test-mets2.xml");
         return resource.getInputStream();
     }
 

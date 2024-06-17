@@ -3,6 +3,7 @@ package ola.hd.longtermstorage.utils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -56,7 +57,11 @@ public class MetsWebConverter {
         Namespace nsXlink = Namespace.getNamespace("http://www.w3.org/1999/xlink");
         List<Element> listFileSec = rootNode.getChildren("fileSec", nsMets);
         List<Element> listFileGrp = listFileSec.get(0).getChildren("fileGrp", nsMets);
+        List<String> fileGrps = new ArrayList<>(listFileGrp.size());
+
+        // Replace FILE-links with URL-links
         for (Element e : listFileGrp) {
+            fileGrps.add(e.getAttributeValue("USE"));
             for (Element e2 : e.getChildren("file", nsMets)) {
                 for (Element e3 : e2.getChildren("FLocat", nsMets)) {
                     String otherLt = e3.getAttributeValue("OTHERLOCTYPE");
@@ -67,11 +72,22 @@ public class MetsWebConverter {
                             e3.setAttribute("LOCTYPE", "URL");
                             e3.removeAttribute("OTHERLOCTYPE");
                         }
-
                     }
                 }
             }
         }
+
+        // Change group-name of image group to DEFAULT so that DFG-Viewer can display the images
+        if (!fileGrps.contains("DEFAULT")) {
+            if (fileGrps.contains("OCR-D-IMG")) {
+                for (Element e : listFileGrp) {
+                    if (e.getAttributeValue("USE").equals("OCR-D-IMG")) {
+                        e.setAttribute("USE", "DEFAULT");
+                    }
+                }
+            }
+        }
+
         XMLOutputter xmlOutput = new XMLOutputter();
         Format format = Format.getPrettyFormat();
         format.setIndent("   ");

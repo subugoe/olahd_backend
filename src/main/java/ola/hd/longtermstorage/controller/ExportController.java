@@ -24,7 +24,6 @@ import ola.hd.longtermstorage.repository.mongo.ExportRequestRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
 import ola.hd.longtermstorage.utils.MetsWebConverter;
 import ola.hd.longtermstorage.utils.Utils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -49,7 +48,6 @@ public class ExportController {
 
     private final ExportRequestRepository exportRequestRepository;
 
-    @Autowired
     public ExportController(
         ArchiveManagerService archiveManagerService,
         ExportRequestRepository exportRequestRepository
@@ -343,7 +341,6 @@ public class ExportController {
             }
             throw e;
         }
-
 
         StreamingResponseBody stream = outputStream -> {
             try {

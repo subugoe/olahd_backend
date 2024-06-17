@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:DC="http://purl.org/dc/elements/1.1/"
+   xmlns:mods="http://www.loc.gov/mods/v3"
+   xmlns:mets="http://www.loc.gov/METS/"
+   xmlns:DV="http://dfg-viewer.de/"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl"
+   xsi:schemaLocation="http://www.loc.gov/mods/v3 https://www.loc.gov/standards/mods/mods-3-7.xsd http://www.loc.gov/mets/ http://www.loc.gov/standards/mets/version111/mets.xsd">
+   <mets:metsHdr CREATEDATE="2019-02-13T17:14:57.984+01:00">
+      <mets:agent OTHERTYPE="SOFTWARE" ROLE="CREATOR" TYPE="OTHER">
+         <mets:name>DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical
+          Character Recognition (OCR-D)</mets:name>
+         <mets:note>OCR-D</mets:note>
+      </mets:agent>
+   </mets:metsHdr>
+   <mets:dmdSec ID="dmdSec_0001">
+      <mets:mdWrap MDTYPE="MODS">
+         <mets:xmlData>
+            <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+               <mods:identifier type="oclc">1043031933</mods:identifier>
+               <mods:location>
+                  <mods:physicalLocation>Oak Street Library</mods:physicalLocation>
+                  <mods:shelfLocator> 396 B38F1879</mods:shelfLocator>
+                  <mods:url/>
+               </mods:location>
+               <mods:originInfo>
+                  <mods:place>
+                     <mods:placeTerm type="text">Zürich-Hottingen</mods:placeTerm>
+                  </mods:place>
+                  <mods:dateIssued encoding="w3cdtf" keyDate="yes">1879</mods:dateIssued>
+                  <mods:publisher>Verlag der Volksbuchhandlung</mods:publisher>
+               </mods:originInfo>
+               <mods:originInfo>
+                  <mods:dateCaptured encoding="w3cdtf">2023-03-14T11:07:45Z</mods:dateCaptured>
+                  <mods:edition>[Electronic ed.]</mods:edition>
+               </mods:originInfo>
+               <mods:classification authority="DTA">Gebrauchsliteratur</mods:classification>
+               <mods:classification authority="DTA">Gesellschaft</mods:classification>
+               <mods:identifier type="urn">urn:oclc:record:1043031933</mods:identifier>
+               <mods:titleInfo>
+                  <mods:title>Die Frau und der Sozialismus</mods:title>
+               </mods:titleInfo>
+               <mods:language>
+                  <mods:languageTerm authority="iso639-2b" type="code">deu</mods:languageTerm>
+               </mods:language>
+               <mods:name type="personal">
+                  <mods:role>
+                     <mods:roleTerm authority="marcrelator" type="code">aut</mods:roleTerm>
+                  </mods:role>
+                  <mods:namePart type="family">Bebel</mods:namePart>
+                  <mods:namePart type="given">August </mods:namePart>
+                  <mods:displayForm>August Bebel</mods:displayForm>
+               </mods:name>
+               <mods:physicalDescription>
+                  <mods:extent>180 S.</mods:extent>
+               </mods:physicalDescription>
+               <mods:accessCondition type="use and reproduction"
+                                     xlink:href="https://creativecommons.org/publicdomain/mark/1.0/">Public Domain Mark 1.0</mods:accessCondition>
+               <mods:typeOfResource>text</mods:typeOfResource>
+               <mods:accessCondition displayLabel="Access Status"
+                                     type="restriction on access"
+                                     xlink:href="http://purl.org/coar/access_right/c_abf2">open access</mods:accessCondition>
+            </mods:mods>
+         </mets:xmlData>
+      </mets:mdWrap>
+   </mets:dmdSec>
+   <mets:dmdSec ID="DMGT_0001">
+      <mets:mdWrap MDTYPE="OTHER" OTHERMDTYPE="GT">
+         <mets:xmlData>
+            <gt:gt xmlns:gt="http://www.ocr-d.de/GT/">
+               <gt:state prop="granularity/physical/document-related/region"/>
+            </gt:gt>
+         </mets:xmlData>
+      </mets:mdWrap>
+   </mets:dmdSec>
+   <mets:dmdSec ID="DMGT_0002">
+      <mets:mdWrap MDTYPE="OTHER" OTHERMDTYPE="GT">
+         <mets:xmlData>
+            <gt:gt xmlns:gt="http://www.ocr-d.de/GT/">
+               <gt:state prop="granularity/physical/document-related/region"/>
+               <gt:state prop="granularity/physical/document-related/text-line"/>
+            </gt:gt>
+         </mets:xmlData>
+      </mets:mdWrap>
+   </mets:dmdSec>
+   <mets:dmdSec ID="DMGT_0003">
+      <mets:mdWrap MDTYPE="OTHER" OTHERMDTYPE="GT">
+         <mets:xmlData>
+            <gt:gt xmlns:gt="http://www.ocr-d.de/GT/">
+               <gt:state prop="granularity/physical/document-related/region"/>
+               <gt:state prop="granularity/physical/document-related/text-line"/>
+            </gt:gt>
+         </mets:xmlData>
+      </mets:mdWrap>
+   </mets:dmdSec>
+   <mets:dmdSec ID="DMGT_0004">
+      <mets:mdWrap MDTYPE="OTHER" OTHERMDTYPE="GT">
+         <mets:xmlData>
+            <gt:gt xmlns:gt="http://www.ocr-d.de/GT/">
+               <gt:state prop="granularity/physical/document-related/region"/>
+               <gt:state prop="granularity/physical/document-related/text-line"/>
+            </gt:gt>
+         </mets:xmlData>
+      </mets:mdWrap>
+   </mets:dmdSec>
+   <mets:amdSec ID="amdSec_0001">
+      <mets:rightsMD ID="rights_0001">
+         <mets:mdWrap MDTYPE="OTHER" OTHERMDTYPE="DVRIGHTS" MIMETYPE="text/xml">
+            <mets:xmlData>
+               <DV:rights xmlns:DV="http://dfg-viewer.de/">
+                  <DV:owner>Koordinierte Förderinitiative zur Weiterentwicklung von Verfahren für die
+                Optical-Character-Recognition OCR-D</DV:owner>
+                  <DV:ownerLogo>https://ocr-d.de/goto/logo</DV:ownerLogo>
+                  <DV:ownerSiteURL>http://ocr-d.de/</DV:ownerSiteURL>
+                  <DV:ownerContact>mailto:ocrd@bbaw.de</DV:ownerContact>
+               </DV:rights>
+            </mets:xmlData>
+         </mets:mdWrap>
+      </mets:rightsMD>
+      <mets:digiprovMD ID="digiprovMD_0001">
+         <mets:mdWrap MIMETYPE="text/xml" MDTYPE="OTHER" OTHERMDTYPE="DVLINKS">
+            <mets:xmlData>
+               <DV:links xmlns:DV="http://dfg-viewer.de/">
+                  <DV:reference/>
+                  <DV:presentation/>
+               </DV:links>
+            </mets:xmlData>
+         </mets:mdWrap>
+      </mets:digiprovMD>
+   </mets:amdSec>
+   <mets:fileSec>
+      <mets:fileGrp USE="OCR-D-IMG">
+         <mets:file MIMETYPE="image/jpeg" ID="OCR-D-IMG_0001">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0146.jpg"/>
+         </mets:file>
+         <mets:file MIMETYPE="image/jpeg" ID="OCR-D-IMG_0002">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0168.jpg"/>
+         </mets:file>
+         <mets:file MIMETYPE="image/jpeg" ID="OCR-D-IMG_0003">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0176.jpg"/>
+         </mets:file>
+         <mets:file MIMETYPE="image/jpeg" ID="OCR-D-IMG_0004">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0186.jpg"/>
+         </mets:file>
+      </mets:fileGrp>
+      <mets:fileGrp USE="OCR-D-GT-SEG-PAGE">
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-PAGE_0001">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0146.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-PAGE_0002">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0168.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-PAGE_0003">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0176.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-PAGE_0004">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0186.xml"/>
+         </mets:file>
+      </mets:fileGrp>
+      <mets:fileGrp USE="OCR-D-GT-SEG-BLOCK">
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-BLOCK_0001">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0146.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-BLOCK_0002">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0168.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-BLOCK_0003">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0176.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-BLOCK_0004">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0186.xml"/>
+         </mets:file>
+      </mets:fileGrp>
+      <mets:fileGrp USE="OCR-D-GT-SEG-LINE">
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-LINE_0001">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0146.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-LINE_0002">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0168.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-LINE_0003">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0176.xml"/>
+         </mets:file>
+         <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="OCR-D-GT-SEG-LINE_0004">
+            <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="GT-PAGE/bebel_frau_1879_0186.xml"/>
+         </mets:file>
+      </mets:fileGrp>
+   </mets:fileSec>
+   <mets:structMap TYPE="LOGICAL">
+      <mets:div TYPE="Monograph"
+                DMDID="dmdSec_0001"
+                ADMID="amdSec_0001"
+                ID="loc_0001">
+         <mets:div ID="loc_d1e9" TYPE="Chapter" LABEL=""/>
+      </mets:div>
+   </mets:structMap>
+   <mets:structMap TYPE="PHYSICAL">
+      <mets:div TYPE="physSequence" ID="physroot">
+         <mets:div ID="phys_0001" TYPE="page" DMDID="DMGT_0001" ORDER="1">
+            <mets:fptr FILEID="OCR-D-IMG_0001"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-PAGE_0001"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-BLOCK_0001"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-LINE_0001"/>
+         </mets:div>
+         <mets:div ID="phys_0002" TYPE="page" DMDID="DMGT_0002" ORDER="2">
+            <mets:fptr FILEID="OCR-D-IMG_0002"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-PAGE_0002"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-BLOCK_0002"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-LINE_0002"/>
+         </mets:div>
+         <mets:div ID="phys_0003" TYPE="page" DMDID="DMGT_0003" ORDER="3">
+            <mets:fptr FILEID="OCR-D-IMG_0003"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-PAGE_0003"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-BLOCK_0003"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-LINE_0003"/>
+         </mets:div>
+         <mets:div ID="phys_0004" TYPE="page" DMDID="DMGT_0004" ORDER="4">
+            <mets:fptr FILEID="OCR-D-IMG_0004"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-PAGE_0004"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-BLOCK_0004"/>
+            <mets:fptr FILEID="OCR-D-GT-SEG-LINE_0004"/>
+         </mets:div>
+      </mets:div>
+   </mets:structMap>
+   <mets:structLink>
+      <mets:smLink xlink:from="loc_d1e9" xlink:to="phys_0001"/>
+      <mets:smLink xlink:from="loc_d1e9" xlink:to="phys_0002"/>
+      <mets:smLink xlink:from="loc_d1e9" xlink:to="phys_0003"/>
+      <mets:smLink xlink:from="loc_d1e9" xlink:to="phys_0004"/>
+   </mets:structLink>
+</mets:mets>
