@@ -62,7 +62,6 @@ public class TestMetsWebConverter {
 
         // Assert
         String metsWebString = new String(metsWeb.toByteArray(), "utf-8");
-        System.out.println(metsWebString);
         List<FlocatInMets> x = getMetsFilegrps(metsWebString);
 
         List<FlocatInMets> defGroup = x.stream().filter(f -> f.grp.equals("DEFAULT")).collect(Collectors.toList());
