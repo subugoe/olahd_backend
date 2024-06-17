@@ -287,7 +287,7 @@ public class ExportController {
     }
 
     /**
-     * Export METS-file via PID and rewrite the Files (FLocat) so that alle files are accessible
+     * Export METS-file via PID and rewrite the Files (FLocat) so that all files are accessible
      * through the web
      *
      * The links of the FLocat-Elements are converted to URLS where the corresponding files are
@@ -344,15 +344,11 @@ public class ExportController {
             throw e;
         }
 
-        // TODO: Consider https. Traefik does the https stuff, so the tomcat does not know it.
-        // Make it configurable: prod and stage by default https, develop http. But offer application.properties var
-        // to change it
-        String host = Utils.readHost(request);
-
-        InputStream metsInStream = res.body().byteStream();
 
         StreamingResponseBody stream = outputStream -> {
             try {
+                InputStream metsInStream = res.body().byteStream();
+                String host = Utils.readHost(request);
                 MetsWebConverter.convertMets(id, host, metsInStream, outputStream);
             } catch (Exception e) {
                 throw new HttpClientErrorException(
@@ -361,7 +357,7 @@ public class ExportController {
             }
         };
 
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/zip"))
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/xml"))
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=mets.xml").body(stream);
     }
