@@ -119,7 +119,7 @@ public class Utils {
      * @param request
      * @return
      */
-    public static String read_request_infos(HttpServletRequest request) {
+    public static String readRequestInfos(HttpServletRequest request) {
         if (request == null) {
             return "null";
         }
