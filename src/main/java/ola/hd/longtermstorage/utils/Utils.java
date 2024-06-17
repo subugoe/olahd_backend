@@ -80,17 +80,23 @@ public class Utils {
     }
 
     /**
-     * Reads host and protocol from request and returns it.
+     * Reads host and "scheme" from request and returns it.
      *
      * @param request
-     * @return Examples: <code>http://localhost:8080</code>, <code>http://ola-hd.ocr-d.de</code>
+     * @return Examples: <code>http://localhost:8080</code>, <code>https://ola-hd.ocr-d.de</code>
      */
     public static String readHost(HttpServletRequest request) {
         if (request == null) {
             return "";
         }
         int port = request.getServerPort();
-        String res = String.format("%s://%s", request.getScheme(), request.getServerName());
+        String scheme = request.getScheme();
+
+        if ("https".equals(request.getHeader("x-forwarded-proto"))) {
+            scheme = "https";
+        }
+
+        String res = String.format("%s://%s", scheme, request.getServerName());
         if (port != 80 && port != 443) {
             res += ":" + String.valueOf(port);
         }
