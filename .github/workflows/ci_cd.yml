@@ -17,7 +17,6 @@ env:
 
 jobs:
   test:
-    if: ${{ false }}  # disable for now
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -26,17 +25,12 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
-    - name: start test-mongodb
-      run: docker run -v mongodb:/data-test/db -p 27018:27017 --name mongodb-test -e MONGO_INITDB_ROOT_USERNAME=test -e MONGO_INITDB_ROOT_PASSWORD=testtest -d mongo:4.0.10
-    - name: start test-es
-      # test-es currently just neededs to be available without doing anything
-      run: docker run --name es-test -p 9200:9200 -d docker.elastic.co/elasticsearch/elasticsearch:6.8.23
-    - name: run tests
+    - name: run JUnit tests
       run: mvn test
 
   # builds docker image to test if dockerfiles are working
   build:
-    #needs: test
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -48,7 +42,6 @@ jobs:
     environment:
       name: Develop
     if: github.event.ref == 'refs/heads/develop'
-    #needs: [test, build]
     needs: [build, build-and-push-dev-image]
     runs-on: ubuntu-latest
     steps:
@@ -70,7 +63,6 @@ jobs:
     environment:
       name: Staging
     if: github.event.ref == 'refs/heads/main'
-    #needs: [test, build]
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -93,7 +85,6 @@ jobs:
       name: Production
     #if: startsWith(github.event.ref, 'refs/tags/v')
     if: startsWith(github.ref, 'refs/tags/')
-    #needs: [test, build]
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -187,7 +178,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          
+
   build-and-push-main-image-production:
     name: Push main images to registry (production)
     environment:
@@ -225,5 +216,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          
+
 
