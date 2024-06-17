@@ -357,9 +357,7 @@ public class ExportController {
             }
         };
 
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/xml"))
-            .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=mets.xml").body(stream);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/xml")).body(stream);
     }
 
     /**
