@@ -348,6 +348,7 @@ public class ExportController {
                 String host = Utils.readHost(request);
                 MetsWebConverter.convertMets(id, host, metsInStream, outputStream);
             } catch (Exception e) {
+                Utils.logError(ErrMsg.METS_CONVERT_ERROR, e);
                 throw new HttpClientErrorException(
                     HttpStatus.INTERNAL_SERVER_ERROR, ErrMsg.METS_CONVERT_ERROR
                 );
