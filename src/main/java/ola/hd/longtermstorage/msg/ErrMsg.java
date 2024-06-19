@@ -23,5 +23,8 @@ public class ErrMsg {
     public static final String FIELD_NOT_EQUALS_VALUE = "'field' and 'value' must be given the same number of times";
     public static final String UNKNOWN_FILTER = "'field' contains unknown filter. Valid are: " + String.join(", ", ElasticQueryHelper.FILTER_MAP.keySet());
     public static final String OCRD_IDENTIFIER_NOT_FOUND = "Ocrd-Identifier not found";
+    public static final String PATH_NOT_A_TIF = "Parameter path must reference a tif image";
+    public static final String TIFF_CONVERT_ERROR = "Error converting tiff to jpeg";
+
 
 }

@@ -1,10 +1,14 @@
 package ola.hd.longtermstorage.utils;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.imageio.ImageIO;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -32,7 +36,12 @@ import org.jdom2.output.XMLOutputter;
 public class MetsWebConverter {
 
     /** Path to where the files are available */
-    private static String PREFIX = "%s/api/export/file?id=%s&path=%s";
+    // TODO: make both of this dynamic: determine export/file with WebMvcLinkBuilder
+    private static final String PREFIX_IMAGE_EXPORT = "%s/api/export/file?id=%s&path=%s";
+    private static final String PREFIX_TIFF_TO_JPEG = "%s/api/export/tiff-as-jpeg?id=%s&path=%s";
+
+    private static final Namespace NS_METS = Namespace.getNamespace("http://www.loc.gov/METS/");
+    private static final Namespace NS_XLINK = Namespace.getNamespace("http://www.w3.org/1999/xlink");
 
     private MetsWebConverter() {
     }
@@ -54,32 +63,66 @@ public class MetsWebConverter {
         Element rootNode = doc.getRootElement();
 
         Namespace nsMets = Namespace.getNamespace("http://www.loc.gov/METS/");
-        Namespace nsXlink = Namespace.getNamespace("http://www.w3.org/1999/xlink");
         List<Element> listFileSec = rootNode.getChildren("fileSec", nsMets);
         List<Element> listFileGrp = listFileSec.get(0).getChildren("fileGrp", nsMets);
-        List<String> fileGrps = new ArrayList<>(listFileGrp.size());
 
-        // Replace FILE-links with URL-links
+        replaceFileWithUrl(listFileGrp, host, pid);
+        addDefaultGroup(listFileGrp);
+        changeTiffLinks(listFileGrp, host, pid);
+
+        XMLOutputter xmlOutput = new XMLOutputter();
+        Format format = Format.getPrettyFormat();
+        format.setIndent("   ");
+        xmlOutput.setFormat(format);
+        xmlOutput.output(doc, outs);
+    }
+
+    /**
+     * Change all links in DEFAULT file-group to use tiff-jpeg convert endpoint
+     *
+     * @param listFileGrp
+     */
+    private static void changeTiffLinks(List<Element> listFileGrp, String host, String pid) {
         for (Element e : listFileGrp) {
-            fileGrps.add(e.getAttributeValue("USE"));
-            for (Element e2 : e.getChildren("file", nsMets)) {
-                for (Element e3 : e2.getChildren("FLocat", nsMets)) {
-                    String otherLt = e3.getAttributeValue("OTHERLOCTYPE");
-                    if (otherLt != null && otherLt.equals("FILE")) {
-                        String link = e3.getAttributeValue("href", nsXlink);
-                        if (!link.startsWith("http") && !link.startsWith("/")) {
-                            e3.setAttribute("href", String.format(PREFIX, host, pid, link), nsXlink);
-                            e3.setAttribute("LOCTYPE", "URL");
-                            e3.removeAttribute("OTHERLOCTYPE");
+            if ("DEFAULT".equals(e.getAttributeValue("USE"))) {
+                for (Element e2 : e.getChildren("file", NS_METS)) {
+                    for (Element e3 : e2.getChildren("FLocat", NS_METS)) {
+                        String lt = e3.getAttributeValue("LOCTYPE");
+                        if ("URL".equals(lt)) {
+                            String link = e3.getAttributeValue("href", NS_XLINK);
+                            // TODO: reuse this pattern
+                            Pattern pattern = Pattern.compile("[\\?&]path=([^&#]*)");
+                            Matcher matcher = pattern.matcher(link);
+                            if (matcher.find()){
+                                String path = matcher.group(1);
+                                if (path.endsWith(".tif") || path.endsWith(".tiff")) {
+                                    e3.setAttribute(
+                                        "href", String.format(PREFIX_TIFF_TO_JPEG, host, pid, path),NS_XLINK
+                                    );
+                                }
+                            }
                         }
                     }
                 }
+                // only default file-grp should be adapted
+                break;
             }
         }
 
-        // Change group-name of image group to DEFAULT so that DFG-Viewer can display the images
-        if (!fileGrps.contains("DEFAULT")) {
-            if (fileGrps.contains("OCR-D-IMG")) {
+    }
+
+    /**
+     * If DEFAULT file-group is missing rename the image file-group to default
+     *
+     * Change group-name of image group to DEFAULT so that DFG-Viewer can display the images
+     *
+     * @param listFileGrp
+     */
+    private static void addDefaultGroup(List<Element> listFileGrp) {
+        List<String> fileGrpStr = readFileGroups(listFileGrp);
+
+        if (!fileGrpStr.contains("DEFAULT")) {
+            if (fileGrpStr.contains("OCR-D-IMG")) {
                 for (Element e : listFileGrp) {
                     if (e.getAttributeValue("USE").equals("OCR-D-IMG")) {
                         e.setAttribute("USE", "DEFAULT");
@@ -87,11 +130,47 @@ public class MetsWebConverter {
                 }
             }
         }
+    }
 
-        XMLOutputter xmlOutput = new XMLOutputter();
-        Format format = Format.getPrettyFormat();
-        format.setIndent("   ");
-        xmlOutput.setFormat(format);
-        xmlOutput.output(doc, outs);
+    private static List<String> readFileGroups(List<Element> listFileGrp) {
+        List<String> res = new ArrayList<>(listFileGrp.size());
+        for (Element e : listFileGrp) {
+            res.add(e.getAttributeValue("USE"));
+        }
+        return res;
+    }
+
+    /**
+     * Replace FILE-links with URL-links
+     *
+     */
+    private static void replaceFileWithUrl(List<Element> listFileGrp, String host, String pid) {
+        for (Element e : listFileGrp) {
+            for (Element e2 : e.getChildren("file", NS_METS)) {
+                for (Element e3 : e2.getChildren("FLocat", NS_METS)) {
+                    String otherLt = e3.getAttributeValue("OTHERLOCTYPE");
+                    if (otherLt != null && otherLt.equals("FILE")) {
+                        String path = e3.getAttributeValue("href", NS_XLINK);
+                        if (!path.startsWith("http") && !path.startsWith("/")) {
+                            e3.setAttribute("href", String.format(PREFIX_IMAGE_EXPORT, host, pid, path), NS_XLINK);
+                            e3.setAttribute("LOCTYPE", "URL");
+                            e3.removeAttribute("OTHERLOCTYPE");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Take a tiff-inputstream and give back a jpeg-outputstream
+     *
+     * @param inputStream
+     * @param outputStream
+     * @throws IOException
+     */
+    public static void convertTifToJpg(InputStream inputStream, OutputStream outputStream) throws IOException{
+        BufferedImage tiff = ImageIO.read(inputStream);
+        ImageIO.write(tiff, "JPEG", outputStream);
     }
 }

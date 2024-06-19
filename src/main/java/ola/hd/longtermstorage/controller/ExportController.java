@@ -359,6 +359,78 @@ public class ExportController {
     }
 
     /**
+     * Export tiff as jpeg
+     *
+     * The DFG-Viewer seems not to be able to display tif images. This endpoint accepts the pid and path of a tif and
+     * returns this as a jpg
+     *
+     * {@linkplain #fullExportRequest(String, Principal)}.
+     *
+     * @param id   PID or PPA
+     * @param path of file relative to the data-folder
+     * @return file from archive's
+     * @throws IOException
+     */
+    @ApiOperation(value = "Export tiff as jpeg")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Tiff was successfully converted to jpeg.", response = byte[].class),
+        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class),
+        @ApiResponse(code = 422, message = "Specified file is not a tiff.", response = ResponseMessage.class),
+        @ApiResponse(code = 422, message = "A file the specified path is not available.", response = ResponseMessage.class) })
+    @GetMapping(value = "/export/tiff-as-jpeg", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    public ResponseEntity<StreamingResponseBody> exportTifAsJpgFile(
+        @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam
+        String id,
+        @ApiParam(value = "Path to tiff.", required = true) @RequestParam
+        String path
+    ) throws IOException {
+        if (id.isBlank()) {
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY
+            );
+        } else if (path.isBlank()) {
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_PATH_IS_EMPTY
+            );
+        } else if (!path.toLowerCase().endsWith(".tiff") && !path.toLowerCase().endsWith(".tif")) {
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PATH_NOT_A_TIF
+            );
+        }
+
+        Response res;
+        try {
+            res = archiveManagerService.exportFile(id, Paths.get("data", path).toString());
+        } catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                String msg = e.getMessage().contains(ErrMsg.ARCHIVE_NOT_FOUND) ? ErrMsg.ID_NOT_FOUND
+                    : ErrMsg.FILE_NOT_FOUND + ": " + path;
+                throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, msg);
+            }
+            throw e;
+        }
+
+        Headers headers = res.headers();
+        // TODO: Make sure this is a tiff, and return 422 otherwise
+        MediaType mediaType = MediaType.parseMediaType(headers.get(HttpHeaders.CONTENT_TYPE));
+
+        StreamingResponseBody stream = outputStream -> {
+            try {
+                InputStream metsInStream = res.body().byteStream();
+                MetsWebConverter.convertTifToJpg(metsInStream, outputStream);
+            } catch (Exception e) {
+                Utils.logError(ErrMsg.METS_CONVERT_ERROR, e);
+                throw new HttpClientErrorException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, ErrMsg.TIFF_CONVERT_ERROR
+                );
+            }
+        };
+
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("image/jpeg")).body(stream);
+    }
+
+
+    /**
      * Export File from OCRD-ZIP data directory via PID
      *
      * The path must be relative to data-directory. The file must be available in the online-profile
