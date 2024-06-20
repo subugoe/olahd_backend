@@ -21,12 +21,6 @@ import org.springframework.core.io.Resource;
 
 public class TestMetsWebConverter {
 
-    public static void main(String[] args) throws Exception {
-        new TestMetsWebConverter().convertMetsLinks();
-
-    }
-
-
     @Test
     public void convertMetsLinks() throws Exception {
         // Arrange

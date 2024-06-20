@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -50,14 +50,17 @@ public class MetsWebConverter {
 
     static {
         try {
-            URL url1 = WebMvcLinkBuilder.linkTo(
+            URI uri1 = WebMvcLinkBuilder.linkTo(
                 WebMvcLinkBuilder.methodOn(ExportController.class).exportFile("PARAM", "PARAM")
-            ).toUri().toURL();
-            PREFIX_IMAGE_EXPORT = "%s/api" + url1.getFile().replaceAll("PARAM", "%s");
-            URL url2 = WebMvcLinkBuilder.linkTo(
+            ).toUri();
+            String path1 = uri1.isAbsolute() ? uri1.toURL().getFile() : uri1.toString();
+            PREFIX_IMAGE_EXPORT = "%s/api" + path1.replaceAll("PARAM", "%s");
+
+            URI uri2 = WebMvcLinkBuilder.linkTo(
                 WebMvcLinkBuilder.methodOn(ExportController.class).exportTiffAsJpegFile("PARAM", "PARAM")
-            ).toUri().toURL();
-            PREFIX_TIFF_TO_JPEG = "%s/api" + url2.getFile().replaceAll("PARAM", "%s");
+            ).toUri();
+            String path2 = uri2.isAbsolute() ? uri2.toURL().getFile() : uri2.toString();
+            PREFIX_TIFF_TO_JPEG = "%s/api" + path2.replaceAll("PARAM", "%s");
         } catch (IOException e) {
             // I think the Exception cannot be thrown the way I use the WebmvcLinkBuilder (only generating the urls)
             throw new RuntimeException(e);
