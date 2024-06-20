@@ -4,11 +4,13 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
+import ola.hd.longtermstorage.controller.ExportController;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -16,6 +18,7 @@ import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 
 /**
  * This class offers functionality to convert the file-locations containing in a Metsfile to
@@ -36,12 +39,30 @@ import org.jdom2.output.XMLOutputter;
 public class MetsWebConverter {
 
     /** Path to where the files are available */
-    // TODO: make both of this dynamic: determine export/file with WebMvcLinkBuilder
-    private static final String PREFIX_IMAGE_EXPORT = "%s/api/export/file?id=%s&path=%s";
-    private static final String PREFIX_TIFF_TO_JPEG = "%s/api/export/tiff-as-jpeg?id=%s&path=%s";
+    private static final String PREFIX_IMAGE_EXPORT;
+    private static final String PREFIX_TIFF_TO_JPEG;
 
     private static final Namespace NS_METS = Namespace.getNamespace("http://www.loc.gov/METS/");
     private static final Namespace NS_XLINK = Namespace.getNamespace("http://www.w3.org/1999/xlink");
+
+    /** Pattern to get the value of query-param "path" from a link in a METS file */
+    private static final Pattern METS_LINK_PATH_PATTERN = Pattern.compile("[\\?&]path=([^&#]*)");
+
+    static {
+        try {
+            URL url1 = WebMvcLinkBuilder.linkTo(
+                WebMvcLinkBuilder.methodOn(ExportController.class).exportFile("PARAM", "PARAM")
+            ).toUri().toURL();
+            PREFIX_IMAGE_EXPORT = "%s/api" + url1.getFile().replaceAll("PARAM", "%s");
+            URL url2 = WebMvcLinkBuilder.linkTo(
+                WebMvcLinkBuilder.methodOn(ExportController.class).exportTiffAsJpegFile("PARAM", "PARAM")
+            ).toUri().toURL();
+            PREFIX_TIFF_TO_JPEG = "%s/api" + url2.getFile().replaceAll("PARAM", "%s");
+        } catch (IOException e) {
+            // I think the Exception cannot be thrown the way I use the WebmvcLinkBuilder (only generating the urls)
+            throw new RuntimeException(e);
+        }
+    }
 
     private MetsWebConverter() {
     }
@@ -90,9 +111,7 @@ public class MetsWebConverter {
                         String lt = e3.getAttributeValue("LOCTYPE");
                         if ("URL".equals(lt)) {
                             String link = e3.getAttributeValue("href", NS_XLINK);
-                            // TODO: reuse this pattern
-                            Pattern pattern = Pattern.compile("[\\?&]path=([^&#]*)");
-                            Matcher matcher = pattern.matcher(link);
+                            Matcher matcher = METS_LINK_PATH_PATTERN.matcher(link);
                             if (matcher.find()){
                                 String path = matcher.group(1);
                                 if (path.endsWith(".tif") || path.endsWith(".tiff")) {

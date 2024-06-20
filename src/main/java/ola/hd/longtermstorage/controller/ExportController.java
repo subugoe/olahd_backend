@@ -378,7 +378,7 @@ public class ExportController {
         @ApiResponse(code = 422, message = "Specified file is not a tiff.", response = ResponseMessage.class),
         @ApiResponse(code = 422, message = "A file the specified path is not available.", response = ResponseMessage.class) })
     @GetMapping(value = "/export/tiff-as-jpeg", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
-    public ResponseEntity<StreamingResponseBody> exportTifAsJpgFile(
+    public ResponseEntity<StreamingResponseBody> exportTiffAsJpegFile(
         @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam
         String id,
         @ApiParam(value = "Path to tiff.", required = true) @RequestParam
@@ -410,9 +410,12 @@ public class ExportController {
             throw e;
         }
 
-        Headers headers = res.headers();
-        // TODO: Make sure this is a tiff, and return 422 otherwise
-        MediaType mediaType = MediaType.parseMediaType(headers.get(HttpHeaders.CONTENT_TYPE));
+        MediaType mediaType = MediaType.parseMediaType(res.headers().get(HttpHeaders.CONTENT_TYPE));
+        if (!mediaType.includes(MediaType.parseMediaType("image/tiff"))) {
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.FILE_NOT_A_TIFF
+            );
+        }
 
         StreamingResponseBody stream = outputStream -> {
             try {
