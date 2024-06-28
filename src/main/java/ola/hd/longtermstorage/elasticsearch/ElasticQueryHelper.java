@@ -41,8 +41,15 @@ public class ElasticQueryHelper {
     public static final String COUNTER_AGG = "counter";
 
     /** Fields which are fetched from source */
-    private static final String[] SOURCE_FIELDS = new String[] { "pid", "publish_infos", "title",
-        "doctype", "IsGt", "creator_infos", "structrun" };
+    private static final String[] SOURCE_FIELDS = new String[] { "pid", "publish_infos", "title", "doctype", "IsGt",
+        "creator_infos", "structrun", "filegrp_use_types"
+    };
+
+    private final static String F_CREATOR = "Creators";
+    private final static String F_TITLE = "Titles";
+    private final static String F_PLACE = "Place";
+    private final static String F_YEAR = "Publish Year";
+    private final static String F_FGRP = "File Groups";
 
     /**
      * Mapping from filter-name to corresponding column
@@ -51,10 +58,11 @@ public class ElasticQueryHelper {
      * the Elasticsearch-entry. For example for Filter Creator, the column to filter must be creator_infos.name.keyword
      */
     public static final Map<String, String> FILTER_MAP = Map.of(
-        "Creators", "creator_infos.name.keyword",
-        "Titles", "title.title.keyword",
-        "Place", "publish_infos.place_publish.keyword",
-        "Publish Year", "publish_infos.year_publish"
+        F_CREATOR, "creator_infos.name.keyword",
+        F_TITLE, "title.title.keyword",
+        F_PLACE, "publish_infos.place_publish.keyword",
+        F_YEAR, "publish_infos.year_publish",
+        F_FGRP, "filegrp_use_types.keyword"
     );
 
     private SearchTerms searchterms;
@@ -172,6 +180,7 @@ public class ElasticQueryHelper {
                 res = res.must(QueryBuilders.matchQuery("IsGt", true));
             }
         }
+        // This sets filters for the "advanced search"
         if (searchterms.hasFilter()) {
             if (StringUtils.isNotBlank(searchterms.getAuthor())) {
                 res = res.filter(
@@ -256,10 +265,11 @@ public class ElasticQueryHelper {
     private List<TermsAggregationBuilder> createFacetAggregations() {
         List<TermsAggregationBuilder> res = new ArrayList<>();
         // Facets
-        res.add(createSingleFacetAggregation("Titles", "title.title.keyword"));
-        res.add(createSingleFacetAggregation("Creators", "creator_infos.name.keyword"));
-        res.add(createSingleFacetAggregation("Place", "publish_infos.place_publish.keyword"));
-        res.add(createSingleFacetAggregation("Publish Year", "publish_infos.year_publish"));
+        res.add(createSingleFacetAggregation(F_TITLE, FILTER_MAP.get(F_TITLE)));
+        res.add(createSingleFacetAggregation(F_CREATOR, FILTER_MAP.get(F_CREATOR)));
+        res.add(createSingleFacetAggregation(F_PLACE, FILTER_MAP.get(F_PLACE)));
+        res.add(createSingleFacetAggregation(F_YEAR, FILTER_MAP.get(F_YEAR)));
+        res.add(createSingleFacetAggregation(F_FGRP, FILTER_MAP.get(F_FGRP)));
         return res;
     }
 
