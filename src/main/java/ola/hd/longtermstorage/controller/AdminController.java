@@ -4,9 +4,16 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import ola.hd.longtermstorage.domain.*;
+import java.util.ArrayList;
+import java.util.List;
+import ola.hd.longtermstorage.domain.Archive;
+import ola.hd.longtermstorage.domain.ArchiveResponse;
+import ola.hd.longtermstorage.domain.TrackingInfo;
+import ola.hd.longtermstorage.domain.TrackingResponse;
+import ola.hd.longtermstorage.domain.TrackingStatus;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
+import ola.hd.longtermstorage.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -15,9 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Api(description = "This endpoint is used to get information for administration purposes.")
 @RestController
@@ -51,6 +55,9 @@ public class AdminController {
 
                 // Get more info (version, online/offline ID in CDSTAR...)
                 Archive archive = archiveRepository.findByPid(trackingInfo.getPid());
+                if (archive == null) {
+                    Utils.logWarn("Archive for tracking-info not found. Pid: " + trackingInfo.getPid());
+                }
                 ArchiveResponse archiveResponse = new ArchiveResponse();
                 archiveResponse.setPid(archive.getPid());
                 archiveResponse.setOnlineId(archive.getOnlineId());
