@@ -83,20 +83,22 @@ public class ImportController {
     }
 
     @ApiOperation(
-        value = "Import a ZIP file into a system. It may be an independent ZIP, or a new version of another ZIP. In the second case, a PID of the previous ZIP must be provided.",
+        value = "Import a ZIP file into the system. It may be an independent ZIP, or a new version of another ZIP. In the second case, a PID of the previous ZIP must be provided.",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
         authorizations = { @Authorization(value = "basicAuth"), @Authorization(value = "bearer")}
     )
     @ApiResponses(value = {
         @ApiResponse(
-            code = 202, message = "The ZIP has a valid BagIt structure. The system is saving it to the archive.",
+            code = 202, message = "The OCRD-ZIP has a valid BagIt structure. The system is saving it to the archive.",
             response = ResponseMessage.class,
             responseHeaders = { @ResponseHeader(name = "Location", description = "The PID of the ZIP.", response = String.class) }
         ),
-        @ApiResponse(code = 400, message = "The ZIP has an invalid BagIt structure.", response = ResponseMessage.class),
+        @ApiResponse(code = 400, message = "The OCRD-ZIP is invalid.", response = ResponseMessage.class),
         @ApiResponse(code = 401, message = "Invalid credentials.", response = ResponseMessage.class),
+        @ApiResponse(code = 409, message = "The same archive (checked through payload checksum) with the same ocrd-identifier already exists.", response = ResponseMessage.class),
         @ApiResponse(code = 415, message = "The request is not a multipart request.", response = ResponseMessage.class)
     })
+    // TODO: remove parameter documentation here when parameters are finally removed (or reduced)
     @ApiImplicitParams(value = {
             @ApiImplicitParam(dataType = "__file", name = "file", value = "The file to be imported", required = true, paramType = "form"),
             @ApiImplicitParam(dataType = "string", name = "prev", value = "The PID of the previous version", paramType = "form"),

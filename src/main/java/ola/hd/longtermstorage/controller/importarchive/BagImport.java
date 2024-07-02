@@ -86,6 +86,8 @@ public class BagImport implements Runnable {
         String prevPid = conf.getPrevPid();
 
         try {
+            /* TODO: think about no retries. There are cases (pid service or cdstar temporarily not available) when it
+             * makes sense just to try again, but I thinks most of the time multiple tries would fail too */
             if (prevPid != null) {
                 importResult = Failsafe.with(ImportUtils.RETRY_POLICY).get(
                     () -> archiveManagerService.importZipFile(

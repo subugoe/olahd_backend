@@ -14,7 +14,6 @@ import ola.hd.longtermstorage.domain.TrackingStatus;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.utils.Utils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
@@ -31,13 +30,12 @@ public class AdminController {
     private final TrackingRepository trackingRepository;
     private final ArchiveRepository archiveRepository;
 
-    @Autowired
     public AdminController(TrackingRepository trackingRepository, ArchiveRepository archiveRepository) {
         this.trackingRepository = trackingRepository;
         this.archiveRepository = archiveRepository;
     }
 
-    @ApiOperation(value = "Get information about import process.")
+    @ApiOperation(value = "Get information about the user's import processes.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Query success", response = TrackingInfo[].class)
     })

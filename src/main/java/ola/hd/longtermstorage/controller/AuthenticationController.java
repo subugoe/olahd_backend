@@ -1,10 +1,12 @@
 package ola.hd.longtermstorage.controller;
 
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import ola.hd.longtermstorage.component.TokenProvider;
 import ola.hd.longtermstorage.domain.ResponseMessage;
 import ola.hd.longtermstorage.domain.TokenResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,13 +24,12 @@ public class AuthenticationController {
 
     private final AuthenticationManager authenticationManager;
 
-    @Autowired
     public AuthenticationController(TokenProvider tokenProvider, AuthenticationManager authenticationManager) {
         this.tokenProvider = tokenProvider;
         this.authenticationManager = authenticationManager;
     }
 
-    @ApiOperation(value = "Submit the valid username and password to get back an access token.", httpMethod = "POST")
+    @ApiOperation(value = "Submit a valid username and password to get back an access token.", httpMethod = "POST")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Login successfully", response = TokenResponse.class),
             @ApiResponse(code = 401, message = "Invalid credentials.", response = ResponseMessage.class)

@@ -164,16 +164,20 @@ public class SearchController {
      * @throws IOException
      */
     @ApiOperation(value = "Facet Search")
-    @ApiResponses({ @ApiResponse(code = 200, message = "Ok") })
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Ok"),
+        @ApiResponse(code = 400, message = "Invalid search parameters", response = String.class),
+        @ApiResponse(code = 404, message = "Parameter id is provided, but no matching archive was found", response = String.class)
+    })
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> search(
-        @RequestParam(required = false) @ApiParam(value = "The PID or the PPN of the work.", required = false)
+        @RequestParam(required = false) @ApiParam(value = "The PID or the PPN of the work. If provided, information about the archive is returned", required = false)
         String id,
         @RequestParam(required = false) @ApiParam(value = "Search Term", required = false)
         String searchterm,
-        @RequestParam(defaultValue = "25") @ApiParam(value = "Number of results in the hitlist from search results")
+        @RequestParam(defaultValue = "25") @ApiParam(value = "Limt the number of results in the hitlist. To support pagination.")
         int limit,
-        @RequestParam(defaultValue = "0") @ApiParam(value = "Starting point of the next resultset from search results to support pagination")
+        @RequestParam(defaultValue = "0") @ApiParam(value = "Skip results first x results. To support pagination")
         int offset,
 //        @RequestParam(defaultValue = "false") @ApiParam(value = "If false, an initial search is started and no facets or filters are applied")
 //        boolean extended,
@@ -185,17 +189,17 @@ public class SearchController {
         boolean fulltextsearch,
 //        @RequestParam(defaultValue = "title|asc") @ApiParam(value = "Defines sorting fields and direction as a comma separated list according to the following pattern field|{asc|desc}")
 //        String sort,
-        @RequestParam(required = false) @ApiParam(value = "Contains the facete names")
+        @RequestParam(required = false) @ApiParam(value = "List of facet names used in the search. Used to narrow down the results")
         String[] field,
-        @RequestParam(required = false) @ApiParam(value = "Contains the facete values")
+        @RequestParam(required = false) @ApiParam(value = "List of facet values according to the facet names. Used to narrow down the results")
         String[] value,
-        @RequestParam(required = false) @ApiParam(value = "Title", required = false)
+        @RequestParam(required = false) @ApiParam(value = "Title filter", required = false)
         String title,
-        @RequestParam(required = false) @ApiParam(value = "Author", required = false)
+        @RequestParam(required = false) @ApiParam(value = "Author filter", required = false)
         String author,
-        @RequestParam(required = false) @ApiParam(value = "Place", required = false)
+        @RequestParam(required = false) @ApiParam(value = "Place filter", required = false)
         String place,
-        @RequestParam(required = false) @ApiParam(value = "Year", required = false)
+        @RequestParam(required = false) @ApiParam(value = "Year filter", required = false)
         String year
     ) throws IOException {
         if (field != null) {

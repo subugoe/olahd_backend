@@ -59,7 +59,7 @@ public class ExportController {
     @ApiOperation(value = "Quickly export a ZIP file via PID. This ZIP file only contains files stored on hard disks.")
     @ApiResponses({
         @ApiResponse(code = 200, message = "An archive with the specified identifier was found.", response = byte[].class),
-        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class) })
+        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found on disk (resp. hot, online) storage.", response = ResponseMessage.class) })
     @GetMapping(value = "/export", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE,
         MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<StreamingResponseBody> export(
@@ -79,10 +79,10 @@ public class ExportController {
      * special users
      *
      * @param id:        PID of the archive to move
-     * @param principal: information of user who calld this function
+     * @param principal: information of user who called this function
      * @return
      */
-    @ApiOperation(value = "Send a request to export data on tapes.", authorizations = {
+    @ApiOperation(value = "Send a request to export data on tapes. Move archive from tape to disk.", authorizations = {
         @Authorization(value = "basicAuth"), @Authorization(value = "bearer") })
     @ApiResponses({
         @ApiResponse(code = 200, message = "The archive is already on the hard drive.", response = byte[].class),
@@ -112,7 +112,7 @@ public class ExportController {
     @ApiResponses({
         @ApiResponse(code = 200, message = "An archive with the specified identifier was found.", response = byte[].class),
         @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class),
-        @ApiResponse(code = 409, message = "The archive is still on tape. A full export request must be made first.", response = ResponseMessage.class) })
+        @ApiResponse(code = 409, message = "The archive is still on tape. A full export request must be made first. This can only occur when an internal ID is used.", response = ResponseMessage.class) })
     @GetMapping(value = "/export-full", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE,
         MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<StreamingResponseBody> fullExport(
@@ -124,6 +124,13 @@ public class ExportController {
         return exportData(id, "full", isInternal);
     }
 
+
+    @ApiOperation(value = "Download a list of files from an archive.")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "Files of archive are successfully collected and send to caller.", response = byte[].class),
+    })
+    @GetMapping(value = "/export-full", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE,
+        MediaType.APPLICATION_JSON_VALUE })
     @PostMapping(value = "/download", consumes = MediaType.APPLICATION_JSON_VALUE, produces = {
         MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<StreamingResponseBody> downloadFiles(
@@ -146,6 +153,12 @@ public class ExportController {
             .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition).body(stream);
     }
 
+    @ApiOperation(value = "Download a single file from an archive.")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "File successfully transfered.", response = byte[].class),
+        @ApiResponse(code = 404, message = "File or archive not found.", response = byte[].class),
+        @ApiResponse(code = 409, message = "File only available on tape.", response = byte[].class),
+    })
     @GetMapping(value = "/download-file", produces = { MediaType.APPLICATION_XML_VALUE,
         MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<Resource> downloadFile(
@@ -225,16 +238,17 @@ public class ExportController {
     /**
      * Export METS-file via PID
      *
-     * Expects the METS-file to be always stored in online-profile (Hot Storage)
+     * Expects the METS-file to be always stored in online-profile (Hot Storage). This finds the METS-file if it is not
+     * located in data/mets.xml. Queries the bag-info.txt for that.
      *
      * @param id PID or PPA
      * @return archive's METS-file
      * @throws IOException
      */
-    @ApiOperation(value = "Quickly export the METS-file via PID")
+    @ApiOperation(value = "Quickly export the METS-file via PID from an archive available online.")
     @ApiResponses({
         @ApiResponse(code = 200, message = "METS-File for specified identifier was found.", response = byte[].class),
-        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class)
+        @ApiResponse(code = 404, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class)
     })
     @GetMapping(value = "/export/mets", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<InputStreamResource> exportMetsfile(
@@ -254,7 +268,7 @@ public class ExportController {
         } catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
                 throw new HttpClientErrorException(
-                    HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.ID_NOT_FOUND
+                    HttpStatus.NOT_FOUND, ErrMsg.ID_NOT_FOUND
                 );
             }
             throw e;
@@ -269,6 +283,8 @@ public class ExportController {
         try {
             res = archiveManagerService.exportFile(id, metsPath);
         } catch (HttpClientErrorException e) {
+            // if the archive was not available (online) it would have failed getting the bag-info.txt. An 404 here
+            // indicates an internal error because the METS-file was not found which is never expected
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
                 throw new HttpClientErrorException(
                     HttpStatus.INTERNAL_SERVER_ERROR, ErrMsg.METS_NOT_FOUND
@@ -289,16 +305,16 @@ public class ExportController {
      * through the web
      *
      * The links of the FLocat-Elements are converted to URLS where the corresponding files are
-     * available for download
+     * available for download. Additionally if DEFAULT fgrp is not available rename image-fgrp to DEFAULT
      *
      * @param id PID
      * @return archive's METS-file
      * @throws IOException
      */
-    @ApiOperation(value = "Export a METS-file via PID with all files referenced web-accessible")
+    @ApiOperation(value = "Export a METS-file via PID with all files referenced web-accessible. Purpose is to display the workspace in the DFG-Viewer.")
     @ApiResponses({
         @ApiResponse(code = 200, message = "METS-File for specified identifier was found.", response = byte[].class),
-        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class)
+        @ApiResponse(code = 404, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class)
     })
     @GetMapping(value = "/export/mets-web", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<StreamingResponseBody> exportMetsfileUrlpaths(
@@ -319,7 +335,7 @@ public class ExportController {
         } catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
                 throw new HttpClientErrorException(
-                    HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.ID_NOT_FOUND
+                    HttpStatus.NOT_FOUND, ErrMsg.ID_NOT_FOUND
                 );
             }
             throw e;
@@ -361,8 +377,8 @@ public class ExportController {
     /**
      * Export tiff as jpeg
      *
-     * The DFG-Viewer seems not to be able to display tif images. This endpoint accepts the pid and path of a tif and
-     * returns this as a jpg
+     * The DFG-Viewer seems not to be able to display tiff images. This endpoint accepts the PID and path of a tiff and
+     * returns this as a jpeg
      *
      * {@linkplain #fullExportRequest(String, Principal)}.
      *
@@ -371,12 +387,12 @@ public class ExportController {
      * @return file from archive's
      * @throws IOException
      */
-    @ApiOperation(value = "Export tiff as jpeg")
+    @ApiOperation(value = "Export a tiff from an archive converted to a jpeg image.")
     @ApiResponses({
         @ApiResponse(code = 200, message = "Tiff was successfully converted to jpeg.", response = byte[].class),
-        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class),
+        @ApiResponse(code = 404, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class),
         @ApiResponse(code = 422, message = "Specified file is not a tiff.", response = ResponseMessage.class),
-        @ApiResponse(code = 422, message = "A file the specified path is not available.", response = ResponseMessage.class) })
+        @ApiResponse(code = 404, message = "A file with the specified path is not available.", response = ResponseMessage.class) })
     @GetMapping(value = "/export/tiff-as-jpeg", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<StreamingResponseBody> exportTiffAsJpegFile(
         @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam
@@ -405,7 +421,7 @@ public class ExportController {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
                 String msg = e.getMessage().contains(ErrMsg.ARCHIVE_NOT_FOUND) ? ErrMsg.ID_NOT_FOUND
                     : ErrMsg.FILE_NOT_FOUND + ": " + path;
-                throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, msg);
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, msg);
             }
             throw e;
         }
@@ -441,15 +457,22 @@ public class ExportController {
      * been processed with the 'export-request' operation.
      * {@linkplain #fullExportRequest(String, Principal)}.
      *
+     * `exportFile` vs `downloadFile`: the latter downloads the file into memory and then sends it to the user.
+     * Additionally it can be used with the internal (CDStar-) id. It also searches in mirror profile if a pid was
+     * provided and the archive is not available online.
+     * `exportFile` streams the file from cdstar to the user without putting it into olahd's memory in between. It can
+     * only be used with the PID and only delivers files available online.
+     *
+     *
      * @param id   PID or PPA
      * @param path of file relative to the data-folder
      * @return file from archive's
      * @throws IOException
      */
-    @ApiOperation(value = "Export a file via PID and path")
+    @ApiOperation(value = "Export a file via PID and path from online archive.")
     @ApiResponses({ @ApiResponse(code = 200, message = "File was found.", response = byte[].class),
-        @ApiResponse(code = 422, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class),
-        @ApiResponse(code = 422, message = "A file the specified path is not available.", response = ResponseMessage.class) })
+        @ApiResponse(code = 404, message = "An archive with the specified identifier is not available.", response = ResponseMessage.class),
+        @ApiResponse(code = 404, message = "A file the specified path is not available.", response = ResponseMessage.class) })
     @GetMapping(value = "/export/file", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
     public ResponseEntity<InputStreamResource> exportFile(
         @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam
@@ -474,7 +497,7 @@ public class ExportController {
             if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
                 String msg = e.getMessage().contains(ErrMsg.ARCHIVE_NOT_FOUND) ? ErrMsg.ID_NOT_FOUND
                     : ErrMsg.FILE_NOT_FOUND + ": " + path;
-                throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, msg);
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, msg);
             }
             throw e;
         }

@@ -574,15 +574,13 @@ public class CdstarService implements ArchiveManagerService, SearchService {
                                 zipOutputStream.write(bytes, 0, length);
                             }
                         } catch (IOException ex) {
-
                             // Catch the exception here so that if something's wrong with 1 file, the whole process still runs
-                            ex.printStackTrace();
+                            Utils.logWarn("Error adding file to zip", ex);
                         }
                     }
                 } catch (IOException ex) {
-
                     // Catch the exception here so that if something's wrong with 1 file, the whole process still runs
-                    ex.printStackTrace();
+                    Utils.logWarn("Error fetching file from Cdstar", ex);
                 }
             }
         }

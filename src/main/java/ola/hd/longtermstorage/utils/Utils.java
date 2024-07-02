@@ -111,6 +111,10 @@ public class Utils {
         LOG.warn(msg);
     }
 
+    public static void logWarn(String msg, Throwable t) {
+        LOG.warn(msg, t);
+    }
+
     public static void logDebug(String msg) {
         LOG.debug(msg);
     }
