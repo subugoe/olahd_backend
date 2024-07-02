@@ -129,8 +129,6 @@ public class ExportController {
     @ApiResponses({
         @ApiResponse(code = 200, message = "Files of archive are successfully collected and send to caller.", response = byte[].class),
     })
-    @GetMapping(value = "/export-full", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE,
-        MediaType.APPLICATION_JSON_VALUE })
     @PostMapping(value = "/download", consumes = MediaType.APPLICATION_JSON_VALUE, produces = {
         MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<StreamingResponseBody> downloadFiles(
