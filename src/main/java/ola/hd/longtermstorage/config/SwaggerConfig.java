@@ -1,5 +1,8 @@
 package ola.hd.longtermstorage.config;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.hateoas.client.LinkDiscoverer;
@@ -8,22 +11,22 @@ import org.springframework.hateoas.mediatype.collectionjson.CollectionJsonLinkDi
 import org.springframework.plugin.core.SimplePluginRegistry;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.*;
+import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.ApiKey;
+import springfox.documentation.service.BasicAuth;
+import springfox.documentation.service.Contact;
+import springfox.documentation.service.SecurityScheme;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 @Configuration
 @EnableSwagger2
 public class SwaggerConfig {
 
-    private static final Contact API_CONTACT = new Contact("Triet Doan",
-            "https://www.gwdg.de/",
-            "triet.doan@gwdg.de");
+    private static final Contact API_CONTACT = new Contact("OCR-D",
+            "https://www.ocr-d.de/",
+            "jonas.schrewe@gwdg.de");
     private static final ApiInfo API_INFO = new ApiInfo("OLA-HD Long-term Archive",
             "This is the documentation for the API of the Long-term Archive System",
             "1.0",
