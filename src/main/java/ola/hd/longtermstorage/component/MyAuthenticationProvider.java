@@ -33,8 +33,8 @@ public class MyAuthenticationProvider implements AuthenticationProvider {
         String password = authentication.getCredentials().toString();
 
         // Check for test users
-        MongoUser testUser = userRepository.findByUsernameAndPassword(username, password);
-        if (testUser != null) {
+        MongoUser testUser = userRepository.findByUsername(username);
+        if (testUser != null && testUser.authenticate_user(password)) {
             return new UsernamePasswordAuthenticationToken(username, password, AuthorityUtils.createAuthorityList("ROLE_USER"));
         }
 
