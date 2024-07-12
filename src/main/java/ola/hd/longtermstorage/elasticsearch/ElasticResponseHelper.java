@@ -151,7 +151,10 @@ public class ElasticResponseHelper {
                     Map<String, Aggregation> subAggMap = x.getAggregations().getAsMap();
                     Aggregation agg = subAggMap.get(ElasticQueryHelper.SUB_AGG_PIDS);
                     int pidCount = ((Terms) agg).getBuckets().size();
-                    Values val = new Values(x.getKeyAsString(), pidCount, x.getDocCount() > pidCount);
+                    /** if `size` is reached with pids-per-facet more results are there. Edge-case (size is reached but
+                     * not exceeded) is assumed (cannot be assured) when doc-count == pid-count */
+                    boolean limited = ElasticQueryHelper.MAX_PID_PER_FACET == pidCount && x.getDocCount() > pidCount;
+                    Values val = new Values(x.getKeyAsString(), pidCount, limited);
                     values.add(val);
                 }
             }
