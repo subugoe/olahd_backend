@@ -38,6 +38,8 @@ public class ElasticQueryHelper {
     public static final String HITS_AGG = "group-by-pid";
     /** Name of the sub-aggregation containing the pids per facet */
     public static final String SUB_AGG_PIDS = "pids-per-facet";
+    /** Max size of pids-per-facet aggregation */
+    public static final int MAX_PID_PER_FACET = 100;
     public static final String COUNTER_AGG = "counter";
 
     /** Fields which are fetched from source */
@@ -275,7 +277,7 @@ public class ElasticQueryHelper {
 
     private TermsAggregationBuilder createSingleFacetAggregation(String term, String field) {
         TermsAggregationBuilder res = AggregationBuilders.terms(term).field(field);
-        return res.subAggregation(AggregationBuilders.terms(SUB_AGG_PIDS).field("pid.keyword"));
+        return res.subAggregation(AggregationBuilders.terms(SUB_AGG_PIDS).field("pid.keyword").size(MAX_PID_PER_FACET));
     }
 
     private List<AggregationBuilder> createMergeAggregation() {

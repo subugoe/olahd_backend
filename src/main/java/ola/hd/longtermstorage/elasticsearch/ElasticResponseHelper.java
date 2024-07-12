@@ -150,7 +150,8 @@ public class ElasticResponseHelper {
                 if (x.getAggregations() != null) {
                     Map<String, Aggregation> subAggMap = x.getAggregations().getAsMap();
                     Aggregation agg = subAggMap.get(ElasticQueryHelper.SUB_AGG_PIDS);
-                    Values val = new Values(x.getKeyAsString(), ((Terms) agg).getBuckets().size());
+                    int pidCount = ((Terms) agg).getBuckets().size();
+                    Values val = new Values(x.getKeyAsString(), pidCount, x.getDocCount() > pidCount);
                     values.add(val);
                 }
             }

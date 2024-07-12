@@ -1,19 +1,16 @@
 package ola.hd.longtermstorage.model;
 
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
-
-@Document(indexName = "values", type = "values")
 public class Values {
-    @Field(type = FieldType.Text)
     String value;
-    @Field(type = FieldType.Integer)
     int occurences;
+    boolean limited;
 
-    public Values(String value, int occurences) {
+    public Values(String value, int occurences, boolean limited) {
         this.value = value;
         this.occurences = occurences;
+        /** This flag indicates if `occurrences` are be higher as specified. ES query contains a size limit for facet
+         *  occurrences. */
+        this.limited = limited;
     }
 
     public String getValue() {
@@ -28,7 +25,15 @@ public class Values {
         return occurences;
     }
 
-    public void setOccurences(int occurences) {
-        this.occurences = occurences;
+    public void setOccurences(int occurrences) {
+        this.occurences = occurrences;
+    }
+
+    public boolean isLimited() {
+        return limited;
+    }
+
+    public void setLimited(boolean limited) {
+        this.limited = limited;
     }
 }
