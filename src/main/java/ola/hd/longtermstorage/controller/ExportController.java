@@ -259,7 +259,6 @@ public class ExportController {
             );
         }
 
-        final String metsPath;
         Map<String, String> bagInfoMap;
         try {
             bagInfoMap = archiveManagerService.getBagInfoTxt(id);
@@ -271,11 +270,7 @@ public class ExportController {
             }
             throw e;
         }
-        if (bagInfoMap.containsKey("Ocrd-Mets")) {
-            metsPath = bagInfoMap.get("Ocrd-Mets");
-        } else {
-            metsPath = "data/mets.xml";
-        }
+        String metsPath = Utils.getMetsPath(bagInfoMap);
 
         Response res;
         try {
@@ -326,7 +321,6 @@ public class ExportController {
             );
         }
 
-        final String metsPath;
         Map<String, String> bagInfoMap;
         try {
             bagInfoMap = archiveManagerService.getBagInfoTxt(id);
@@ -338,11 +332,7 @@ public class ExportController {
             }
             throw e;
         }
-        if (bagInfoMap.containsKey("Ocrd-Mets")) {
-            metsPath = bagInfoMap.get("Ocrd-Mets");
-        } else {
-            metsPath = "data/mets.xml";
-        }
+		String metsPath = Utils.getMetsPath(bagInfoMap);
 
         Response res;
         try {

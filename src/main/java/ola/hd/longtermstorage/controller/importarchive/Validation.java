@@ -68,14 +68,17 @@ class Validation {
             // else in the mongo-database
         }
 
-        if (!metadata.contains("Ocrd-Mets")) {
+        if (!metadata.contains(Constants.BAGINFO_KEY_METS)) {
             if (!Files.exists(bag.getRootDir().resolve("data").resolve("mets.xml"))) {
-                res.add("mets.xml not found and 'Ocrd-Mets' not provided in bag-info.txt");
+                res.add(String.format(
+                    "mets.xml not found and '%s' not provided in bag-info.txt",
+                    Constants.BAGINFO_KEY_METS
+                ));
             }
         } else {
-            String value = metadata.get("Ocrd-Mets").get(0);
+            String value = metadata.get(Constants.BAGINFO_KEY_METS).get(0);
             if (!Files.exists(bag.getRootDir().resolve("data").resolve(value))) {
-                res.add("Ocrd-Mets is set, but specified file not existing");
+                res.add(String.format("'%s' is set, but specified file not existing", Constants.BAGINFO_KEY_METS));
             }
         }
 
@@ -174,8 +177,8 @@ class Validation {
     static void validateMetsfileSchema(Bag bag) {
         var metadata = bag.getMetadata();
         Path mets;
-        if (metadata.contains("Ocrd-Mets")) {
-            String value = metadata.get("Ocrd-Mets").get(0);
+        if (metadata.contains(Constants.BAGINFO_KEY_METS)) {
+            String value = metadata.get(Constants.BAGINFO_KEY_METS).get(0);
             mets = bag.getRootDir().resolve("data").resolve(value);
         } else {
             mets = bag.getRootDir().resolve("data").resolve("mets.xml");

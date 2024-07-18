@@ -28,6 +28,7 @@ public class Constants {
     public static final String BAGINFO_KEY_PREV_PID = "Olahd-Search-Prev-PID";
     public static final String BAGINFO_KEY_IMPORTER = "Olahd-Importer";
     public static final String BAGINFO_KEY_IS_GT = "Olahd-GT";
+    public static final String BAGINFO_KEY_METS = "Ocrd-Mets";
 
     public static final String PAYLOAD_MANIFEST_NAME = "manifest-sha512.txt";
     public static final String TAG_MANIFEST_NAME = "tagmanifest-sha512.txt";

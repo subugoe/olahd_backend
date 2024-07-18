@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
+import ola.hd.longtermstorage.Constants;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,6 +194,20 @@ public class Utils {
             return true;
         }
         return false;
+    }
+
+    /**
+     * If Ocrd-Mets in `bagInfoMap` return its value otherwise the mets is expected at data/mets.xml
+     *
+     * @param bagInfoMap - Map containing key-value-pairs from bag-info.txt
+     * @return
+     */
+    public static String getMetsPath(Map<String, String> bagInfoMap) {
+        if (bagInfoMap.containsKey(Constants.BAGINFO_KEY_METS)) {
+            return bagInfoMap.get(Constants.BAGINFO_KEY_METS);
+        } else {
+            return "data/mets.xml";
+        }
     }
 
 }

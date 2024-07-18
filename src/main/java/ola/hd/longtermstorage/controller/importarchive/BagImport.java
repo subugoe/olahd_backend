@@ -261,14 +261,8 @@ public class BagImport implements Runnable {
             .withMaxDuration(Duration.ofMinutes(10));
 
         Failsafe.with(retryPolicy).run(() -> {
-            final String metsPath;
             Map<String, String> bagInfoMap = archiveManagerService.getBagInfoTxt(pid);
-            if (bagInfoMap.containsKey("Ocrd-Mets")) {
-                metsPath = bagInfoMap.get("Ocrd-Mets");
-            } else {
-                metsPath = "data/mets.xml";
-            }
-
+            String metsPath = Utils.getMetsPath(bagInfoMap);
             try (Response response = archiveManagerService.exportFile(pid, metsPath)) {
                 if (response.isSuccessful()) {
                     return;
