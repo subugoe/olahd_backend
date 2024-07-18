@@ -19,7 +19,6 @@ import ola.hd.longtermstorage.exceptions.MetsInvalidException;
 import ola.hd.longtermstorage.exceptions.MetsSchemaException;
 import ola.hd.longtermstorage.exceptions.OcrdzipInvalidException;
 import ola.hd.longtermstorage.utils.Utils;
-import org.apache.commons.lang3.StringUtils;
 import org.xml.sax.SAXException;
 
 /**
@@ -94,9 +93,7 @@ class Validation {
         // validate provided filegrps are actually existing in ocrdzip
         boolean imageFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_IMAGE_FILEGRP);
         boolean fullFgrpPresent = metadata.contains(Constants.BAGINFO_KEY_FULLTEXT_FILEGRP);
-        boolean imageFgrpParam = StringUtils.isNotBlank(params.getImageFilegrp());
-        boolean fullFgrpParam = StringUtils.isNotBlank(params.getFulltextFilegrp());
-        if (imageFgrpPresent || fullFgrpPresent || imageFgrpParam || fullFgrpParam) {
+        if (imageFgrpPresent || fullFgrpPresent) {
             List<String> fileGrps = new ArrayList<>(0);
             try {
                 fileGrps = Files.list(bagdir.resolve("data"))
@@ -120,20 +117,6 @@ class Validation {
                             + " existing", Constants.BAGINFO_KEY_FULLTEXT_FILEGRP, fullFileGrp));
                 }
             }
-            if (imageFgrpParam) {
-                String imageFileGrp = params.getImageFilegrp();
-                if (!fileGrps.contains(imageFileGrp)) {
-                    res.add(String.format("Parameter '%s' is provided, but specified File-Grp (%s) "
-                            + "is not existing", "Image-Filegrp", imageFileGrp));
-                }
-            }
-            if (fullFgrpParam) {
-                String fullFileGrp = params.getFulltextFilegrp();
-                if (!fileGrps.contains(fullFileGrp)) {
-                    res.add(String.format("Parameter '%s' is provided, but specified File-Grp (%s) "
-                            + "is not existing", "Fulltext-Filegrp", fullFileGrp));
-                }
-            }
         }
 
         if (metadata.contains(Constants.BAGINFO_KEY_FTYPE)) {
@@ -142,15 +125,6 @@ class Validation {
                 res.add(String.format("'%s' is provided, but value (%s) is invalid. Valid are "
                         + "following values: '%s'", Constants.BAGINFO_KEY_FTYPE, ftype, String.join(
                         ", ", Constants.POSSIBLE_FULLTEXT_FTYPES)));
-            }
-        }
-
-        if (StringUtils.isNotBlank(params.getFulltextFtype())) {
-            String ftype = params.getFulltextFtype();
-            if (!Constants.POSSIBLE_FULLTEXT_FTYPES.contains(ftype)) {
-                res.add(String.format("Parameter '%s' is provided, but the value (%s) is invalid. "
-                        + "Valid are the following values: '%s'", "fulltext-ftype", ftype, String.
-                        join(", ", Constants.POSSIBLE_FULLTEXT_FTYPES)));
             }
         }
 

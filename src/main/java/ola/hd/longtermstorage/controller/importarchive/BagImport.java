@@ -16,7 +16,6 @@ import okhttp3.Response;
 import ola.hd.longtermstorage.component.MutexFactory;
 import ola.hd.longtermstorage.controller.ExportController;
 import ola.hd.longtermstorage.domain.Archive;
-import ola.hd.longtermstorage.domain.BaginfoConfig;
 import ola.hd.longtermstorage.domain.ImportResult;
 import ola.hd.longtermstorage.domain.TrackingInfo;
 import ola.hd.longtermstorage.domain.TrackingStatus;
@@ -82,8 +81,7 @@ public class BagImport implements Runnable {
     @Override
     public void run() {
         ImportResult importResult = null;
-        BaginfoConfig conf = BaginfoConfig.create(params.bagInfos).considerFormParams(params.formParams);
-        String prevPid = conf.getPrevPid();
+        String prevPid = params.formParams.getPrev();
 
         try {
             /* TODO: think about no retries. There are cases (pid service or cdstar temporarily not available) when it
@@ -159,7 +157,7 @@ public class BagImport implements Runnable {
             } else {
                 archiveRepository.save(archive);
             }
-            sendToElastic(conf);
+            sendToElastic(params.formParams.getPrev());
         } catch (Exception ex) {
             logger.error("Archive Import failed", ex);
             handleFailedImport(ex, params.pid, importResult, params.info);
@@ -174,11 +172,7 @@ public class BagImport implements Runnable {
      *
      * @param conf Config read from bag-info.txt and possibly updated with form parameters. Must not be null
      */
-    private void sendToElastic(BaginfoConfig conf) {
-        if (conf == null) {
-            // This is supposed to never happen
-            throw new RuntimeException("conf (BaginfoConfig) must not be null");
-        }
+    private void sendToElastic(String prevPid) {
         String pid = this.params.pid;
 
         try {
@@ -188,36 +182,13 @@ public class BagImport implements Runnable {
             return;
         }
 
-        String gtConf = "";
-        if (conf.getGt() != null) {
-            gtConf = ", \"isGt\": " + conf.getGt();
-        }
-
-        String workIdentifierConf = "";
-        if (conf.getWorkIdentifier() != null) {
-            workIdentifierConf = ", \"workIdentifier\": \"" + conf.getWorkIdentifier() + "\"";
-        }
-
-        String importerConf = "";
-        if (conf.getImporter() != null) {
-            importerConf = ", \"importer\": \"" + conf.getImporter() + "\"";
-        }
-
-        String ocrdIdentifierConf = "";
-        if (conf.getOcrdIdentifier() != null) {
-            ocrdIdentifierConf = ", \"ocrdIdentifier\": \"" + conf.getOcrdIdentifier() + "\"";
-        }
-
         try {
             final String json = String.format(
                 "{"
                     + "\"document\":\"%s\", \"context\":\"ocrd\", \"product\":\"olahds\","
-                    + "\"imageFileGrp\":\"%s\", \"fulltextFileGrp\":\"%s\", \"ftype\":\"%s\"%s%s%s%s, "
                     + "\"prev\":\"%s\""
-                    + "}",
-                pid, conf.getImageFileGrp(), conf.getFulltextFileGrp(),
-                conf.getFulltextFtype(), gtConf, workIdentifierConf, importerConf, ocrdIdentifierConf,
-                conf.getPrevPid() != null ? conf.getPrevPid() : ""
+                + "}",
+                pid, prevPid != null ? prevPid : ""
             );
 
             Utils.logDebug("Sending json to mets-Importer: '" + json + "'");

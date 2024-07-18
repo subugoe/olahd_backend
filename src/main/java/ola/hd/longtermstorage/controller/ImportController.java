@@ -99,14 +99,9 @@ public class ImportController {
         @ApiResponse(code = 409, message = "The same archive (checked through payload checksum) with the same ocrd-identifier already exists.", response = ResponseMessage.class),
         @ApiResponse(code = 415, message = "The request is not a multipart request.", response = ResponseMessage.class)
     })
-    // TODO: remove parameter documentation here when parameters are finally removed (or reduced)
     @ApiImplicitParams(value = {
             @ApiImplicitParam(dataType = "__file", name = "file", value = "The file to be imported", required = true, paramType = "form"),
             @ApiImplicitParam(dataType = "string", name = "prev", value = "The PID of the previous version", paramType = "form"),
-            @ApiImplicitParam(dataType = "string", name = "fulltextfilegrp", value = "Name of filegroup containing the fulltexts", paramType = "form"),
-            @ApiImplicitParam(dataType = "string", name = "imagefilegrp", value = "Name of filegroup containing the images", paramType = "form"),
-            @ApiImplicitParam(dataType = "string", name = "fulltextftype", value = "Type of fulltexts, e.g. PAGEXML_1", paramType = "form"),
-            @ApiImplicitParam(dataType = "boolean", name = "isgt", value = "Set to true to flag the data as Ground Truth, used for search filtering", paramType = "form"),
     })
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping(value = "/bag", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

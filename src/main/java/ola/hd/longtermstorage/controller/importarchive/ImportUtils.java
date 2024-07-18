@@ -262,23 +262,6 @@ public class ImportUtils {
                     String formFieldName = item.getFieldName();
                     if (formFieldName.equals("prev")) {
                         res.setPrev(Streams.asString(stream));
-                    } else if (formFieldName.equalsIgnoreCase("gt") || formFieldName.equalsIgnoreCase("isgt")) {
-                        String value = Streams.asString(stream);
-                        res.setIsGt(Utils.stringToBool(value));
-                        if (StringUtils.isNotBlank(value) && res.getIsGt() == null) {
-                            throwClientException(String.format("'%s' was given with value '%s'"
-                            + " but must be either true or false", formFieldName, value), info,
-                            HttpStatus.BAD_REQUEST, trackingRepository);
-                        }
-                    } else if (formFieldName.equalsIgnoreCase("fulltext-filegrp")
-                               || formFieldName.equalsIgnoreCase("fulltextfilegrp")) {
-                        res.setFulltextFilegrp(Streams.asString(stream).trim());
-                    } else if (formFieldName.equalsIgnoreCase("image-filegrp")
-                               || formFieldName.equalsIgnoreCase("imagefilegrp")) {
-                        res.setFulltextFilegrp(Streams.asString(stream).trim());
-                    } else if (formFieldName.equalsIgnoreCase("fulltext-ftype")
-                               || formFieldName.equalsIgnoreCase("fulltextftype")) {
-                        res.setFulltextFtype(Streams.asString(stream).trim());
                     }
                 }
             }
