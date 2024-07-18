@@ -88,12 +88,27 @@ public class ImportUtils {
      * @return
      */
     public static String readOcrdIdentifier(List<SimpleImmutableEntry<String, String>> bagInfos) {
+        return readBagInfoValue(bagInfos, Constants.BAGINFO_KEY_OCRD_IDENTIFIER);
+    }
+
+    /**
+     * Read value from bag-infos
+     *
+     * @param bagInfos
+     * @param key - key to read
+     * @return
+     */
+    public static String readBagInfoValue(List<SimpleImmutableEntry<String, String>> bagInfos, String key) {
+        if (StringUtils.isBlank(key)) {
+            return "";
+        }
         for (SimpleImmutableEntry<String, String> x : bagInfos) {
-            if (StringUtils.isBlank(x.getValue())) {
-                continue;
-            }
-            if (Constants.BAGINFO_KEY_OCRD_IDENTIFIER.equals(x.getKey())) {
-                return x.getValue();
+            if (key.equals(x.getKey())) {
+                if (StringUtils.isBlank(x.getValue())) {
+                    return "";
+                } else {
+                    return x.getValue();
+                }
             }
         }
         return "";

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import net.jodah.failsafe.Failsafe;
+import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.component.ExecutorWrapper;
 import ola.hd.longtermstorage.controller.importarchive.BagImport;
 import ola.hd.longtermstorage.controller.importarchive.BagImportParams;
@@ -128,13 +129,15 @@ public class ImportController {
                 targetFile.toPath(), destination, tempDir, info, formParams, trackingRepository
         );
 
-        // Set previous version if the latest Ocrdzip (with same OcrdIdentifier) has different payload
+        // Set previous version in two cases: 1. If Ocrdzip with same OcrdIdentifier exist
+        // 2. if prev-pid is provided in the bag-info.txt
         if (StringUtils.isBlank(formParams.getPrev())) {
             String checksumPayloadmanifest = ImportUtils.generatePayloadmanifestChecksum(destination);
             String ocrdIdentifier = ImportUtils.readOcrdIdentifier(bagInfos);
             Archive prevArchive = archiveRepository.findTopByOcrdIdentifierOrderByCreatedAtDesc(ocrdIdentifier);
             if (prevArchive != null) {
                 if (checksumPayloadmanifest.equals(prevArchive.getChecksumPayloadmanifest())) {
+                    // Abort if archive with same OcrdIdentifier and same payload already exists
                     ImportUtils.throwClientException(
                         String.format(
                             "Newest archive of OcrdIdentifier '%s' has the same payload(-checksum).",
@@ -144,6 +147,11 @@ public class ImportController {
                     );
                 } else {
                     formParams.setPrev(prevArchive.getPid());
+                }
+            } else {
+                String prevPid = ImportUtils.readBagInfoValue(bagInfos, Constants.BAGINFO_KEY_PREV_PID);
+                if (StringUtils.isNoneBlank(prevPid)) {
+                    formParams.setPrev(prevPid);
                 }
             }
         }
