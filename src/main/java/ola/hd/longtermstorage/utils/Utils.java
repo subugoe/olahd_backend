@@ -58,6 +58,29 @@ public class Utils {
         return res;
     }
 
+    /**
+     * Convert the Bag-Info-Map to a String
+     *
+     * Example:
+     * ```
+     * Foo-Key: Foo-Value
+     * Bar-Key: Bar-Value
+     * ```
+     * No line breaks, line lenght is not limited
+     *
+     * @param bagInfoMap
+     * @return
+     */
+    public static String writeBagInfoMapToString(Map<String, String> bagInfoMap) {
+        StringBuilder res = new StringBuilder();
+        for(Map.Entry<String,String> entry : bagInfoMap.entrySet()){
+            String key = entry.getKey() != null ? entry.getKey() : "";
+            String value = entry.getValue() != null ? entry.getValue() : "";
+            res.append(key).append(": ").append(value).append("\n");
+        }
+        return res.toString();
+    }
+
     private static final Set<String> trueSet = new HashSet<String>(Arrays.asList("1", "true", "yes"));
     private static final Set<String> falseSet = new HashSet<String>(Arrays.asList("0", "false", "no"));
 

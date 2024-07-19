@@ -6,9 +6,14 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
+import okhttp3.Response;
+import ola.hd.longtermstorage.Constants;
 import ola.hd.longtermstorage.domain.Archive;
 import ola.hd.longtermstorage.domain.ArchiveResponse;
+import ola.hd.longtermstorage.domain.ResponseMessage;
 import ola.hd.longtermstorage.domain.SearchTerms;
 import ola.hd.longtermstorage.elasticsearch.ElasticQueryHelper;
 import ola.hd.longtermstorage.elasticsearch.ElasticsearchService;
@@ -17,6 +22,7 @@ import ola.hd.longtermstorage.model.ResultSet;
 import ola.hd.longtermstorage.msg.ErrMsg;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.service.ArchiveManagerService;
+import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.propertyeditors.StringArrayPropertyEditor;
 import org.springframework.http.HttpStatus;
@@ -267,5 +273,55 @@ public class SearchController {
                 HttpStatus.NOT_FOUND, ErrMsg.OCRD_IDENTIFIER_NOT_FOUND
             );
         }
+    }
+
+    /**
+     * Get indexing info for a pid
+     *
+     * This info is stored in bag-info and in the mongodb. It contains for example Ocrd-Work-Identifier,
+     * Olahd-Search-Image-Filegrp and Olahd-GT from bag-info.txt. And Olahd-Search-Prev-PID which can be provided
+     * through bag-info.txt as well or as a form-parameter (form parameter wins). It is stored in the mongodb.
+     *
+     * @param id   PID or PPA
+     * @param path of file relative to the data-folder
+     * @return file from archive's
+     * @throws IOException
+     */
+    @ApiOperation(value = "Provides info used for indexing and re-indexing")
+    @ApiResponses({ @ApiResponse(code = 200, message = "Info is available", response = String.class),
+        @ApiResponse(code = 404, message = "An archive with the specified identifier is not available in online storage.", response = ResponseMessage.class)
+    })
+    @GetMapping(value = "/search/indexer-info", produces = { MediaType.TEXT_PLAIN_VALUE })
+    public ResponseEntity<String> indexerInfo(
+        @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam
+        String pid
+    ) throws IOException {
+        if (pid.isBlank()) {
+            throw new HttpClientErrorException(
+                HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY
+            );
+        }
+
+        String bagInfo = null;
+        try (
+            Response response = archiveManagerService.exportFile(pid, Paths.get("data", "../bag-info.txt").toString())
+        ) {
+            byte[] data = response.body().bytes();
+            bagInfo = new String(data, "utf-8");
+        } catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ID_NOT_FOUND_ONLINE);
+            }
+            throw e;
+        }
+        Map<String, String> bagInfoMap = Utils.readBagInfoToMap(bagInfo);
+
+        Archive archive = archiveRepository.findByPid(pid);
+        Archive prevArchive = archive.getPreviousVersion();
+
+        if (prevArchive != null) {
+            bagInfoMap.put(Constants.BAGINFO_KEY_PREV_PID, prevArchive.getPid());
+        }
+        return ResponseEntity.ok(Utils.writeBagInfoMapToString(bagInfoMap));
     }
 }
