@@ -232,7 +232,8 @@ public class SearchController {
                     detail = elasticsearchService.getDetailsForPid(archive.getPid());
                     if (detail == null) {
                         // This happens, when a PID is found, but elasticsearch does not have an entry for it. This is
-                        // somehow expected if the PID is a previous version, but not if it is the newest of a work
+                        // somehow expected if the PID is a previous version, but not if it is the newest of a work.
+                        // This can also happen if elasticsearch has entries for the pid, but none with isFirst == true
                         throw new HttpClientErrorException(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "No search entry for a PID found which is registered in the mongdb and does not have a "
