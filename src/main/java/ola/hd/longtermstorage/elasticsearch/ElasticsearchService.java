@@ -7,6 +7,7 @@ import java.util.Map;
 import ola.hd.longtermstorage.domain.SearchTerms;
 import ola.hd.longtermstorage.exceptions.ElasticServiceException;
 import ola.hd.longtermstorage.model.Detail;
+import ola.hd.longtermstorage.model.HitList;
 import ola.hd.longtermstorage.model.ResultSet;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.search.SearchRequest;
@@ -144,12 +145,47 @@ public class ElasticsearchService {
         try {
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
             ElasticResponseHelper util2 = new ElasticResponseHelper();
-            return util2.responseToResultSet(
+            ResultSet res = util2.responseToResultSet(
                 response, searchterms, metadatasearch, fulltextsearch, offset, limit
             );
+            patchNoDataEntries(res);
+            return res;
         } catch (IOException | ElasticsearchStatusException e) {
             throw new ElasticServiceException("Error executing search request", e);
         }
+    }
+
+    /**
+     * Add information to entries without data.
+     *
+     * Entries without data can occur when pages an the METS are accidently not part of the <mets:structLink> element.
+     * Then they are considered not part of the work and thus the metadata from the mets is not added to them. But as we
+     * can consider every page in a ocrdzip part of the work, this metadata is added here via the pid
+     *
+     * @param res
+     */
+    private void patchNoDataEntries(ResultSet res) {
+        for (HitList hit : res.getHitlist()) {
+            if (Boolean.TRUE.equals(hit.getNoData())) {
+                String pid = hit.getPid();
+                Detail details = null;
+                try {
+                    details = this.getDetailsForPid(pid);
+                } catch (Exception e) {
+                    // just pass if details not available
+                    continue;
+                }
+                if (details != null) {
+                    hit.setTitle(details.getTitle());
+                    hit.setPublisher(details.getPublisher());
+                    hit.setPlaceOfPublish(details.getPlaceOfPublish());
+                    hit.setYearOfPublish(details.getYearOfPublish());
+                    hit.setSubtitle(details.getSubtitle());
+                    hit.setCreator(details.getCreator());
+                }
+            }
+        }
+
     }
 
 }
