@@ -72,10 +72,10 @@ public class ElasticResponseHelper {
         res.setPID(hit.getOrDefault("pid", "").toString());
         res.setTitle(readTitleFromSearchHit(hit));
         res.setSubtitle(readSubtitleFromSearchHit(hit));
-
         res.setPublisher(readPublisherFromSearchHit(hit));
         res.setYearOfPublish(readYearFromSearchHit(hit));
         res.setPlaceOfPublish(readPlaceOfPublishFromSearchHit(hit));
+        res.setYearDigitization(readYearDigitizationFromSearchHit(hit));
         res.setCreator(readCreatorFromSearchHit(hit));
         res.setGT(readIsGtFromSearchHit(hit));
 
@@ -189,6 +189,31 @@ public class ElasticResponseHelper {
             Integer i = (Integer) infos.get("year_publish");
             if (i != null) {
                 return i;
+            }
+        } catch (Exception e) {
+            // pass: just skip if value is not available
+        }
+        return -1;
+    }
+
+    /**
+     * Extract the year of digitization from a Elasticsearch search hit to the logical entry
+     *
+     * @param hit - response from Elasticsearch query
+     * @return
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static int readYearDigitizationFromSearchHit(Map<String, Object> hit) {
+        try {
+            Map<String, Object> infos = (Map) hit.get("digitization_infos");
+            Integer i = (Integer) infos.get("year_digitization");
+            if (i != null) {
+                return i;
+            } else {
+                String s = (String) infos.get("year_digitization_string");
+                if (StringUtils.isNotBlank(s)) {
+                    return Integer.parseInt(s.substring(0, 4));
+                }
             }
         } catch (Exception e) {
             // pass: just skip if value is not available

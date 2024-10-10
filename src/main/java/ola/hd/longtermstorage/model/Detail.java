@@ -23,6 +23,8 @@ public class Detail {
 	@Field(type = FieldType.Integer)
 	private int yearOfPublish;
 	@Field(type = FieldType.Text)
+	private int yearDigitization;
+	@Field(type = FieldType.Text)
 	private String publisher;
 	@Field(type = FieldType.Text)
 	private String creator;
@@ -54,18 +56,19 @@ public class Detail {
 	@Field(type = FieldType.Text)
 	private String infoForPreviousPid;
 
-	public Detail(
+    public Detail(
         String PID, String ID, String title, String subtitle, String placeOfPublish, int yearOfPublish,
-	    String publisher, String creator, String genre, String label, String classification, String copyright,
-	    String license, String licenseURL, String owner, String ownerURL, boolean isGT, FileTree fileTree,
-	    String infoForPreviousPid
-	) {
+        int yearDigitization, String publisher, String creator, String genre, String label, String classification,
+        String copyright, String license, String licenseURL, String owner, String ownerURL, boolean isGT,
+        FileTree fileTree, String infoForPreviousPid
+    ) {
 		this.PID = PID;
 		this.ID = ID;
 		this.title = title;
 		this.subtitle = subtitle;
 		this.placeOfPublish = placeOfPublish;
 		this.yearOfPublish = yearOfPublish;
+		this.yearDigitization = yearDigitization;
 		this.publisher = publisher;
 		this.creator = creator;
 		this.genre = genre;
@@ -123,6 +126,14 @@ public class Detail {
 		this.yearOfPublish = yearOfPublish;
 	}
 
+    public int getYearDigitization() {
+        return yearDigitization;
+    }
+
+    public void setYearDigitization(int yearDigitization) {
+        this.yearDigitization = yearDigitization;
+    }
+	
 	public String getGenre() {
 		return genre;
 	}
@@ -234,5 +245,4 @@ public class Detail {
     public void setInfoForPreviousPid(String infoForPreviousPid) {
         this.infoForPreviousPid = infoForPreviousPid;
     }
-
 }
