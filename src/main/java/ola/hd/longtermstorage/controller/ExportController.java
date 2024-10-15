@@ -349,7 +349,7 @@ public class ExportController {
         StreamingResponseBody stream = outputStream -> {
             try {
                 InputStream metsInStream = res.body().byteStream();
-                String host = Utils.readHost(request);
+                String host = Utils.getBaseUrl(request);
                 MetsWebConverter.convertMets(id, host, metsInStream, outputStream);
             } catch (Exception e) {
                 Utils.logError(ErrMsg.METS_CONVERT_ERROR, e);

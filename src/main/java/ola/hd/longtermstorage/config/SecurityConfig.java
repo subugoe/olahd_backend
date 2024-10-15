@@ -4,7 +4,6 @@ import ola.hd.longtermstorage.component.CustomAuthenticationEntryPoint;
 import ola.hd.longtermstorage.component.TokenProvider;
 import ola.hd.longtermstorage.filter.JwtFilter;
 import ola.hd.longtermstorage.utils.Utils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +24,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${useKeycloak:false}")
     private boolean useKeycloak;
 
-    @Autowired
     public SecurityConfig(TokenProvider tokenProvider,
                           CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.tokenProvider = tokenProvider;
@@ -51,6 +49,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         "/download-file/**",
                         "/login",
                         "/search*/**",
+                        "/iiif/**",
                         "/configuration/**", "/swagger*/**", "/webjars/**").permitAll()
                 .anyRequest().authenticated()
                 .and()

@@ -103,13 +103,23 @@ public class Utils {
         return null;
     }
 
+    private static String baseUrl = null;
+
+    public static String getBaseUrl(HttpServletRequest request) {
+        if (baseUrl == null) {
+            baseUrl = readHost(request);
+        }
+        return baseUrl;
+    }
+
     /**
      * Reads host and "scheme" from request and returns it.
      *
      * @param request
      * @return Examples: <code>http://localhost:8080</code>, <code>https://ola-hd.ocr-d.de</code>
      */
-    public static String readHost(HttpServletRequest request) {
+    private static String readHost(HttpServletRequest request) {
+
         if (request == null) {
             return "";
         }
