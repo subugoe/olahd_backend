@@ -423,8 +423,9 @@ public class ExportController {
 
         StreamingResponseBody stream = outputStream -> {
             try {
-                InputStream metsInStream = res.body().byteStream();
-                MetsWebConverter.convertTifToJpg(metsInStream, outputStream);
+                InputStream imageInStream = res.body().byteStream();
+                MetsWebConverter.convertTifToJpg(imageInStream, outputStream);
+                imageInStream.close();
             } catch (Exception e) {
                 Utils.logError(ErrMsg.METS_CONVERT_ERROR, e);
                 throw new HttpClientErrorException(

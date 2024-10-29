@@ -27,6 +27,7 @@ public class ErrMsg {
     public static final String PATH_NOT_A_TIF = "Parameter path must reference a tiff image";
     public static final String FILE_NOT_A_TIFF = "Given file is not a tiff image";
     public static final String TIFF_CONVERT_ERROR = "Error converting tiff to jpeg";
+    public static final String IIIF_MANIFEST_NOT_FOUND = "IIIF-Manifest not found";
 
 
 }
