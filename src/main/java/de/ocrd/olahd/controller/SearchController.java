@@ -181,9 +181,9 @@ public class SearchController {
         String id,
         @RequestParam(required = false) @ApiParam(value = "Search Term", required = false)
         String searchterm,
-        @RequestParam(defaultValue = "25") @ApiParam(value = "Limt the number of results in the hitlist. To support pagination.")
+        @RequestParam(defaultValue = "25") @ApiParam(value = "Limt the number of results in the hitlist. To support pagination.", example = "25")
         int limit,
-        @RequestParam(defaultValue = "0") @ApiParam(value = "Skip results first x results. To support pagination")
+        @RequestParam(defaultValue = "0") @ApiParam(value = "Skip results first x results. To support pagination", example = "0")
         int offset,
 //        @RequestParam(defaultValue = "false") @ApiParam(value = "If false, an initial search is started and no facets or filters are applied")
 //        boolean extended,
