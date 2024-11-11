@@ -13,6 +13,7 @@ import de.ocrd.olahd.domain.TrackingStatus;
 import de.ocrd.olahd.repository.mongo.ArchiveRepository;
 import de.ocrd.olahd.repository.mongo.TrackingRepository;
 import de.ocrd.olahd.service.PidService;
+import de.ocrd.olahd.utils.Utils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -145,7 +146,7 @@ public class ImportController {
                 }
             } else {
                 String prevPid = ImportUtils.readBagInfoValue(bagInfos, Constants.BAGINFO_KEY_PREV_PID);
-                if (StringUtils.isNoneBlank(prevPid)) {
+                if (!Utils.isNullValue(prevPid)) {
                     formParams.setPrev(prevPid);
                 }
             }
