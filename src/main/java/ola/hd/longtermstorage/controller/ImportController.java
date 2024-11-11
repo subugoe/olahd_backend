@@ -31,6 +31,7 @@ import ola.hd.longtermstorage.domain.TrackingStatus;
 import ola.hd.longtermstorage.repository.mongo.ArchiveRepository;
 import ola.hd.longtermstorage.repository.mongo.TrackingRepository;
 import ola.hd.longtermstorage.service.PidService;
+import ola.hd.longtermstorage.utils.Utils;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
@@ -145,7 +146,7 @@ public class ImportController {
                 }
             } else {
                 String prevPid = ImportUtils.readBagInfoValue(bagInfos, Constants.BAGINFO_KEY_PREV_PID);
-                if (StringUtils.isNoneBlank(prevPid)) {
+                if (!Utils.isNullValue(prevPid)) {
                     formParams.setPrev(prevPid);
                 }
             }
