@@ -1,0 +1,14 @@
+spring.servlet.multipart.enabled = true
+spring.servlet.multipart.resolve-lazily = true
+spring.servlet.multipart.max-file-size = 1GB
+spring.servlet.multipart.max-request-size = 1GB
+spring.profiles.active = localdev
+
+springfox.documentation.swagger.v2.path = /swagger-docs
+
+### Upload directory ###
+ola.hd.upload.dir = /var/tmp/ola-hd/upload
+
+spring.data.mongodb.auto-index-creation = true
+adminuser.pw.salt = qkUcUYrx9X4jVEFE
+adminuser.pw.hash = 73ef46cd3ac9a8836d786f8c235e0a3b6a41c1784e6cc3fa815430c71eac73625594323f3f77af32a73c493947d1c34a9b544e6c172b68ccd78237af3317f80c
