@@ -9,7 +9,7 @@ FROM openjdk:13-jdk-alpine
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 WORKDIR /ola-hd
-COPY --from=build /build/target/long-term-storage*.jar app.jar
+COPY --from=build /build/target/olahd*.jar app.jar
 ENV OLA_HD_MIN_MEMORY 6G
 ENV OLA_HD_MAX_MEMORY 6G
 ENV OLA_HD_PORT 8080

@@ -9,6 +9,6 @@ springfox.documentation.swagger.v2.path = /swagger-docs
 ### Upload directory ###
 ola.hd.upload.dir = /var/tmp/ola-hd/upload
 
-spring.data.mongodb.auto-index-creation=true
+spring.data.mongodb.auto-index-creation = true
 adminuser.pw.salt = qkUcUYrx9X4jVEFE
-adminuser.pw.hash = 73ef46cd3ac9a8836d786f8c235e0a3b6a41c1784e6cc3fa815430c71eac73625594323f3f77af32a73c493947d1c34a9b544e6c172b68ccd78237af3317f80c
+adminuser.pw.hash = 130826354603749da0690429ae54b128e1f89c9c389da03b7a973b97605cf89011875e8d6d79898496be04145b6ef3bdda012c6dceb09989bb724fac7b687bc9
