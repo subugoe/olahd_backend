@@ -5,19 +5,18 @@ services:
     image: traefik:v2.8
     container_name: olahds_reverse_proxy
     command:
-      - "--api.insecure=true" # TODO: remove
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
       - "--providers.docker.exposedByDefault=false"
     ports:
       - "80:80"
-      - "8081:8080" # TODO: remove
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     networks:
       - olahd
 
   olahds_backend:
+    image: ghcr.io/subugoe/olahd_backend:${OLAHD_BACKEND_IMAGE_TAG}
     ports:
       - "8080:8080"
     expose:
@@ -33,6 +32,8 @@ services:
 
       - "traefik.http.routers.olahds_backend_export.entrypoints=web"
       - "traefik.http.routers.olahds_backend_export.rule=PathPrefix(`/export`)"
+    volumes:
+      - ./src/main/resources/:/config/
 
   olahds_indexer:
     volumes:
