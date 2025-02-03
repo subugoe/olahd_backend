@@ -780,7 +780,6 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
     @Override
     public boolean isArchiveOnDisk(String identifier) throws IOException {
-
         String archiveId = getArchiveIdFromIdentifier(identifier, mirrorProfile);
 
         if (archiveId.equals(NOT_FOUND)) {
@@ -831,7 +830,6 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
     @Override
     public HttpFile getFile(String id, String path, boolean infoOnly, boolean internalId) throws IOException {
-
         if (!internalId) {
             id = this.mapPidToArchiveId(id, mirrorProfile, onlineProfile);
         }
@@ -879,7 +877,8 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
     @Override
     public Map<String, String> getBagInfoTxt(String pid) throws IOException {
-        String archiveId = this.getArchiveIdFromIdentifier(pid, onlineProfile);
+        String archiveId = this.mapPidToArchiveId(pid, onlineProfile, mirrorProfile);
+
         if (archiveId.equals(NOT_FOUND)) {
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
@@ -909,7 +908,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
     @Override
     public Response exportFile(String pid, String path) throws IOException{
-        String archiveId = getArchiveIdFromIdentifier(pid, onlineProfile);
+        String archiveId = this.mapPidToArchiveId(pid, onlineProfile, mirrorProfile);
         if (archiveId.equals(NOT_FOUND)) {
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND, ErrMsg.ARCHIVE_NOT_FOUND);
         }
@@ -938,7 +937,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     /**
      * Get the archive-id (Id in Cdstar) for a PID
      *
-     * When querying cdstart with a pid it must be mapped to an internalId: Every ocrd-zip is saved
+     * When querying Cdstar with a pid it must be mapped to an internalId: Every ocrd-zip is saved
      * in an online and an offline archive (in Cdstar) when created. Offline archives can be moved
      * to mirror archives (move from tape to disc). Uploading Ocrd-zips with previous versions
      * deletes the online archive of that. So every pid **can** point to 3 different types of
@@ -965,5 +964,24 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             }
         }
         return NOT_FOUND;
+    }
+
+    @Override
+    public Response exportMets(String pid) throws IOException {
+        Response res;
+        try {
+            res = this.exportFile(pid, "data/mets.xml");
+        } catch (HttpClientErrorException e) {
+            // If mets not in data/mets.xml try to get mets path from bag-info
+            if (HttpStatus.NOT_FOUND == e.getStatusCode() && e.getStatusText().equals(ErrMsg.FILE_NOT_FOUND)) {
+                Map<String, String> bagInfoMap;
+                bagInfoMap = this.getBagInfoTxt(pid);
+                String metsPath = Utils.getMetsPath(bagInfoMap);
+                res = this.exportFile(pid, metsPath);
+            } else {
+                throw e;
+            }
+        }
+        return res;
     }
 }

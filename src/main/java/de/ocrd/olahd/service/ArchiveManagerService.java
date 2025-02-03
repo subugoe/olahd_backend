@@ -128,7 +128,7 @@ public interface ArchiveManagerService {
     /**
      * Get the file from the archive via it's PID/PPA and path.
      *
-     * This method only searches in Online-Profile, so it should not be used for images or large
+     * This method searches in Online-Profile and Mirror-Profile, so it should not be used for images or large
      * files which might be only available in offline profile.
      *
      * @param id    identifier of archive (PID/PPA)
@@ -138,6 +138,14 @@ public interface ArchiveManagerService {
      */
     Response exportFile(String id, String path) throws IOException;
 
+    /**
+     * Reads the METS from the archive via it's PID/PPA
+     *
+     * @param id    identifier of archive (PID/PPA)
+     * @return The {@link Response} object to get the stream and close it properly.
+     * @throws IOException Thrown if something's wrong when connecting to the archive services
+     */
+    Response exportMets(String id) throws IOException;
     /**
      * Delete an archive
      *

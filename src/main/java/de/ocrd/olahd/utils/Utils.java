@@ -230,14 +230,15 @@ public class Utils {
     }
 
     /**
-     * If Ocrd-Mets in `bagInfoMap` return its value otherwise the mets is expected at data/mets.xml
+     * If Ocrd-Mets in `bagInfoMap` return its value (preceded with "data") otherwise the expected mets-path:
+     * data/mets.xml
      *
      * @param bagInfoMap - Map containing key-value-pairs from bag-info.txt
      * @return
      */
     public static String getMetsPath(Map<String, String> bagInfoMap) {
         if (bagInfoMap.containsKey(Constants.BAGINFO_KEY_METS)) {
-            return bagInfoMap.get(Constants.BAGINFO_KEY_METS);
+            return String.format("data/%s", bagInfoMap.get(Constants.BAGINFO_KEY_METS));
         } else {
             return "data/mets.xml";
         }

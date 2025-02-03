@@ -16,7 +16,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.FailsafeException;
 import net.jodah.failsafe.RetryPolicy;
@@ -232,9 +231,7 @@ public class BagImport implements Runnable {
             .withMaxDuration(Duration.ofMinutes(10));
 
         Failsafe.with(retryPolicy).run(() -> {
-            Map<String, String> bagInfoMap = archiveManagerService.getBagInfoTxt(pid);
-            String metsPath = Utils.getMetsPath(bagInfoMap);
-            try (Response response = archiveManagerService.exportFile(pid, metsPath)) {
+            try (Response response = archiveManagerService.exportMets(pid)) {
                 if (response.isSuccessful()) {
                     return;
                 } else {
