@@ -299,6 +299,11 @@ public class BagImport implements Runnable {
         // Delete the PID in the tracking database
         info.setPid(null);
 
+        Archive archive = archiveRepository.findByPid(pid);
+        if (archive != null) {
+            archiveRepository.delete(archive);
+        }
+
         trackingRepository.save(info);
     }
 }
