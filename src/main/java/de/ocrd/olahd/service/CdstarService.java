@@ -34,6 +34,11 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tika.Tika;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
+import org.jdom2.input.SAXBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -638,11 +643,11 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         }
     }
 
-    private String getArchiveIdFromIdentifier(String identifier, String profile) throws IOException {
+    private String getArchiveIdFromIdentifier(String pid, String profile) throws IOException {
         String fullUrl = url + vault;
 
         // Search for archive with specified identifier (PPN, PID)
-        String query = String.format("dcIdentifier:\"%s\" AND profile:%s", identifier, profile);
+        String query = String.format("dcIdentifier:\"%s\" AND profile:%s", pid, profile);
 
         HttpUrl httpUrl = HttpUrl.parse(fullUrl).newBuilder()
                 .addQueryParameter("q", query)
@@ -679,7 +684,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             }
 
             // Cannot get the archive ID? Throw the exception
-            throw new HttpServerErrorException(HttpStatus.valueOf(response.code()), "Error when getting the archive with the identifier " + identifier);
+            throw new HttpServerErrorException(HttpStatus.valueOf(response.code()), "Error when getting the archive with the identifier " + pid);
         }
     }
 
@@ -779,13 +784,11 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     }
 
     @Override
-    public boolean isArchiveOnDisk(String identifier) throws IOException {
-        String archiveId = getArchiveIdFromIdentifier(identifier, mirrorProfile);
-
+    public boolean isArchiveOnDisk(String pid) throws IOException {
+        String archiveId = getArchiveIdFromIdentifier(pid, mirrorProfile);
         if (archiveId.equals(NOT_FOUND)) {
             return false;
         }
-
         return isArchiveOpen(archiveId);
     }
 
@@ -953,7 +956,7 @@ public class CdstarService implements ArchiveManagerService, SearchService {
      *
      * @param pid
      * @param profiles - profiles to search in order
-     * @return
+     * @return the Cdstar id of the archive or NOT_FOUND if it is not available
      * @throws IOException
      */
     private String mapPidToArchiveId(String pid, String...profiles) throws IOException {
@@ -983,5 +986,32 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             }
         }
         return res;
+    }
+
+    @Override
+    public List<String> readFilegroups(String pid) throws IOException {
+        Response res = exportMets(pid);
+
+        SAXBuilder sax = new SAXBuilder();
+        Element rootNode = null;
+        try {
+            Document doc = sax.build(res.body().byteStream());
+            rootNode = doc.getRootElement();
+        } catch (JDOMException e) {
+            throw new IOException("Error parsing mets file for reading filegroups", e);
+        }
+
+        Namespace nsMets = Namespace.getNamespace("http://www.loc.gov/METS/");
+        List<Element> listFileSec = rootNode.getChildren("fileSec", nsMets);
+        List<String> filegrps = new ArrayList<>();
+
+        for (Element fileSec : listFileSec) {
+            for (Element grp : fileSec.getChildren("fileGrp", nsMets)) {
+                if (grp.getAttribute("USE") != null) {
+                    filegrps.add(grp.getAttributeValue("USE"));
+                }
+            }
+        }
+        return filegrps;
     }
 }

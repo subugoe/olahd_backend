@@ -80,7 +80,11 @@ public interface ArchiveManagerService {
     void moveFromDiskToTape(String identifier) throws IOException;
 
     /**
-     * Check if an archive is on disk so that it can be exported.
+     * Check if an archive was moved from tape to disk so that it can be exported.
+     *
+     * This checks if an archive is available on the mirror-profile. An archive is on the mirror profile only if it
+     * was moved from tape to disk. Archives only available online (hot) will return false
+     *
      *
      * @param identifier The public identifier of the archive (PID, PPN,...)
      * @return True if the archive is ready on the hard drive, false otherwise.
@@ -146,6 +150,7 @@ public interface ArchiveManagerService {
      * @throws IOException Thrown if something's wrong when connecting to the archive services
      */
     Response exportMets(String id) throws IOException;
+
     /**
      * Delete an archive
      *
@@ -154,4 +159,16 @@ public interface ArchiveManagerService {
      * @throws IOException Thrown if something's wrong when connecting to the archive services
      */
     void deleteArchive(String archiveId, String txId) throws IOException;
+
+    /**
+     * Read all filegroups from the METS
+     *
+     * This function downloads the METS from Cdstar and then reads all USE attributes from all `fileGrp`-elements inside
+     * the `fileSec`
+     *
+     * @param pid
+     * @return List of File-Groups
+     * @throws IOException
+     */
+    public List<String> readFilegroups(String pid) throws IOException;
 }
