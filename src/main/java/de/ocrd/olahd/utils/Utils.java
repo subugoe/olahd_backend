@@ -141,16 +141,16 @@ public class Utils {
         LOG.info(msg);
     }
 
-    public static void logWarn(String msg) {
-        LOG.warn(msg);
-    }
-
     public static void logWarn(String msg, Throwable t) {
         LOG.warn(msg, t);
     }
 
-    public static void logDebug(String msg) {
-        LOG.debug(msg);
+    public static void logWarn(String msg, Object ...formatArgs) {
+        LOG.warn(String.format(msg, formatArgs));
+    }
+
+    public static void logDebug(String msg, Object ...formatArgs) {
+        LOG.debug(String.format(msg, formatArgs));
     }
 
     public static void logError(String msg, Throwable t) {
