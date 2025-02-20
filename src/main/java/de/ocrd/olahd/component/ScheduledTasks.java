@@ -1,8 +1,5 @@
 package de.ocrd.olahd.component;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import de.ocrd.olahd.domain.ArchiveStatus;
 import de.ocrd.olahd.domain.ExportRequest;
 import de.ocrd.olahd.repository.mongo.ExportRequestRepository;
@@ -11,6 +8,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 @Component
 public class ScheduledTasks {
@@ -19,7 +18,6 @@ public class ScheduledTasks {
 
     private final ArchiveManagerService archiveManagerService;
 
-    @Autowired
     public ScheduledTasks(ExportRequestRepository exportRequestRepository, ArchiveManagerService archiveManagerService) {
         this.exportRequestRepository = exportRequestRepository;
         this.archiveManagerService = archiveManagerService;
