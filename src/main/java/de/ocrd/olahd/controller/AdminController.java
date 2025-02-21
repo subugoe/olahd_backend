@@ -40,7 +40,7 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Query success", response = TrackingInfo[].class)
     })
     @GetMapping(value = "/import-status", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<TrackingResponse>> GetImportData(String username, int page, int limit) {
+    public ResponseEntity<List<TrackingResponse>> getImportData(String username, int page, int limit) {
         List<TrackingInfo> trackingInfos = trackingRepository.findByUsername(username, PageRequest.of(page, limit, Sort.Direction.DESC, "timestamp"));
 
         List<TrackingResponse> results = new ArrayList<>();

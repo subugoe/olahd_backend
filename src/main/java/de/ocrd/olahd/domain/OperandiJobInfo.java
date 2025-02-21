@@ -20,10 +20,10 @@ public class OperandiJobInfo {
     private String username;
 
     @CreatedDate
-    private LocalDateTime createdAt;
+    private LocalDateTime created;
 
     @LastModifiedDate
-    private LocalDateTime uptadedAt;
+    private LocalDateTime updated;
 
     /** Status of the job from operandi */
     private OperandiJobStatus status;
@@ -130,20 +130,12 @@ public class OperandiJobInfo {
         this.pidResult = pidResult;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getCreated() {
+        return created;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUptadedAt() {
-        return uptadedAt;
-    }
-
-    public void setUptadedAt(LocalDateTime uptadedAt) {
-        this.uptadedAt = uptadedAt;
+    public void setCreated(LocalDateTime created) {
+        this.created = created;
     }
 
     public String getInputFileGroup() {
@@ -168,5 +160,13 @@ public class OperandiJobInfo {
 
     public void setWorkspaceDeleted(Boolean workspaceDeleted) {
         this.workspaceDeleted = workspaceDeleted;
+    }
+
+    public LocalDateTime getUpdated() {
+        return updated;
+    }
+
+    public void setUpdated(LocalDateTime updated) {
+        this.updated = updated;
     }
 }

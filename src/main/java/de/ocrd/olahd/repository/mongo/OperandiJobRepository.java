@@ -3,6 +3,7 @@ package de.ocrd.olahd.repository.mongo;
 import de.ocrd.olahd.domain.OperandiJobInfo;
 import de.ocrd.olahd.domain.OperandiJobStatus;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Repository;
 public interface OperandiJobRepository extends MongoRepository<OperandiJobInfo, String> {
 
     List<OperandiJobInfo> findByStatusIn(List<OperandiJobStatus> statuses);
+
+    List<OperandiJobInfo> findByUsername(String username, Pageable pageable);
 
     @Query("{'username' : ?0, 'status' : { $in: ['RUNNING']}}")
     List<OperandiJobInfo> findRunningJobsByUser(String username);
