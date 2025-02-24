@@ -83,17 +83,17 @@ public class ExportController {
      * @return
      */
     @ApiOperation(value = "Send a request to export data on tapes. Move archive from tape to disk.", authorizations = {
-        @Authorization(value = "basicAuth"), @Authorization(value = "bearer") })
+        @Authorization(value = "basicAuth"), @Authorization(value = "bearer")
+    })
     @ApiResponses({
         @ApiResponse(code = 200, message = "The archive is already on the hard drive.", response = byte[].class),
         @ApiResponse(code = 202, message = "Request accepted. Data is being transfer from tape to hard drive.", response = byte[].class),
-        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class) })
+        @ApiResponse(code = 404, message = "An archive with the specified identifier was not found.", response = ResponseMessage.class)
+    })
     @GetMapping(value = "/export-request", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> fullExportRequest(
-        @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam
-        String id,
-        @ApiIgnore
-        Principal principal
+        @ApiParam(value = "The PID or the PPN of the work.", required = true) @RequestParam String id,
+        @ApiIgnore Principal principal
     ) throws IOException {
 
         archiveManagerService.moveFromTapeToDisk(id);

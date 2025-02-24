@@ -53,14 +53,14 @@ public class AdminController {
 
                 // Get more info (version, online/offline ID in CDSTAR...)
                 Archive archive = archiveRepository.findByPid(trackingInfo.getPid());
+                ArchiveResponse archiveResponse = new ArchiveResponse();
                 if (archive == null) {
                     Utils.logWarn("Archive for tracking-info not found. Pid: " + trackingInfo.getPid());
+                } else {
+                    archiveResponse.setPid(archive.getPid());
+                    archiveResponse.setOnlineId(archive.getOnlineId());
+                    archiveResponse.setOfflineId(archive.getOfflineId());
                 }
-                ArchiveResponse archiveResponse = new ArchiveResponse();
-                archiveResponse.setPid(archive.getPid());
-                archiveResponse.setOnlineId(archive.getOnlineId());
-                archiveResponse.setOfflineId(archive.getOfflineId());
-
                 trackingResponse = new TrackingResponse(trackingInfo, archiveResponse);
             } else {
                 trackingResponse = new TrackingResponse(trackingInfo);
