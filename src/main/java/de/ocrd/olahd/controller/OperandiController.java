@@ -30,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
@@ -72,7 +73,7 @@ public class OperandiController {
         @ApiResponse(code = 200, message = "Operandi workflow started"),
         @ApiResponse(code = 500, message = "Internal error transfering a job to operandi", response = ResponseMessage.class)
     })
-    @GetMapping(value = "/operandi/run-workflow", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    @PostMapping(value = "/operandi/run-workflow", produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<String> runOperandiWorkflow(
         HttpServletRequest request,
         @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id,
