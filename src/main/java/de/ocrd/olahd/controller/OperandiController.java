@@ -6,6 +6,7 @@ import de.ocrd.olahd.component.ExecutorWrapper;
 import de.ocrd.olahd.domain.Archive;
 import de.ocrd.olahd.domain.OperandiJobInfo;
 import de.ocrd.olahd.domain.ResponseMessage;
+import de.ocrd.olahd.domain.RunOperandiWorkflowResponse;
 import de.ocrd.olahd.domain.TrackingInfo;
 import de.ocrd.olahd.msg.ErrMsg;
 import de.ocrd.olahd.operandi.OperandiJobStarter;
@@ -74,7 +75,7 @@ public class OperandiController {
         @ApiResponse(code = 500, message = "Internal error transfering a job to operandi", response = ResponseMessage.class)
     })
     @PostMapping(value = "/operandi/run-workflow", produces = { MediaType.APPLICATION_JSON_VALUE })
-    public ResponseEntity<String> runOperandiWorkflow(
+    public ResponseEntity<RunOperandiWorkflowResponse> runOperandiWorkflow(
         HttpServletRequest request,
         @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id,
         @ApiIgnore Principal principal
@@ -126,11 +127,9 @@ public class OperandiController {
                 job
             )
         );
-
-        // TODO: send a json back so that the frontend can more easily parse the job-id etc.
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType("application/json"))
-            .body(String.format("Operandi workflow started for pid: %s. Job-Id: %s",  id, job.getId()));
+            .body(new RunOperandiWorkflowResponse(job.getId(), job.getPid(), "Operandi workflow started"));
     }
 
     @ApiOperation(value = "Get information about the user's operandi-workflow-jobs.")

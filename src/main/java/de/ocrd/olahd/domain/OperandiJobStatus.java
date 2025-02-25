@@ -5,6 +5,8 @@ public enum OperandiJobStatus {
     ACCEPTED,
     /** {@linkplain OperandiJobRunnable} has started to process the job*/
     PREPARING,
+    /** Error in {@linkplain OperandiJobRunnable} */
+    PREPARING_FAILED,
     /** Running from Olahd's point of view means the job was submitted to operandi*/
     RUNNING,
     /** Job-status of failed queried from operandi*/

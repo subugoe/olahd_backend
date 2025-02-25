@@ -9,6 +9,7 @@ import de.ocrd.olahd.repository.mongo.ArchiveRepository;
 import de.ocrd.olahd.repository.mongo.OperandiJobRepository;
 import de.ocrd.olahd.service.ArchiveManagerService;
 import de.ocrd.olahd.utils.Utils;
+import java.io.IOException;
 import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,40 +61,59 @@ public class OperandiJobStarter implements Runnable {
         String pid = this.jobinfo.getPid();
         Archive archive = archiveRepository.findByPid(pid);
         boolean isOnline = StringUtils.isNotBlank(archive.getOnlineId());
+        if (!isOnline) {
+            Boolean isOnDisk = null;
+            try {
+                isOnDisk = archiveManagerService.isArchiveOnDisk(pid);
+            } catch(IOException e) {
+                //pass
+            }
+            if (!Boolean.TRUE.equals(isOnDisk)) {
+                this.handleError("Internal error. Archive not online and not on disk", null);
+                return;
+            }
+        }
 
         String workspaceId = null;
         try {
             Response res = archiveManagerService.export(pid, isOnline ? "quick" : "full", false);
+            if (!res.isSuccessful()) {
+                String msg = res.body() != null ? res.body().toString() : "no body";
+                throw new Exception(
+                    String.format("Error exporting archive from operandi. Code: %d. Text: %s", res.code(), msg)
+                );
+            }
+
             workspaceId = operandiService.uploadWorkspace(res.body().byteStream());
             logDebug("runOperandiWorkflow - Uploaded workspace to operandi. Id: %s", workspaceId);
             jobinfo.setWorkspaceId(workspaceId);
             jobinfo = operandiJobRepository.save(jobinfo);
         } catch (Exception e) {
-            // TODO: improve Error handling: if workspace upload fails set the job-status to failed or something else
-            Utils.logError(
-                String.format(
-                    "Error while uploading workspace to operandi. Pid: %s. Job-Info-Id: %s", pid, jobinfo.getId()
-                ), e
-            );
+            this.handleError("Error while uploading workspace to operandi", workspaceId);
             return;
         }
 
         try {
-            String jobId = operandiService.runWorkflow(jobinfo.getWorkflowId(), workspaceId, jobinfo.getInputFileGroup());
+            String jobId = operandiService
+                .runWorkflow(jobinfo.getWorkflowId(), workspaceId, jobinfo.getInputFileGroup());
             logDebug("runOperandiWorkflow - started operandi-workflow with id: %s", jobId);
             jobinfo.setOperandiJobId(jobId);
             jobinfo.setStatus(OperandiJobStatus.RUNNING);
             jobinfo = operandiJobRepository.save(jobinfo);
             logDebug("runOperandiWorkflow - Saved Operandi job in mongodb: %s", jobinfo.getId());
         } catch(Exception e) {
-            // TODO: improve error handling: set job-status. Remove the workspace again from operandi
-            Utils.logError(
-                String.format(
-                    "Error starting operandi workflow. Pid: %s. Workspace-id: %s. Job-Info-Id: %s", pid, workspaceId,
-                    jobinfo.getId()
-                ), e
-            );
+            this.handleError("Error starting operandi workflow", workspaceId);
             return;
         }
+    }
+
+    private void handleError(String msg, String workspaceId) {
+        String logmsg = String.format("%s. Pid: %s. Job-Info-Id: %s", msg, this.jobinfo.getPid(), this.jobinfo.getId());
+        if (StringUtils.isNotBlank(workspaceId)) {
+            logmsg = logmsg + ". Workspace-Id: " + workspaceId;
+        }
+        Utils.logError(logmsg, null);
+        this.jobinfo.setStatus(OperandiJobStatus.PREPARING_FAILED);
+        this.jobinfo = operandiJobRepository.save(this.jobinfo);
     }
 }

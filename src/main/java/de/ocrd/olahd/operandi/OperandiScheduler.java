@@ -24,9 +24,9 @@ import org.springframework.util.CollectionUtils;
 public class OperandiScheduler {
 
     // TODO: set to 5
-    private final static int FIRST_RUN_AFTER_X_MIN = 0;
+    private final static int FIRST_RUN_AFTER_X_MIN = 1;
     // TODO: set to 30
-    private final static int RUN_EVERY_X_MIN = 1;
+    private final static int RUN_EVERY_X_MIN = 5;
 
     @Autowired
     private OperandiJobRepository operandiJobRepository;
@@ -98,8 +98,6 @@ public class OperandiScheduler {
         } else if (status.equalsIgnoreCase("failed")) {
             job.setStatus(OperandiJobStatus.FAILED);
             try {
-                // XXX:  (2025-02-21) I think it is best to simply delete the workspace, but maybe this it's not if
-                // a job should be rerun for example
                 operandiService.deleteWorkspace(job.getWorkspaceId());
                 job.setWorkspaceDeleted(true);
                 Utils.logDebug("handleRunningOperandiJobs: Deleted workspace from Operandi: %s", job.getWorkspaceId());
