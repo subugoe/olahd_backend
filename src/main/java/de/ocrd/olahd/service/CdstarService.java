@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.annotation.PostConstruct;
 import okhttp3.Credentials;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -33,6 +34,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.Tika;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -72,6 +74,20 @@ public class CdstarService implements ArchiveManagerService, SearchService {
     @Value("${offline.mimeTypes}")
     private String offlineMimeTypes;
 
+    /** With this flag the offline-storage of Cdstar can be switched of (set to false). This flag is meant to be set
+     *  only once when starting the service for the first time. It is NOT intended to switch it again after the first
+     *  archive has been importet.*/
+    @Value("${cdstar.useTapestorage:true}")
+    private boolean useTapeStorage;
+
+    @PostConstruct
+    private void validateService() {
+        if (!useTapeStorage && StringUtils.isNotBlank(offlineMimeTypes)) {
+            throw new RuntimeException("'offline.mimeTypes' can only be used when tape storage is used, but"
+                + " 'cdstar.useTapestorage' is set to false");
+        }
+    }
+
     /**
      * To indicate that function
      * {@linkplain #getArchiveIdFromIdentifier(String, String)} wasn't successful
@@ -89,14 +105,20 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             // Get the transaction ID
             txId = getTransactionId();
 
+            String offlineArchiveId = "";
+
             String onlineArchiveId = createArchive(txId, false);
-            String offlineArchiveId = createArchive(txId, true);
+            if (useTapeStorage) {
+                offlineArchiveId = createArchive(txId, true);
+            }
 
             uploadData(extractedDir, txId, onlineArchiveId, offlineArchiveId);
 
             // Update archive meta-data
             setArchiveMetaData(onlineArchiveId, metaData, pid, txId);
-            setArchiveMetaData(offlineArchiveId, metaData, pid, txId);
+            if (useTapeStorage) {
+                setArchiveMetaData(offlineArchiveId, metaData, pid, txId);
+            }
 
             // Commit the transaction
             commitTransaction(txId);
@@ -104,7 +126,9 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             // Meta-data for PID
             List<AbstractMap.SimpleImmutableEntry<String, String>> pidMetaData = new ArrayList<>();
             pidMetaData.add(new AbstractMap.SimpleImmutableEntry<>("ONLINE-URL", url + vault + "/" + onlineArchiveId + "?with=files,meta"));
-            pidMetaData.add(new AbstractMap.SimpleImmutableEntry<>("OFFLINE-URL", url + vault + "/" + offlineArchiveId + "?with=files,meta"));
+            if (useTapeStorage) {
+                pidMetaData.add(new AbstractMap.SimpleImmutableEntry<>("OFFLINE-URL", url + vault + "/" + offlineArchiveId + "?with=files,meta"));
+            }
 
             return new ImportResult(onlineArchiveId, offlineArchiveId, pidMetaData);
         } catch (Exception ex) {
@@ -136,17 +160,22 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             txId = getTransactionId();
 
             String onlineArchiveId = createArchive(txId, false);
-            String offlineArchiveId = createArchive(txId, true);
+            String offlineArchiveId = "";
+            if (useTapeStorage) {
+                offlineArchiveId = createArchive(txId, true);
+            }
 
             uploadData(extractedDir, txId, onlineArchiveId, offlineArchiveId);
 
             // Update archive meta-data of current version
             setArchiveMetaData(onlineArchiveId, metaData, pid, txId);
-            setArchiveMetaData(offlineArchiveId, metaData, pid, txId);
+            if (useTapeStorage) {
+                setArchiveMetaData(offlineArchiveId, metaData, pid, txId);
+            }
 
             // Delete the previous version on the hard drive
             // Only store the latest version on the hard drive
-            if (!prevOnlineArchiveId.equals(NOT_FOUND)) {
+            if (!prevOnlineArchiveId.equals(NOT_FOUND) && useTapeStorage) {
                 deleteArchive(prevOnlineArchiveId, txId);
             }
 
@@ -156,7 +185,9 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             // Meta-data for PID
             List<AbstractMap.SimpleImmutableEntry<String, String>> pidMetaData = new ArrayList<>();
             pidMetaData.add(new AbstractMap.SimpleImmutableEntry<>("ONLINE-URL", url + vault + "/" + onlineArchiveId + "?with=files,meta"));
-            pidMetaData.add(new AbstractMap.SimpleImmutableEntry<>("OFFLINE-URL", url + vault + "/" + offlineArchiveId + "?with=files,meta"));
+            if (useTapeStorage) {
+                pidMetaData.add(new AbstractMap.SimpleImmutableEntry<>("OFFLINE-URL", url + vault + "/" + offlineArchiveId + "?with=files,meta"));
+            }
 
             return new ImportResult(onlineArchiveId, offlineArchiveId, pidMetaData);
 
@@ -203,6 +234,15 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         }
     }
 
+    /**
+     * Upload data to Cdstar
+     *
+     * @param extractedDir
+     * @param txId
+     * @param onlineArchiveId
+     * @param offlineArchiveId - Must not be null, but can be an empty String in case of no tape(offline) storage.
+     * @throws IOException
+     */
     private void uploadData(Path extractedDir, String txId, String onlineArchiveId, String offlineArchiveId) throws IOException {
 
         String onlineBaseUrl = url + vault + "/" + onlineArchiveId;
@@ -238,13 +278,14 @@ public class CdstarService implements ArchiveManagerService, SearchService {
                     try {
                         // Offline file?
                         if (offlineTypes.contains(mimeType)) {
-
+                            // useTapestorage(=true) and non empty offlineTypes is not allowed
                             // Only send to offline archive
                             sendRequest(offlineUrl, txId, file, mimeType, true);
                         } else {
-
                             // For other files, send to both archives
-                            sendRequest(offlineUrl, txId, file, mimeType, true);
+                            if (useTapeStorage) {
+                                sendRequest(offlineUrl, txId, file, mimeType, true);
+                            }
                             sendRequest(onlineUrl, txId, file, mimeType, false);
                         }
                     } catch (IOException e) {
@@ -384,6 +425,15 @@ public class CdstarService implements ArchiveManagerService, SearchService {
         }
     }
 
+    /**
+     * Upload the meta-data (`metaData` comes from bag-info.txt) to the cdstar-archive
+     *
+     * @param archiveId - Cdstar-id to send metadata to
+     * @param metaData - The data to upload. This is read from the bag-info.txt previously
+     * @param pid - The pid is added too to the Cdstar-archive's metadata
+     * @param txId - the transaction-id to associate the Cdstar-call to
+     * @throws IOException
+     */
     private void setArchiveMetaData(String archiveId, List<AbstractMap.SimpleImmutableEntry<String, String>> metaData,
                                     String pid, String txId) throws IOException {
         String fullUrl = url + vault + "/" + archiveId;
@@ -473,6 +523,9 @@ public class CdstarService implements ArchiveManagerService, SearchService {
 
     @Override
     public void deleteArchive(String archiveId, String txId) throws IOException {
+        if (StringUtils.isBlank(archiveId)) {
+            return;
+        }
         String fullUrl = url + vault + "/" + archiveId;
 
         OkHttpClient client = new OkHttpClient();

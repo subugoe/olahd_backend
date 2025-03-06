@@ -23,6 +23,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -148,7 +149,9 @@ public class BagImport implements Runnable {
                 synchronized (mutexFactory.getMutex(prevPid)) {
                     Archive prevVersion = archiveRepository.findByPid(prevPid);
                     archive.setPreviousVersion(prevVersion);
-                    prevVersion.setOnlineId(null);
+                    if (importResult.isTapeStorageUsed()) {
+                        prevVersion.setOnlineId(null);
+                    }
                     prevVersion.addNextVersion(archive);
                     archiveRepository.save(archive);
                     archiveRepository.save(prevVersion);
@@ -270,7 +273,9 @@ public class BagImport implements Runnable {
         // Delete the archives (hot and cold)
         if (importResult != null) {
             try {
-                archiveManagerService.deleteArchive(importResult.getOnlineId(), null);
+                if (StringUtils.isNotBlank(importResult.getOnlineId())) {
+                    archiveManagerService.deleteArchive(importResult.getOnlineId(), null);
+                }
             } catch (Exception e) {
                 logger.error(
                     "error cleaning up. pid: '{}', online-id: '{}', offline-id: '{}' - {}",
@@ -279,7 +284,9 @@ public class BagImport implements Runnable {
                 );
             }
             try {
-                archiveManagerService.deleteArchive(importResult.getOfflineId(), null);
+                if (StringUtils.isNotBlank(importResult.getOfflineId())) {
+                    archiveManagerService.deleteArchive(importResult.getOfflineId(), null);
+                }
             } catch (Exception e) {
                 logger.error(
                     "error cleaning up. pid: '{}', online-id: '{}', offline-id: '{}' - {}",
