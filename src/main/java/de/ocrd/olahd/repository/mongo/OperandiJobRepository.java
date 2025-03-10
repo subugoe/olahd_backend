@@ -18,21 +18,40 @@ public interface OperandiJobRepository extends MongoRepository<OperandiJobInfo, 
 
     List<OperandiJobInfo> findByUsername(String username, Pageable pageable);
 
-    @Query("{'username' : ?0, 'status' : { $in: ['RUNNING']}}")
-    List<OperandiJobInfo> findRunningJobsByUser(String username);
+    @Query("{'username' : ?0, 'status' : { $in: ['ACCEPTED', 'PREPARING', 'RUNNING']}}")
+    List<OperandiJobInfo> findUnfinishedJobsByUser(String username);
+
+    @Query("{'pid' : ?0, 'status' : { $in: ['ACCEPTED', 'PREPARING', 'RUNNING']}}")
+    List<OperandiJobInfo> findUnfinishedJobsByPid(String pid);
 
     /**
      * Asks the database if the provided user has a running operandi job
      *
-     * The original aim of this method is to ensure that each user does not have more than one job running at the same
-     * time. This might be changed later
+     * Running in this case means the job has been received but is not completely processed by operandi yet. The
+     * original aim of this method is to ensure that each user does not have more than one job running at the same time.
+     * This might be changed later
      *
      * @param archiveRepository
      * @param archive
      * @return
      */
-    default public boolean hasRunningJob(String username) {
-        List<OperandiJobInfo> runningJobs = findRunningJobsByUser(username);
+    default public boolean hasUserUnfinishedJob(String username) {
+        List<OperandiJobInfo> runningJobs = findUnfinishedJobsByUser(username);
+        return !runningJobs.isEmpty();
+    }
+
+    /**
+     * Asks the database if the provided workspace (pid) has a not finished aka running job.
+     *
+     * Running in this case means the job has been received but is not completely processed by operandi yet. The
+     * original aim of this method is to ensure that for each workspace only a single workspace is running at a time.
+     *
+     * @param archiveRepository
+     * @param archive
+     * @return
+     */
+    default public boolean hasWorkspaceUnfinishedJob(String pid) {
+        List<OperandiJobInfo> runningJobs = findUnfinishedJobsByPid(pid);
         return !runningJobs.isEmpty();
     }
 

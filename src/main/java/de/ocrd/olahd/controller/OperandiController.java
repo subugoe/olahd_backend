@@ -65,6 +65,8 @@ public class OperandiController {
      * Check with the mongodb if the PID has an existing archive. Then try to load the file from the s3. Set the
      * placeholder and return it. Check for errors if unexpectedly there is no IIIF-Manifest available for the PID.
      *
+     * This method is synchronized to ensure that there is only one single job running for a user and that a user has
+     * only one running job (the latter might be removed sooner or later).
      * @param id PID
      * @return IIIF-Manifest for the PID
      * @throws IOException
@@ -75,7 +77,7 @@ public class OperandiController {
         @ApiResponse(code = 500, message = "Internal error transfering a job to operandi", response = ResponseMessage.class)
     })
     @PostMapping(value = "/operandi/run-workflow", produces = { MediaType.APPLICATION_JSON_VALUE })
-    public ResponseEntity<RunOperandiWorkflowResponse> runOperandiWorkflow(
+    public synchronized ResponseEntity<RunOperandiWorkflowResponse> runOperandiWorkflow(
         HttpServletRequest request,
         @ApiParam(value = "The PID/PPA of the work.", required = true) @RequestParam String id,
         @ApiIgnore Principal principal
@@ -85,8 +87,14 @@ public class OperandiController {
             throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.PARAM_ID_IS_EMPTY);
         }
 
-        // Only one running Job per user for now
-        if (operandiJobRepository.hasRunningJob(principal.getName())) {
+        // XXX: Only one running Job per user for now
+        if (operandiJobRepository.hasUserUnfinishedJob(principal.getName())) {
+            throw new HttpClientErrorException(HttpStatus.CONFLICT, "This user already has a running job. Only one"
+                + " running operandi job is permitted currently");
+        }
+
+        // Only a single running job per workspace
+        if (operandiJobRepository.hasWorkspaceUnfinishedJob(principal.getName())) {
             throw new HttpClientErrorException(HttpStatus.CONFLICT, "This user already has a running job. Only one"
                 + " running operandi job is permitted currently");
         }
@@ -145,10 +153,26 @@ public class OperandiController {
         @ApiIgnore
         Principal principal
     ) {
-        System.out.println("page: " + page + ". limit: " + limit + ". username: " + principal.getName());
-
         List<OperandiJobInfo> joblist = operandiJobRepository
             .findByUsername(principal.getName(), PageRequest.of(page, limit, Sort.Direction.DESC, "created"));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(joblist);
+    }
+
+    @ApiOperation(value = "Check if user or workspace has a running job")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Query success", response = TrackingInfo[].class)
+    })
+    @GetMapping(value = "/operandi/unfinished-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<OperandiJobInfo>> getUnfinishedJobs(
+        @ApiParam(value = "The PID/PPA of the work.", required = false) @RequestParam String pid,
+        @ApiIgnore Principal principal
+    ) {
+        List<OperandiJobInfo> joblist = null;
+        if (StringUtils.isNotBlank(pid)) {
+            joblist = operandiJobRepository.findUnfinishedJobsByPid(pid);
+        } else {
+            joblist = operandiJobRepository.findUnfinishedJobsByPid(principal.getName());
+        }
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(joblist);
     }
 }
