@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiResponses;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -163,16 +165,23 @@ public class OperandiController {
             @ApiResponse(code = 200, message = "Query success", response = TrackingInfo[].class)
     })
     @GetMapping(value = "/operandi/unfinished-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<OperandiJobInfo>> getUnfinishedJobs(
-        @ApiParam(value = "The PID/PPA of the work.", required = false) @RequestParam String pid,
+    public ResponseEntity<Map<String, Boolean>> getUnfinishedJobs(
+        @ApiParam(value = "The PID/PPA of the work.") @RequestParam(required = false) String id,
         @ApiIgnore Principal principal
     ) {
         List<OperandiJobInfo> joblist = null;
-        if (StringUtils.isNotBlank(pid)) {
-            joblist = operandiJobRepository.findUnfinishedJobsByPid(pid);
-        } else {
-            joblist = operandiJobRepository.findUnfinishedJobsByPid(principal.getName());
+        boolean jobsForPid = false;
+        if (StringUtils.isNotBlank(id)) {
+            joblist = operandiJobRepository.findUnfinishedJobsByPid(id);
         }
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(joblist);
+        if (CollectionUtils.isEmpty(joblist)) {
+            joblist = operandiJobRepository.findUnfinishedJobsByUser(principal.getName());
+        } else {
+            jobsForPid = true;
+        }
+
+        boolean jobsRunning = !joblist.isEmpty();
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+            .body(Map.of("jobsRunning", jobsRunning, "jobsForPid", jobsForPid));
     }
 }

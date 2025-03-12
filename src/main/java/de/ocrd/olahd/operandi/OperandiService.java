@@ -140,7 +140,6 @@ public class OperandiService {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(bodyString);
 
-            System.out.println("root: " + root);
             return root.get("resource_id").asText();
         } catch (IOException e) {
             throw new OperandiException("Error handling operandi workspace-upload response", e);

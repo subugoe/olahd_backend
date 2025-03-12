@@ -17,16 +17,12 @@ import org.springframework.util.CollectionUtils;
  * This scheduler schedules tasks every few minutes to find and finalize (set infos, remove workspace) finished
  * operandi-workflow-jobs
  *
- * TODO: think about adding a task to find finished jobs with not deleted workspaces (these jobs have to be handled
- * manually and should only occur in case of errors)
  */
 @Component
 public class OperandiScheduler {
 
-    // TODO: set to 5
-    private final static int FIRST_RUN_AFTER_X_MIN = 1;
-    // TODO: set to 30
-    private final static int RUN_EVERY_X_MIN = 5;
+    private final static int FIRST_RUN_AFTER_X_MIN = 5;
+    private final static int RUN_EVERY_X_MIN = 30;
 
     @Autowired
     private OperandiJobRepository operandiJobRepository;
