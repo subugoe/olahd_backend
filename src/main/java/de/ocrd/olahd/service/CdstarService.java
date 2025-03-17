@@ -176,7 +176,11 @@ public class CdstarService implements ArchiveManagerService, SearchService {
             // Delete the previous version on the hard drive
             // Only store the latest version on the hard drive
             if (!prevOnlineArchiveId.equals(NOT_FOUND) && useTapeStorage) {
-                deleteArchive(prevOnlineArchiveId, txId);
+                // It may happen that useTapeStorage was switched off and on again (this is not intended), this ensures
+                // at least one version of an archive still exists in any case
+                if (!prevOfflineArchiveId.equals(NOT_FOUND)) {
+                    deleteArchive(prevOnlineArchiveId, txId);
+                }
             }
 
             // Commit the transaction
