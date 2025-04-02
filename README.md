@@ -27,13 +27,25 @@ This is the core of the OLA-HD project. OLA-HD is to archive, export and search 
 * **Identity Management**: Users have to provide proper credentials to import data to the system.
   Frontend users are authenticated against the
   [GWDG SSO](https://gwdg.de/services/general-services/sso-aai/).
-* **Archive manager (CDSTAR)**: The service that is responsible for storing the data. This service
+* **Archive Manager (CDSTAR)**: The service that is responsible for storing the data. This service
   is called
   [CDSTAR](https://info.gwdg.de/dokuwiki/doku.php?id=en:services:storage_services:gwdg_cdstar:start)
   and maintained by GWDG. When data is imported, everything will be stored on tapes. To provide
   quick access to users, some data are copied to hard drive. In the current configuration, the
   system does not store TIFF images on hard drive.
 * **MongoDB**: the database of the back-end. It stores all import and export information.
+
+The core of OLA-HD is the REST API (the Java-Spring REST Service Backend). It provides an API for
+importing, exporting and searching the data. The REST service also offers other functions such as
+exporting single files or querying metadata etc. The Backend-Service itself does not save any
+archive-data but sends it to the external archive manager CDSTAR. Each saved OCRD-ZIP is assigned a
+unique PID via the external PID-Service during import. The OLA-HD-Service uses a MongoDB to store
+information about the stored OCRD-ZIPs, such as the CDSTAR internal ID or the PID used. There are
+also 4 containers for the search: Web, Redis, Indexer and Elasticsearch. The information about the
+data is stored in Elasticsearch so that it can be searched quickly. This data is written to the
+Elasticsearch by the Indexer. It extracts this data from the archived files by querying them
+through the OLA-HD-Backend. The Web and Redis containers are used to process and forward the
+indexing requests from the Backend to the Indexer.
 
 
 2\. Installation and startup
