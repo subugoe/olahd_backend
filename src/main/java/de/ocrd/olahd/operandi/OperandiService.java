@@ -15,6 +15,7 @@ import okhttp3.Response;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -32,27 +33,27 @@ import org.springframework.web.client.HttpServerErrorException;
 public class OperandiService {
 
     /** Base-url of operandi */
-    @Value("${operandi.url}")
+    @Value("${operandi.url:}")
     private String operandiUrl;
 
     /** Username of used operandi account */
-    @Value("${operandi.username}")
+    @Value("${operandi.username:}")
     private String operandiUsername;
 
     /** Password for operandi account */
-    @Value("${operandi.password}")
+    @Value("${operandi.password:}")
     private String operandiPassword;
 
     /** Username to upload with operandi processed workspaces. An admin account is used*/
-    @Value("${operandi.olahd.username}")
+    @Value("${operandi.olahd.username:}")
     private String olahdUsername;
 
     /** Password for olahdUsername*/
-    @Value("${operandi.olahd.password}")
+    @Value("${operandi.olahd.password:}")
     private String olahdPassword;
 
     /** Base-Url to upload to*/
-    @Value("${operandi.olahd.url}")
+    @Value("${operandi.olahd.url:}")
     private String olahdBaseUrl;
 
     /**
@@ -64,6 +65,9 @@ public class OperandiService {
      * @return
      */
     public String runWorkflow(String workflowId, String workspaceId, String inputFileGrp) {
+        if (StringUtils.isBlank(operandiUrl)) {
+            throwOperandiException("Operandi-URL not set. Aborting", null);
+        }
         String url = String.format("%s/workflow/%s", operandiUrl, workflowId);
         OkHttpClient client = new OkHttpClient();
 
@@ -106,6 +110,10 @@ public class OperandiService {
      * @return
      */
     public String uploadWorkspace(InputStream zipStream) {
+        if (StringUtils.isBlank(operandiUrl)) {
+            throwOperandiException("Operandi-URL not set. Aborting", null);
+        }
+
         String url = String.format("%s/workspace", operandiUrl);
         OkHttpClient client = new OkHttpClient();
 
@@ -249,7 +257,12 @@ public class OperandiService {
      * @param response
      */
     private void throwOperandiException(String msg, Response response) {
-        throw new OperandiException(String.format("%s. Code: %d. Text: %s", msg, response.code(), response.toString()));
+        throw new OperandiException(String.format(
+            "%s. Code: %d. Text: %s",
+            msg,
+            response != null ? response.code() : 0,
+            response != null ? response.toString() : ""
+        ));
 
     }
 
