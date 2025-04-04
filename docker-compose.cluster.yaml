@@ -109,6 +109,7 @@ services:
 
   go-iiif:
     image: ghcr.io/subugoe/go-iiif:develop
+    container_name: olahds_image_server
     command: /go/iiif-server -server-uri http://0.0.0.0:8080 -config-source file:///etc/iiif-server
     working_dir: /go
     volumes:
@@ -120,7 +121,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.go-iiif.entrypoints=web"
       - "traefik.http.routers.go-iiif.rule=PathPrefix(`/images`)"
-      - "traefik.http.routers.go-iiif.middlewares=stripprefix_api"
+      - "traefik.http.routers.go-iiif.middlewares=stripprefix_images"
       - "traefik.http.middlewares.stripprefix_images.stripprefix.prefixes=/images"
     ports:
       - "6701:8080"
