@@ -2,9 +2,6 @@ version: '3.5'
 services:
 
   olahds_backend:
-    #labels:
-    #  kompose.image-pull-policy: Always
-    #volumes:
     ports:
       - "8080:8080"
     environment:
@@ -12,11 +9,10 @@ services:
       - OLA_HD_MAX_MEMORY=6G
       - OLA_HD_EXTERNAL_PORT=8080
       - OLA_HD_PORT=8080
-
+    volumes:
+      - ./src/main/resources/:/config/
 
   olahds_indexer:
-    #labels:
-    #  kompose.image-pull-policy: Always
     volumes:
       - ./cfg/local/app.env:/etc/env/app.env
       - ./cfg/local/app-static.env:/etc/env/app-static.env
@@ -24,10 +20,7 @@ services:
       - ./cfg/local/commons-static.env:/etc/env/commons-static.env
       - ./cfg/local/iiif.env:/etc/env/iiif.env
 
-
   olahds_web_notifier:
-    #labels:
-    #  kompose.image-pull-policy: Always
     volumes:
       - ./cfg/local/app.env:/etc/env/app.env
       - ./cfg/local/app-static.env:/etc/env/app-static.env
@@ -65,8 +58,6 @@ services:
     command: redis-server --appendonly yes
     container_name: olahds_redis
     restart: on-failure
-    #labels:
-    #  build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
     ports:
       - "8442:6379"
     volumes:
@@ -80,9 +71,6 @@ services:
     build:
       context: ./docker/search
     container_name: olahds_search
-    #labels:
-    #  build.context: docker.gitlab.gwdg.de/subugoe/olahd_backend/
-    #command: tail -f /dev/null
     volumes:
       - ./docker/search/config/stopwords.txt:/usr/share/elasticsearch/config/stopwords.txt:ro
       - es_data:/usr/share/elasticsearch/data
@@ -116,6 +104,20 @@ services:
           - olahds_s3
           - s3
 
+  go-iiif:
+    image: ghcr.io/subugoe/go-iiif:develop
+    command: /go/iiif-server -server-uri http://0.0.0.0:8080 -config-source file:///etc/iiif-server
+    working_dir: /go
+    volumes:
+      - ./cfg/go-iiif/config.json:/etc/iiif-server/config.json
+      - ./cfg/go-iiif/instructions.json:/etc/iiif-server/instructions.json
+    ports:
+      - "8081:8080"
+    networks:
+      olahd:
+        aliases:
+          - image-server
+          - images
 
 volumes:
   redisdata:
