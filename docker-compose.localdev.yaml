@@ -120,6 +120,18 @@ services:
           - olahds_s3
           - s3
 
+  olahds_image_server:
+    container_name: olahds_image_server
+    build:
+      context: https://github.com/go-iiif/go-iiif.git#v7.0.2
+    command: /bin/iiif-server -server-uri "http://0.0.0.0:8090" -config-images-source-uri "rfc6570://?template=http://172.17.0.1:8080/download-image?id={id}"
+    ports:
+      - "8090:8090"
+    networks:
+      olahd:
+        aliases:
+          - images
+          - image-server
 
 volumes:
   redisdata:

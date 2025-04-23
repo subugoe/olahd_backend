@@ -28,6 +28,6 @@ public class ErrMsg {
     public static final String FILE_NOT_A_TIFF = "Given file is not a tiff image";
     public static final String TIFF_CONVERT_ERROR = "Error converting tiff to jpeg";
     public static final String IIIF_MANIFEST_NOT_FOUND = "IIIF-Manifest not found";
-
+    public static final String CANNOT_PARSE_IMAGE_ID = "Cannot parse PID and filepath from image-id";
 
 }

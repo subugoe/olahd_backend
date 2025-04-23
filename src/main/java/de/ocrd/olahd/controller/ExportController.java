@@ -191,6 +191,33 @@ public class ExportController {
             .header(HttpHeaders.CONTENT_LENGTH, contentLength + "").body(resource);
     }
 
+    static final String REGEX_IMAGE_ID = "^(.*?)&.*?path=([^\\s]+)$";
+    static final java.util.regex.Pattern PATTERN_IMAGE_ID = java.util.regex.Pattern.compile(REGEX_IMAGE_ID);
+
+    @ApiOperation(value = "Endpoint for go-iiif to get images")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "File successfully transfered.", response = byte[].class),
+        @ApiResponse(code = 404, message = "File or archive not found.", response = byte[].class),
+        @ApiResponse(code = 409, message = "File only available on tape.", response = byte[].class),
+    })
+    @GetMapping(value = "/download-image", produces = { MediaType.APPLICATION_XML_VALUE,
+        MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    public ResponseEntity<Resource> downloadImage(
+        @ApiParam(value = "Image id used by go-iiif image server", required = true) @RequestParam("id")
+        String imageId
+    ) throws IOException {
+        String pid = null;
+        String path = null;
+        java.util.regex.Matcher matcher = PATTERN_IMAGE_ID.matcher(imageId);
+        if (matcher.find()) {
+            pid = matcher.group(1);
+            path = matcher.group(2);
+        } else {
+            throw new HttpClientErrorException(HttpStatus.UNPROCESSABLE_ENTITY, ErrMsg.CANNOT_PARSE_IMAGE_ID);
+        }
+        return this.downloadFile(pid, false, path);
+    }
+
     /**
      * Export data using {@linkplain ArchiveManagerService}
      *
