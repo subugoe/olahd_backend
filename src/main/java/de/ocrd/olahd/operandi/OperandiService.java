@@ -131,7 +131,7 @@ public class OperandiService {
         };
 
         MultipartBody multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
-            .addFormDataPart("workspace", "vd18test.ocrd.zip", body)
+            .addFormDataPart("workspace", "olahd-workspace.ocrd.zip", body)
             .build();
 
         Request request = new Request.Builder()
