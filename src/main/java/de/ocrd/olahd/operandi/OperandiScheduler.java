@@ -61,7 +61,7 @@ public class OperandiScheduler {
     private void handleOperandiJob(OperandiJobInfo job) {
         String status = null;
         try {
-            status = operandiService.getJobStatus(job.getWorkflowId(), job.getOperandiJobId());
+            status = operandiService.getJobStatus(job.getOperandiJobId());
             if (StringUtils.isAllBlank(status)) {
                 throw new Exception("Empty job status");
             }

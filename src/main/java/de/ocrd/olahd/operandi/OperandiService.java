@@ -162,8 +162,8 @@ public class OperandiService {
      * @param workflowId
      * @return true if job was successful, false otherwise.
      */
-    public String getJobStatus(String workflowId, String jobId) {
-        String url = String.format("%s/workflow/%s/%s", operandiUrl, workflowId, jobId);
+    public String getJobStatus(String jobId) {
+        String url = String.format("%s/workflow-job/%s", operandiUrl, jobId);
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder()
