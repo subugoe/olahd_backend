@@ -1,6 +1,7 @@
 package de.ocrd.olahd.operandi;
 
 import static de.ocrd.olahd.utils.Utils.logDebug;
+import static de.ocrd.olahd.utils.Utils.logError;
 
 import de.ocrd.olahd.domain.Archive;
 import de.ocrd.olahd.domain.OperandiJobInfo;
@@ -89,7 +90,9 @@ public class OperandiJobStarter implements Runnable {
             jobinfo.setWorkspaceId(workspaceId);
             jobinfo = operandiJobRepository.save(jobinfo);
         } catch (Exception e) {
-            this.handleError("Error while uploading workspace to operandi", workspaceId);
+            var msg = "Error while uploading workspace to operandi";
+            logError(msg, e);
+            this.handleError(msg, workspaceId);
             return;
         }
 
@@ -102,7 +105,9 @@ public class OperandiJobStarter implements Runnable {
             jobinfo = operandiJobRepository.save(jobinfo);
             logDebug("runOperandiWorkflow - Saved Operandi job in mongodb: %s", jobinfo.getId());
         } catch(Exception e) {
-            this.handleError("Error starting operandi workflow", workspaceId);
+            var msg = "Error starting operandi workflow";
+            logError(msg, e);
+            this.handleError(msg, workspaceId);
             return;
         }
     }
