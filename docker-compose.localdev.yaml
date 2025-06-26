@@ -34,6 +34,8 @@ services:
       - ./cfg/localdev/commons.env:/etc/env/commons.env
       - ./cfg/localdev/commons-static.env:/etc/env/commons-static.env
       - ./cfg/localdev/iiif.env:/etc/env/iiif.env
+    ports:
+      - "1323:1323"
     networks:
       olahd:
         aliases:

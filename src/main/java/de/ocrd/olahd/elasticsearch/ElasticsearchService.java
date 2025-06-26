@@ -7,8 +7,13 @@ import de.ocrd.olahd.exceptions.ElasticServiceException;
 import de.ocrd.olahd.model.Detail;
 import de.ocrd.olahd.model.HitList;
 import de.ocrd.olahd.model.ResultSet;
+import de.ocrd.olahd.utils.Utils;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -156,6 +161,63 @@ public class ElasticsearchService {
     }
 
     /**
+     * This is the newer version of the facet search. This is the main functionality for searching.
+     *
+     * Previously it was a grouped search over both, logical and physical Index. Now for the metadata it searches only
+     * in the logical Index and only in entries having `IsFirst = true`. For the fulltext-search the physical index is
+     * queried first and then the resulting pids are used to filter the logical-IsFirst-Entries.
+     *
+     * @param searchterm     term to be searched for in metadata and/or fulltexts
+     * @param limit          number of results in the hitlist
+     * @param offset         starting point of the next resultset from search results to support
+     *                       pagination
+     * @param extended       if false, an initial search is started and no facets or filters are
+     *                       applied
+     * @param isGT           if true, search only for GT data
+     * @param metadatasearch if true, search over the metadata
+     * @param fulltextsearch if true, search over the fulltexts
+     * @param sort           Defines sorting fields and direction as a comma separated list
+     *                       according to the following pattern field|{asc|desc}
+     * @param field
+     * @param value
+     * @return
+     */
+    public ResultSet facetSearchV2(
+        SearchTerms searchterms, int limit, int offset, boolean extended,
+        Boolean isGt, boolean metadatasearch, boolean fulltextsearch, String sort,
+        String[] field, String[] value
+    ) {
+
+        // Get the pids matching the searchterm in its fulltext
+        Set<String> fulltextPids = null;
+        if (fulltextsearch && StringUtils.isNotBlank(searchterms.getSearchterm())) {
+            fulltextPids = this.queryFulltextPids(searchterms.getSearchterm());
+        }
+
+        // Create the search query
+        ElasticQueryHelperV2 util = new ElasticQueryHelperV2(
+            searchterms, limit, offset, extended,
+            isGt, metadatasearch, fulltextsearch, sort, field, value,
+            fulltextPids
+        );
+        SearchRequest request = util.createSearchRequest();
+
+        try {
+            // Execute the main search-query
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+
+            // Transfer the results into the result-objects
+            ElasticResponseHelper util2 = new ElasticResponseHelper();
+            ResultSet res = util2.responseToResultSetV2(
+                response, searchterms, metadatasearch, fulltextsearch, offset, limit
+            );
+            return res;
+        } catch (IOException | ElasticsearchStatusException e) {
+            throw new ElasticServiceException("Error executing search request", e);
+        }
+    }
+
+    /**
      * Add information to entries without data.
      *
      * Entries without data can occur when pages an the METS are accidently not part of the <mets:structLink> element.
@@ -165,8 +227,10 @@ public class ElasticsearchService {
      * @param res
      */
     private void patchNoDataEntries(ResultSet res) {
+        int counter = 0;
         for (HitList hit : res.getHitlist()) {
             if (Boolean.TRUE.equals(hit.getNoData())) {
+                counter += 1;
                 String pid = hit.getPid();
                 Detail details = null;
                 try {
@@ -185,7 +249,41 @@ public class ElasticsearchService {
                 }
             }
         }
+        if (counter > 0) {
+            // TODO: after changing the query (simplify) this whole function might not be needed any longer. If there
+            // are no logs, function and it's invocation should be deleted
+            Utils.logDebug("Patched %d hits without data", counter);
+        }
+    }
 
+    /**
+     * Query the phys index and get all pids containing the searchterm in their fulltexts
+     *
+     * @param searchterm
+     * @return
+     */
+    private Set<String> queryFulltextPids(String searchterm) {
+        SearchRequest request = new SearchRequest().indices(de.ocrd.olahd.Constants.PHYSICAL_INDEX_NAME);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        request.source(sourceBuilder);
+
+        BoolQueryBuilder query = QueryBuilders.boolQuery()
+            .must(QueryBuilders.matchQuery("fulltext", searchterm));
+        sourceBuilder.query(query);
+        sourceBuilder.size(9999);
+        sourceBuilder.fetchSource("pid", null);
+
+        try {
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHits hits = response.getHits();
+            return StreamSupport.stream(hits.spliterator(), false)
+                .map(hit -> hit.getSourceAsMap().get("pid"))
+                .filter(pid -> pid != null && StringUtils.isNotBlank(pid.toString()))
+                .map(Object::toString)
+                .collect(Collectors.toSet());
+        } catch (IOException e) {
+            throw new ElasticServiceException("Error executing search request", e);
+        }
     }
 
 }

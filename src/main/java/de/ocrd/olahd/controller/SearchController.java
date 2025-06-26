@@ -206,7 +206,9 @@ public class SearchController {
         @RequestParam(required = false) @ApiParam(value = "Place filter", required = false)
         String place,
         @RequestParam(required = false) @ApiParam(value = "Year filter", required = false)
-        String year
+        String year,
+        @RequestParam(defaultValue = "2") @ApiParam(value = "Currently there are 2 different search versions, old = 1 and new one = 2", required = false)
+        int searchVersion
     ) throws IOException {
         if (field != null) {
             if (value == null || field.length != value.length) {
@@ -250,13 +252,22 @@ public class SearchController {
             return ResponseEntity.ok(detail);
         } else {
             SearchTerms searchterms = new SearchTerms(searchterm, author, title, place, year);
-            ResultSet resultSet = elasticsearchService.facetSearch(
-                searchterms, limit, offset, false, isGT, metadatasearch, fulltextsearch, null,
-                field, value
-            );
+            ResultSet resultSet = null;
+            if (searchVersion == 1) {
+                // This code is for the "old" grouped search in case it is needed again
+                resultSet = elasticsearchService.facetSearch(
+                    searchterms, limit, offset, false, isGT, metadatasearch, fulltextsearch, null, field, value
+                );
+            } else {
+                resultSet = elasticsearchService.facetSearchV2(
+                    searchterms, limit, offset, false, isGT, metadatasearch, fulltextsearch, null, field, value
+                );
+
+            }
             return ResponseEntity.ok(resultSet);
         }
     }
+
     @ApiOperation(value = "Returns the latest PID for an Ocrd-Identifier")
     @ApiResponses({ @ApiResponse(code = 200, message = "PID for Ocrd-Identifier found", response = String.class),
         @ApiResponse(code = 404, message = "Ocrd-Identifier not found", response = String.class)

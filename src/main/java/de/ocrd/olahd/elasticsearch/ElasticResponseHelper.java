@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -78,6 +79,56 @@ public class ElasticResponseHelper {
         res.setYearDigitization(readYearDigitizationFromSearchHit(hit));
         res.setCreator(readCreatorFromSearchHit(hit));
         res.setGT(readIsGtFromSearchHit(hit));
+
+        return res;
+    }
+
+    /**
+     * Extract the results from the response and fill it into the response model.
+     *
+     * This method is for the simplified search query
+     *
+     * @return
+     */
+    public ResultSet responseToResultSetV2(
+        SearchResponse response, SearchTerms searchterms, boolean metadatasearch,
+        boolean fulltextsearch, int offset, int limit
+    ) {
+
+        ResultSet res = new ResultSet();
+        List<HitList> hitlist = new ArrayList<>();
+        res.setHitlist(hitlist);
+
+        for (SearchHit hit : response.getHits()) {
+            Map<String, Object> hitmap = hit.getSourceAsMap();
+            HitList hitResult = new HitList();
+            hitlist.add(hitResult);
+            hitResult.setPid(hitmap.get("pid").toString());
+            hitResult.setTitle(readTitleFromSearchHit(hitmap));
+            hitResult.setSubtitle(readSubtitleFromSearchHit(hitmap));
+            hitResult.setPlaceOfPublish(readPlaceOfPublishFromSearchHit(hitmap));
+            hitResult.setYearOfPublish(readYearFromSearchHit(hitmap));
+            hitResult.setPublisher(readPublisherFromSearchHit(hitmap));
+            hitResult.setCreator(readCreatorFromSearchHit(hitmap));
+            hitResult.setGt(readIsGtFromSearchHit(hitmap));
+        }
+
+        List<Facets> facets = new ArrayList<>();
+        for (Aggregation agg : response.getAggregations().asList()) {
+            Terms terms = (Terms) agg;
+            List<Values> values = new ArrayList<>();
+            for (Bucket bucket : terms.getBuckets()) {
+                Values val = new Values(bucket.getKeyAsString(), (int)bucket.getDocCount(), false);
+                values.add(val);
+            }
+            facets.add(new Facets(terms.getName(), values));
+        }
+        res.setFacets(facets);
+        res.setSearchTerms(searchterms);
+        res.setMetadataSearch(metadatasearch);
+        res.setFulltextSearch(fulltextsearch);
+        res.setOffset(offset);
+        res.setLimit(limit);
 
         return res;
     }
