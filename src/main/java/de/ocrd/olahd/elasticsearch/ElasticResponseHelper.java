@@ -129,7 +129,7 @@ public class ElasticResponseHelper {
         res.setFulltextSearch(fulltextsearch);
         res.setOffset(offset);
         res.setLimit(limit);
-        res.setHits(hitlist.size());
+        res.setHits((int)response.getHits().getTotalHits());
 
         return res;
     }
