@@ -208,7 +208,7 @@ public class SearchController {
         @RequestParam(required = false) @ApiParam(value = "Year filter", required = false)
         String year,
         @RequestParam(defaultValue = "2") @ApiParam(value = "Currently there are 2 different search versions, old = 1 and new one = 2", required = false)
-        int searchVersion
+        int version
     ) throws IOException {
         if (field != null) {
             if (value == null || field.length != value.length) {
@@ -253,7 +253,7 @@ public class SearchController {
         } else {
             SearchTerms searchterms = new SearchTerms(searchterm, author, title, place, year);
             ResultSet resultSet = null;
-            if (searchVersion == 1) {
+            if (version == 1) {
                 // This code is for the "old" grouped search in case it is needed again
                 resultSet = elasticsearchService.facetSearch(
                     searchterms, limit, offset, false, isGT, metadatasearch, fulltextsearch, null, field, value
