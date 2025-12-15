@@ -5,7 +5,7 @@ COPY . .
 RUN mvn -q clean package -DskipTests
 
 # Production image
-FROM openjdk:13-jdk-alpine
+FROM eclipse-temurin:11-alpine
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 WORKDIR /ola-hd
