@@ -126,6 +126,24 @@ services:
           - image-server
           - images
 
+  olahds_cantaloupe_image_server:
+    container_name: olahds_cantaloupe_image_server
+    image: docker.gitlab.gwdg.de/subugoe/metsimporter/cantaloupe_iiif_image_server:latest
+    command: java -Dcantaloupe.config=/home/cantaloupe/cantaloupe.properties  -Xmx2g -jar /home/cantaloupe/cantaloupe-5.0.7/cantaloupe-5.0.7.jar
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.imageserver2.entrypoints=web"
+      - "traefik.http.routers.imageserver2.rule=PathPrefix(`/iiif/3`)"
+      # stripprefix unnecessary because requests to server itself must contain /iiif/3
+    ports:
+      - "8182:8182"
+    volumes:
+      - ./cfg/cluster/cantaloupe.properties:/home/cantaloupe/cantaloupe.properties
+    networks:
+      olahd:
+        aliases:
+          - cantaloupe_image_server
+
 networks:
   olahd:
     name: olahd
