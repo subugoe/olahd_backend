@@ -268,6 +268,6 @@ public class ElasticQueryHelperV2 {
     }
 
     private TermsAggregationBuilder createSingleFacetAggregation(String term, String field) {
-        return AggregationBuilders.terms(term).field(field);
+        return AggregationBuilders.terms(term).field(field).shardSize(50);
     }
 }
