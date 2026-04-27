@@ -62,10 +62,11 @@ public class OperandiController {
     private static final String WORKFLOW_ID = "olahd-workflow-1";
 
     /**
-     * Download a IIIF Manifest through a PID
+     * Endpoint (called by the frontend) to run an operandi workflow for the specified PID
      *
-     * Check with the mongodb if the PID has an existing archive. Then try to load the file from the s3. Set the
-     * placeholder and return it. Check for errors if unexpectedly there is no IIIF-Manifest available for the PID.
+     * Ensure archive exists etc. Then determine input-filegroup and create an OperandiJob-object. This is then used
+     * by OperandiJobStarter to create a Runnable. The Runnable is finally submitted to an executor to be run in the
+     * background.
      *
      * This method is synchronized to ensure that there is only one single job running for a user and that a user has
      * only one running job (the latter might be removed sooner or later).
